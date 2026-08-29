@@ -1,0 +1,9 @@
+content_set_id,expected_cluster_count,unit_order,language_bcp47
+latn_seq01,4,A|E|H|M,
+latn_seq02,4,O|R|S|T,
+hani_seq01,4,永|山|水|中,zh-CN
+hani_seq02,4,文|門|木|人,zh-CN
+kana_seq01,4,あ|い|す|ね,ja
+kana_seq02,4,の|ま|る|よ,ja
+hang_seq01,4,가|나|다|라,ko
+hang_seq02,4,마|바|사|아,ko

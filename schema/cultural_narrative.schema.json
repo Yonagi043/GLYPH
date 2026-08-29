@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH cultural narrative evidence record",
+  "description": "An auditable annotation of a public source. It records an observed narrative, not a claim of causal origin or aesthetic truth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evidence_id", "source_id", "object_type", "object_label", "aesthetic_term", "stance", "evidence_span", "collection_method", "confidence", "human_verified"],
+  "properties": {
+    "evidence_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "stimulus_id": { "anyOf": [{ "$ref": "shared.schema.json#/$defs/stimulusId" }, { "type": "null" }] },
+    "source_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "object_type": { "type": "string", "enum": ["writing_system", "script", "style_family", "font", "stimulus", "brand"] },
+    "object_label": { "type": "string", "minLength": 1 },
+    "aesthetic_term": { "type": "string", "minLength": 1 },
+    "brand_context": { "type": ["string", "null"] },
+    "stance": { "type": "string", "enum": ["positive", "negative", "mixed", "descriptive", "counterexample", "unclear"] },
+    "mechanism_claim": { "type": ["string", "null"] },
+    "evidence_span": { "type": "string", "minLength": 1 },
+    "language_bcp47": { "type": ["string", "null"] },
+    "region_hint": { "type": ["string", "null"] },
+    "author_role": { "type": ["string", "null"], "enum": ["brand", "design_studio", "designer", "design_media", "researcher", "ordinary_user", "unknown", null] },
+    "collection_method": { "type": "string", "enum": ["manual", "api", "public_web", "corpus_export", "llm_candidate_manual_verified"] },
+    "annotator_id": { "type": ["string", "null"] },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "human_verified": { "type": "boolean" },
+    "collected_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH source and licence record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source_id", "source_type", "title", "url", "accessed_at", "license_status"],
+  "properties": {
+    "source_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "source_type": { "type": "string", "enum": ["font_file", "logo_archive", "award_page", "brand_page", "academic_paper", "book", "social_post", "video", "survey_protocol", "generated_asset", "other"] },
+    "title": { "type": "string", "minLength": 1 },
+    "publisher_or_creator": { "type": ["string", "null"] },
+    "url": { "$ref": "shared.schema.json#/$defs/uri" },
+    "published_at": { "anyOf": [{ "$ref": "shared.schema.json#/$defs/isoDateTime" }, { "$ref": "shared.schema.json#/$defs/isoDate" }, { "type": "null" }] },
+    "accessed_at": { "$ref": "shared.schema.json#/$defs/isoDate" },
+    "language_bcp47": { "type": ["string", "null"] },
+    "region": { "type": ["string", "null"] },
+    "license_status": { "type": "string", "enum": ["open", "research_only", "permission_required", "unknown"] },
+    "license_text_or_id": { "type": ["string", "null"] },
+    "redistribution_allowed": { "type": ["boolean", "null"] },
+    "local_archive": { "anyOf": [{ "$ref": "shared.schema.json#/$defs/assetRef" }, { "type": "null" }] },
+    "notes": { "type": ["string", "null"] }
+  }
+}

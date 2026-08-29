@@ -1,0 +1,22 @@
+.DS_Store
+.pytest_cache/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+data/raw/*
+data/processed/*
+data/releases/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/releases/.gitkeep
+!data/processed/visual_features_v1/
+!data/processed/visual_features_v1/**
+data/processed/visual_features_v1/history/
+# Local font alternatives not included in the frozen public inventory.
+data/assets/fonts/LXGWWenKai-Regular.ttf
+data/assets/fonts/LXGWWenKaiTC-Regular.ttf
+data/assets/fonts/ZCOOLXiaoWei-Regular.ttf
+data/assets/fonts/NotoSansCJKsc-Black.otf

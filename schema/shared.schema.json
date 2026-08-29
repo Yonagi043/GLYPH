@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH shared definitions",
+  "description": "Shared identifiers, controlled vocabularies, and reusable objects for all four GLYPH research lines.",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{1,127}$",
+      "description": "Stable, opaque identifier. Do not encode mutable labels or experiment results in an ID."
+    },
+    "stimulusId": {
+      "type": "string",
+      "pattern": "^stim_[a-z0-9][a-z0-9_-]{2,63}$",
+      "description": "Stable stimulus identifier shared across manifests, features, ratings, and narrative evidence."
+    },
+    "isoDate": { "type": "string", "format": "date" },
+    "isoDateTime": { "type": "string", "format": "date-time" },
+    "uri": { "type": "string", "format": "uri" },
+    "researchLine": {
+      "type": "string",
+      "enum": ["WP1_cross_cultural_perception", "WP2_cultural_historical_narrative", "WP3_cross_script_visual_form", "WP4_han_style_evolution"]
+    },
+    "writingSystem": {
+      "type": "string",
+      "enum": ["latin", "han", "kana", "hangul", "mixed", "other", "unknown"]
+    },
+    "semanticStatus": {
+      "type": "string",
+      "enum": ["meaningful_word", "phrase", "pseudoword", "character_set", "nonlinguistic", "unknown"]
+    },
+    "styleFamily": {
+      "type": "string",
+      "enum": ["seal", "clerical", "regular", "running", "cursive", "song", "sans", "serif", "display", "handwritten", "custom", "none", "unknown"]
+    },
+    "assetRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "mime_type": { "type": "string", "minLength": 1 },
+        "byte_size": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "rgba": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        { "type": "integer", "minimum": 0, "maximum": 255 },
+        { "type": "integer", "minimum": 0, "maximum": 255 },
+        { "type": "integer", "minimum": 0, "maximum": 255 },
+        { "type": "integer", "minimum": 0, "maximum": 255 }
+      ],
+      "items": false,
+      "description": "RGBA channels, each in [0, 255]."
+    },
+    "text": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["content", "semantic_status", "character_count"],
+      "properties": {
+        "content": { "type": "string", "minLength": 1 },
+        "unicode_codepoints": { "type": "array", "items": { "type": "string", "pattern": "^U\\+[0-9A-F]{4,6}$" } },
+        "language_bcp47": { "type": ["string", "null"], "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$" },
+        "semantic_status": { "$ref": "#/$defs/semanticStatus" },
+        "meaning_gloss": { "type": ["string", "null"] },
+        "character_count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "font": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["font_id", "family_name", "role"],
+      "properties": {
+        "font_id": { "$ref": "#/$defs/id" },
+        "family_name": { "type": "string", "minLength": 1 },
+        "postscript_name": { "type": ["string", "null"] },
+        "version": { "type": ["string", "null"] },
+        "role": { "type": "string", "enum": ["source_font", "recreated_font", "experimental_font", "raster_only"] },
+        "source_id": { "$ref": "#/$defs/id" },
+        "file": { "$ref": "#/$defs/assetRef" }
+      }
+    },
+    "canvas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width_px", "height_px", "background_rgba", "color_space", "dpi"],
+      "properties": {
+        "width_px": { "type": "integer", "minimum": 1 },
+        "height_px": { "type": "integer", "minimum": 1 },
+        "background_rgba": { "$ref": "#/$defs/rgba" },
+        "color_space": { "type": "string", "enum": ["sRGB", "Display-P3", "grayscale"] },
+        "dpi": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["line_count", "alignment", "orientation", "tracking_px", "leading_px"],
+      "properties": {
+        "line_count": { "type": "integer", "minimum": 1 },
+        "alignment": { "type": "string", "enum": ["left", "center", "right", "justified", "freeform"] },
+        "orientation": { "type": "string", "enum": ["horizontal", "vertical", "mixed"] },
+        "tracking_px": { "type": "number" },
+        "leading_px": { "type": "number", "minimum": 0 },
+        "rotation_deg": { "type": "number", "minimum": -360, "maximum": 360 },
+        "positioning": { "type": "string", "enum": ["text_layout", "individually_positioned", "logo_lockup", "unknown"] }
+      }
+    },
+    "readability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["readability_condition", "familiarity_condition"],
+      "properties": {
+        "readability_condition": { "type": "string", "enum": ["clearly_readable", "partly_readable", "not_readable", "not_applicable", "unknown"] },
+        "familiarity_condition": { "type": "string", "enum": ["native_script", "non_native_script", "mixed_script", "controlled_unfamiliar", "not_applicable", "unknown"] },
+        "pretest_readability_mean": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "pretest_familiarity_mean": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "pretest_sample_size": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "acquisition_method", "license_status", "accessed_at"],
+      "properties": {
+        "source_id": { "$ref": "#/$defs/id" },
+        "source_uri": { "$ref": "#/$defs/uri" },
+        "acquisition_method": { "type": "string", "enum": ["rendered_from_font", "redrawn_from_reference", "generated", "licensed_asset", "public_archive", "participant_created", "unknown"] },
+        "license_status": { "type": "string", "enum": ["open", "research_only", "permission_required", "unknown"] },
+        "license_id": { "type": ["string", "null"] },
+        "accessed_at": { "$ref": "#/$defs/isoDate" },
+        "generator": { "type": ["string", "null"] },
+        "generator_version": { "type": ["string", "null"] },
+        "generation_parameters": { "type": ["object", "null"], "additionalProperties": true },
+        "parent_stimulus_id": { "anyOf": [{ "$ref": "#/$defs/stimulusId" }, { "type": "null" }] }
+      }
+    }
+  }
+}

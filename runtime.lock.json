@@ -1,0 +1,15 @@
+{
+  "runtime": "CPython 3.11.x",
+  "platform_note": "Reference run: macOS arm64, protocol visual_features_v1.2.0",
+  "packages": {
+    "Pillow": {"version": "11.3.0", "source": "PyPI", "sha256_required": true},
+    "numpy": {"version": "2.0.2", "source": "PyPI", "sha256_required": true},
+    "scipy": {"version": "1.14.1", "source": "PyPI", "sha256_required": true},
+    "scikit-image": {"version": "0.24.0", "source": "PyPI", "sha256_required": true},
+    "fonttools": {"version": "4.55.0", "source": "PyPI", "sha256_required": true},
+    "uharfbuzz": {"version": "0.43.0", "source": "PyPI", "sha256_required": true},
+    "jsonschema": {"version": "4.25.1", "source": "PyPI", "sha256_required": true},
+    "pytest": {"version": "8.4.1", "source": "PyPI", "sha256_required": true, "scope": "dev"}
+  },
+  "resolver": "uv.lock (generated with uv 0.11.23); hashes and transitive pins are authoritative there."
+}

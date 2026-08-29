@@ -1,0 +1,2 @@
+rating_id,study_id,stimulus_id,participant_id,trial_index,respondent_language_bcp47,native_script,self_reported_familiarity,rating_scale,ratings_json,response_time_ms,attention_check_passed,exclude_from_analysis,exclusion_reason,collected_at
+rating_demo_001,study_pilot_001,stim_demo_001,p_demo_001,1,zh,han,5,likert_1_7,"{""aesthetic"":5,""premium"":4,""modern"":5,""trustworthy"":4,""legibility"":6,""unfamiliarity"":2,""brand_fit"":5}",2400,true,false,,2026-08-29T00:00:00Z

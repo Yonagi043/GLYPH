@@ -1,0 +1,2 @@
+evidence_id,stimulus_id,source_id,object_type,object_label,aesthetic_term,brand_context,stance,mechanism_claim,evidence_span,language_bcp47,region_hint,author_role,collection_method,annotator_id,confidence,human_verified,collected_at
+evid_demo_001,stim_demo_001,src_demo_001,style_family,regular,modern,,descriptive,example mechanism,"原文证据片段",zh-CN,CN,designer,manual,annotator_001,0.9,true,2026-08-29T00:00:00Z

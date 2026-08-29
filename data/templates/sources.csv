@@ -1,0 +1,2 @@
+source_id,source_type,title,publisher_or_creator,url,published_at,accessed_at,language_bcp47,region,license_status,license_text_or_id,redistribution_allowed,local_archive_json,notes
+src_demo_001,award_page,Demo source,GLYPH,https://example.org/source,2026-08-01,2026-08-29,zh-CN,CN,research_only,permission_required,,,placeholder only

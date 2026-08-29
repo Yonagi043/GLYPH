@@ -1,0 +1,41 @@
+content_set_id,writing_system,script_code_iso15924,content,unit_count,semantic_status,unicode_codepoints,selection_rationale,language_bcp47
+latn_u01,latin,Latn,A,1,character_set,U+0041,uppercase form,
+latn_u02,latin,Latn,E,1,character_set,U+0045,uppercase form,
+latn_u03,latin,Latn,H,1,character_set,U+0048,uppercase form,
+latn_u04,latin,Latn,M,1,character_set,U+004D,uppercase form,
+latn_u05,latin,Latn,O,1,character_set,U+004F,uppercase form,
+latn_u06,latin,Latn,R,1,character_set,U+0052,uppercase form,
+latn_u07,latin,Latn,S,1,character_set,U+0053,uppercase form,
+latn_u08,latin,Latn,T,1,character_set,U+0054,uppercase form,
+latn_seq01,latin,Latn,AEHM,4,pseudoword,U+0041 U+0045 U+0048 U+004D,fixed sequence,
+latn_seq02,latin,Latn,ORST,4,pseudoword,U+004F U+0052 U+0053 U+0054,fixed sequence,
+hani_u01,han,Hani,永,1,character_set,U+6C38,structural variety,zh-CN
+hani_u02,han,Hani,山,1,character_set,U+5C71,structural variety,zh-CN
+hani_u03,han,Hani,水,1,character_set,U+6C34,structural variety,zh-CN
+hani_u04,han,Hani,中,1,character_set,U+4E2D,structural variety,zh-CN
+hani_u05,han,Hani,文,1,character_set,U+6587,structural variety,zh-CN
+hani_u06,han,Hani,門,1,character_set,U+9580,structural variety,zh-CN
+hani_u07,han,Hani,木,1,character_set,U+6728,structural variety,zh-CN
+hani_u08,han,Hani,人,1,character_set,U+4EBA,structural variety,zh-CN
+hani_seq01,han,Hani,永山水中,4,pseudoword,U+6C38 U+5C71 U+6C34 U+4E2D,fixed sequence,zh-CN
+hani_seq02,han,Hani,文門木人,4,pseudoword,U+6587 U+9580 U+6728 U+4EBA,fixed sequence,zh-CN
+kana_u01,kana,Kana,あ,1,character_set,U+3042,hiragana variety,ja
+kana_u02,kana,Kana,い,1,character_set,U+3044,hiragana variety,ja
+kana_u03,kana,Kana,す,1,character_set,U+3059,hiragana variety,ja
+kana_u04,kana,Kana,ね,1,character_set,U+306D,hiragana variety,ja
+kana_u05,kana,Kana,の,1,character_set,U+306E,hiragana variety,ja
+kana_u06,kana,Kana,ま,1,character_set,U+307E,hiragana variety,ja
+kana_u07,kana,Kana,る,1,character_set,U+308B,hiragana variety,ja
+kana_u08,kana,Kana,よ,1,character_set,U+3088,hiragana variety,ja
+kana_seq01,kana,Kana,あいすね,4,pseudoword,U+3042 U+3044 U+3059 U+306D,fixed sequence,ja
+kana_seq02,kana,Kana,のまるよ,4,pseudoword,U+306E U+307E U+308B U+3088,fixed sequence,ja
+hang_u01,hangul,Hang,가,1,character_set,U+AC00,syllable variety,ko
+hang_u02,hangul,Hang,나,1,character_set,U+B098,syllable variety,ko
+hang_u03,hangul,Hang,다,1,character_set,U+B2E4,syllable variety,ko
+hang_u04,hangul,Hang,라,1,character_set,U+B77C,syllable variety,ko
+hang_u05,hangul,Hang,마,1,character_set,U+B9C8,syllable variety,ko
+hang_u06,hangul,Hang,바,1,character_set,U+BC14,syllable variety,ko
+hang_u07,hangul,Hang,사,1,character_set,U+C0AC,syllable variety,ko
+hang_u08,hangul,Hang,아,1,character_set,U+C544,syllable variety,ko
+hang_seq01,hangul,Hang,가나다라,4,pseudoword,U+AC00 U+B098 U+B2E4 U+B77C,fixed sequence,ko
+hang_seq02,hangul,Hang,마바사아,4,pseudoword,U+B9C8 U+BC14 U+C0AC U+C544,fixed sequence,ko

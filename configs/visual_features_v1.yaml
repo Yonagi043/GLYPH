@@ -1,0 +1,14 @@
+{
+  "protocol_version": "visual_features_v1.2.0",
+  "schema_versions": {"stimulus": "1.1.0", "visual_features": "1.1.0"},
+  "canvas": {"width_px": 2048, "height_px": 1024, "dpi": 96},
+  "foreground": [0, 0, 0, 255], "background": [255, 255, 255, 255],
+  "anchors": {"single_ink_bbox_center": [1024, 512], "multi_text_center_x": 1024, "multi_baseline_y": 640},
+  "profiles": {"bbox_height_matched": {"target_height_px": 320}, "ink_area_matched": {"target_ratio": 0.050}},
+  "shaping": {"engine": "Pillow-FreeType", "features": ["-liga", "-kern"], "unicode_normalization": "NFC", "hinting": "none"},
+  "thresholds": {"binary": 128, "sensitivity": [96, 160]},
+  "contour_params": {"resample_spacing_px": 2, "corner_window": 5, "corner_angle_deg": 30, "corner_min_distance_px": 8},
+  "skeleton_params": {"algorithm": "zhang_suen", "straight_tolerance_deg": 15},
+  "sensitivity_runs": [{"width_px": 1024, "height_px": 512, "threshold": 128}, {"width_px": 2048, "height_px": 1024, "threshold": 96}, {"width_px": 2048, "height_px": 1024, "threshold": 160}],
+  "release_policy": {"require_qc_pass": true, "unknown_license_block": true, "no_overwrite": true}
+}

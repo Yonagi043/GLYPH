@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH visual feature record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["feature_record_id", "stimulus_id", "extraction_run_id", "feature_definition_version", "representation", "normalization_profile", "dimensions", "applicability", "measurement_status", "feature_numerators", "feature_denominators", "feature_units", "feature_applicability", "missing_reasons", "features"],
+  "properties": {
+    "feature_record_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "stimulus_id": { "$ref": "shared.schema.json#/$defs/stimulusId" },
+    "extraction_run_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "feature_definition_version": { "type": "string", "const": "1.1.0" },
+    "representation": { "type": "string", "enum": ["raster_binary", "raster_grayscale", "contour", "skeleton"] },
+    "normalization_profile": { "type": "string", "enum": ["bbox_height_matched", "ink_area_matched"] },
+    "dimensions": { "type": "array", "items": { "type": "string", "enum": ["geometry", "density", "proportion", "stroke_gesture", "layout", "visual_center", "reading_rhythm", "uniformity"] }, "minItems": 1, "uniqueItems": true },
+    "applicability": { "type": "string", "enum": ["direct", "protocol_dependent", "within_script_only", "not_applicable"] },
+    "measurement_status": { "type": "string", "enum": ["valid", "missing", "needs_review"] },
+    "missing_reason": { "type": ["string", "null"] },
+    "algorithm_config_sha256": { "type": ["string", "null"] },
+    "feature_numerators": { "type": "object", "additionalProperties": { "type": ["number", "null"] } },
+    "feature_denominators": { "type": "object", "additionalProperties": { "type": ["number", "null"] } },
+    "feature_units": { "type": "object", "additionalProperties": { "type": "string" } },
+    "feature_applicability": { "type": "object", "additionalProperties": { "type": "string", "enum": ["direct", "protocol_dependent", "within_script_only", "not_applicable"] } },
+    "missing_reasons": { "type": "object", "additionalProperties": { "type": "string" } },
+    "features": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": {
+        "ink_coverage_ratio": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "bbox_fill_ratio": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "whitespace_ratio": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "bbox_aspect_ratio": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "connected_component_count": { "type": ["integer", "null"], "minimum": 0 },
+        "contour_complexity": { "type": ["number", "null"], "minimum": 0 },
+        "closure_count": { "type": ["integer", "null"], "minimum": 0 },
+        "symmetry_horizontal": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "symmetry_vertical": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "straight_curve_ratio": { "type": ["number", "null"], "minimum": 0 },
+        "centroid_x_norm": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "centroid_y_norm": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "inter_glyph_spacing_mean_norm": { "type": ["number", "null"] },
+        "inter_glyph_spacing_sd_norm": { "type": ["number", "null"], "minimum": 0 },
+        "rhythm_periodicity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "unit_area_cv": { "type": ["number", "null"], "minimum": 0 },
+        "unit_width_cv": { "type": ["number", "null"], "minimum": 0 },
+        "unit_height_cv": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "missing_features": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "computed_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" },
+    "software": { "type": ["string", "null"] }
+  }
+}
