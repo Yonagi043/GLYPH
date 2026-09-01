@@ -1,0 +1,29 @@
+{
+  "counts": {
+    "annotation_status": {
+      "human_verified": 4,
+      "unannotated": 1
+    },
+    "collection_run": {
+      "social_run_demo_20260901": 5
+    },
+    "errors": 0,
+    "platform": {
+      "public_web": 5
+    },
+    "warnings": 1
+  },
+  "input_path": "demo/social_narrative/observations.jsonl",
+  "input_sha256": "b6b2edce27353b86d6008e0b3b05adff8c6ffc0792175b3c1c60eb431fc99027",
+  "messages": [
+    {
+      "code": "external_reference_targets",
+      "message": "1 reference target(s) are outside this bounded sample",
+      "severity": "warning"
+    }
+  ],
+  "record_count": 5,
+  "schema_version": "0.1.0",
+  "valid": true,
+  "validator_version": "social_validate_v0.1.1"
+}

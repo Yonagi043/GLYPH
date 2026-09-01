@@ -1,0 +1,9 @@
+term,object_label,pair_weight,term_weight,p_object_given_term,weight_mode,exploratory,exploratory_reason
+readable,han,1.00000000,1.00000000,1.00000000,records,true,object_denominator_lt_20|term_denominator_lt_20
+traditional,han,1.00000000,2.00000000,0.50000000,records,true,object_denominator_lt_20|term_denominator_lt_20
+modern,latin,1.00000000,1.00000000,1.00000000,records,true,object_denominator_lt_20|term_denominator_lt_20
+premium,latin,1.00000000,2.00000000,0.50000000,records,true,object_denominator_lt_20|term_denominator_lt_20
+international,sans,1.00000000,1.00000000,1.00000000,records,true,object_denominator_lt_20|term_denominator_lt_20
+minimal,sans,1.00000000,1.00000000,1.00000000,records,true,object_denominator_lt_20|term_denominator_lt_20
+premium,seal,1.00000000,2.00000000,0.50000000,records,true,object_denominator_lt_20|term_denominator_lt_20
+traditional,seal,1.00000000,2.00000000,0.50000000,records,true,object_denominator_lt_20|term_denominator_lt_20

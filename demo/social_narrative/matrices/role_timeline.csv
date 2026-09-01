@@ -1,0 +1,9 @@
+platform,language_bcp47,object_label,term,author_role,record_count,first_published_at,last_published_at
+public_web,en,latin,modern,design_media,1,2026-08-10T09:00:00Z,2026-08-10T09:00:00Z
+public_web,en,latin,premium,design_media,1,2026-08-10T09:00:00Z,2026-08-10T09:00:00Z
+public_web,en,sans,international,creator,1,2026-08-12T09:00:00Z,2026-08-12T09:00:00Z
+public_web,en,sans,minimal,creator,1,2026-08-12T09:00:00Z,2026-08-12T09:00:00Z
+public_web,zh-CN,han,readable,brand,1,2026-08-11T09:00:00Z,2026-08-11T09:00:00Z
+public_web,zh-CN,han,traditional,brand,1,2026-08-11T09:00:00Z,2026-08-11T09:00:00Z
+public_web,zh-CN,seal,premium,designer,1,2026-08-13T09:00:00Z,2026-08-13T09:00:00Z
+public_web,zh-CN,seal,traditional,designer,1,2026-08-13T09:00:00Z,2026-08-13T09:00:00Z

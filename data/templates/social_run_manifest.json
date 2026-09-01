@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.1.0",
+  "collection_run_id": "social_run_example_20260901",
+  "platform": "public_web",
+  "source_kind": "imported_export",
+  "query_ids": ["q_example_typography_en"],
+  "window": {
+    "start": "2026-08-01T00:00:00Z",
+    "end": "2026-08-31T23:59:59Z",
+    "timezone": "UTC"
+  },
+  "sampling": {
+    "method": "fixed_quota_search",
+    "max_items": 100,
+    "page_size": 100,
+    "sort_order": "platform_default",
+    "deduplication": "platform_item_id",
+    "inclusion_rule": "Public item matches the registered query and discusses a letterform, script, style, or wordmark.",
+    "exclusion_rule": "Duplicate, inaccessible, unrelated, or personally identifying item; record the reason in the failure log.",
+    "random_seed": null
+  },
+  "collector": {
+    "tool": "manual-export",
+    "tool_version": null,
+    "endpoint": null,
+    "api_version": null,
+    "adapter_commit": null
+  },
+  "created_at": "2026-09-01T00:00:00Z",
+  "completed_at": null,
+  "input_files": [
+    {
+      "path": "data/raw/social/public_web/social_run_example_20260901/export.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "byte_size": null
+    }
+  ],
+  "governance": {
+    "terms_checked_at": "2026-09-01",
+    "license_status": "unknown",
+    "raw_storage": "ignored_local",
+    "release_decision": "pending_review",
+    "reviewer_ref": null,
+    "notes": "Template only; replace every placeholder before a real run."
+  },
+  "status": "planned",
+  "counts": {
+    "requested": null,
+    "received": null,
+    "normalized": null,
+    "failures": null,
+    "human_verified": null
+  },
+  "notes": "Synthetic example; no platform request is made by this repository."
+}

@@ -1,0 +1,5 @@
+observation_id,annotation_status,source_id,url,platform,object_label,terms,stance,mechanism_claim,evidence_span,annotator_ref
+obs_311c72fe621147eb8261baaea9748fd5,human_verified,src_social_845033555efc45da2d6aa8b7,https://example.org/case/han,public_web,han,readable|traditional,positive,,the Han lettering is called traditional and readable,annotator_demo01
+obs_692472e81b4c7fdf8d2a6e4fe77ce7b8,human_verified,src_social_1c4baf9649f666b746698e8f,https://example.org/case/sans,public_web,sans,international|minimal,descriptive,,a creator calls the sans treatment minimal and international,annotator_demo02
+obs_6b2a8eaaac9308b38013c19f72825ac3,human_verified,src_social_ec2e101c4c279e5ba82ce633,https://example.org/case/latin?a=1&b=2,public_web,latin,modern|premium,descriptive,Synthetic example only: restrained geometry is named.,the Latin wordmark is described as premium and modern,annotator_demo01
+obs_b0a057fe81bc1c4bb65797d7c25b899c,human_verified,src_social_b5b451bf77eb0700af48af1d,https://example.org/case/seal,public_web,seal,premium|traditional,mixed,,the seal form is described as traditional and premium,annotator_demo02

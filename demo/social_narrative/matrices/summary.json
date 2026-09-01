@@ -1,0 +1,113 @@
+{
+  "counts": {
+    "excluded_by_filter": 1,
+    "input_records": 5
+  },
+  "engagement": {
+    "comment_count": {
+      "max": 4,
+      "median": 1.5,
+      "non_null": 4,
+      "p90": 3.4,
+      "p99": 3.94,
+      "q1": 0.75,
+      "q3": 2.5,
+      "sum": 7
+    },
+    "like_count": {
+      "max": 20,
+      "median": 12.0,
+      "non_null": 3,
+      "p90": 18.4,
+      "p99": 19.84,
+      "q1": 10.0,
+      "q3": 16.0,
+      "sum": 40
+    },
+    "quote_count": {
+      "max": null,
+      "median": null,
+      "non_null": 0,
+      "p90": null,
+      "p99": null,
+      "q1": null,
+      "q3": null,
+      "sum": 0
+    },
+    "score": {
+      "max": -2,
+      "median": -2.0,
+      "non_null": 1,
+      "p90": -2.0,
+      "p99": -2.0,
+      "q1": -2.0,
+      "q3": -2.0,
+      "sum": -2
+    },
+    "share_count": {
+      "max": 3,
+      "median": 2.0,
+      "non_null": 2,
+      "p90": 2.8,
+      "p99": 2.98,
+      "q1": 1.5,
+      "q3": 2.5,
+      "sum": 4
+    },
+    "view_count": {
+      "max": null,
+      "median": null,
+      "non_null": 0,
+      "p90": null,
+      "p99": null,
+      "q1": null,
+      "q3": null,
+      "sum": 0
+    }
+  },
+  "exploratory_denominator_threshold": 20,
+  "exploratory_pair_count": 8,
+  "filters": {
+    "annotation_status": [
+      "human_verified"
+    ],
+    "collection_run_id": null,
+    "language_bcp47": null,
+    "platform": null
+  },
+  "included_records": 4,
+  "input_path": "demo/social_narrative/observations.jsonl",
+  "input_sha256": "b6b2edce27353b86d6008e0b3b05adff8c6ffc0792175b3c1c60eb431fc99027",
+  "interpretation": "Descriptive co-occurrence in the supplied sample; lift is not a causal or population estimate.",
+  "metric_definition": "records=one row; interactions=like+comment+share+quote+score within one platform (negative score contributes zero to a weight); individual modes select one visible metric; views are never added to interactions",
+  "objects": [
+    "han",
+    "latin",
+    "sans",
+    "seal"
+  ],
+  "output_files": [
+    "matrix_a_term_given_object.csv",
+    "matrix_b_object_given_term.csv",
+    "lift.csv",
+    "role_timeline.csv",
+    "reference_edges.csv",
+    "evidence_index.csv",
+    "time_series.csv",
+    "summary.json"
+  ],
+  "protocol_version": "social_narrative_v0.1.0",
+  "summary_version": "0.1.0",
+  "terms": [
+    "international",
+    "minimal",
+    "modern",
+    "premium",
+    "readable",
+    "traditional"
+  ],
+  "time_granularity": "week",
+  "weight_mode": "records",
+  "weighted_records": 4,
+  "zero_weight_records": 0
+}

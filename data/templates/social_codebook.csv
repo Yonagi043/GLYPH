@@ -1,0 +1,16 @@
+code_type,code,display_zh,definition,inclusion_rule,exclusion_rule,evidence_required,version,notes
+object_type,writing_system,文字系统,Named writing system or script used as the object of discussion.,The text explicitly names or shows the writing system.,Only a brand or individual font is named.,yes,0.1.0,"Use object_label for the canonical label."
+object_type,style_family,书体,Named style family such as seal or sans.,The text identifies a style family or recognizable calligraphic form.,Do not infer a style from a logo image without a human note.,yes,0.1.0,
+object_type,font,字体,Named font family or font asset.,The source names a font family or maps it to a GLYPH font_id.,Do not guess a font from appearance alone.,yes,0.1.0,
+aesthetic_term,premium,高级感,The source links the object to premium or elevated value.,Explicit wording or an unambiguous equivalent in the source language.,A merely positive reaction without the value claim.,yes,0.1.0,"Translate into this stable code; retain the original evidence span."
+aesthetic_term,luxury,奢侈,The source links the object to luxury or exclusivity.,Explicit luxury/exclusive/high-end wording.,Generic quality praise without luxury meaning.,yes,0.1.0,
+aesthetic_term,minimal,极简,The source describes the form or identity as minimal or restrained.,Explicit minimal/simple/reduced wording.,Do not equate empty space alone with minimal.,yes,0.1.0,
+aesthetic_term,modern,现代,The source describes the object as modern or contemporary.,Explicit modern/contemporary wording.,Do not infer from publication date.,yes,0.1.0,
+aesthetic_term,traditional,传统,"The source describes the object as traditional, historical, or heritage-coded.","Explicit traditional/heritage/old-style wording.","Do not infer from script name alone.",yes,0.1.0,
+aesthetic_term,international,国际化,The source links the object to global or international identity.,Explicit global/international/cross-cultural wording.,Do not infer from Latin text alone.,yes,0.1.0,
+aesthetic_term,readable,易读,The source makes a claim about legibility or ease of reading.,Explicit readable/legible/easy-to-read wording.,Do not substitute the researcher's judgment.,yes,0.1.0,
+aesthetic_term,unfamiliar,陌生,"The source describes unfamiliarity, foreignness, or difficulty recognizing the form.","Explicit unfamiliar/foreign/strange wording.","Do not code simple non-native status without a claim.",yes,0.1.0,
+brand_context,technology,科技,Technology or digital-product context is present.,Brand or project belongs to technology/digital products.,Generic modernity without a technology context.,yes,0.1.0,
+brand_context,fashion,时尚,Fashion or apparel context is present.,Brand or project belongs to fashion/apparel.,Aesthetic discussion without a fashion object.,yes,0.1.0,
+brand_context,food_beverage,食品饮料,"Food, tea, alcohol, or beverage context is present.","The source names a food/beverage product or identity.","Do not infer from color or shape alone.",yes,0.1.0,
+brand_context,fragrance,香氛,"Fragrance, cosmetics, or scent context is present.","The source names a fragrance/cosmetics product or identity.","Generic luxury discussion alone.",yes,0.1.0,

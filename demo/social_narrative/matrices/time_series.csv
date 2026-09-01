@@ -1,0 +1,9 @@
+platform,language_bcp47,time_bucket,object_label,term,record_count,time_granularity
+public_web,en,2026-08-10,latin,modern,1,week
+public_web,en,2026-08-10,latin,premium,1,week
+public_web,en,2026-08-10,sans,international,1,week
+public_web,en,2026-08-10,sans,minimal,1,week
+public_web,zh-CN,2026-08-10,han,readable,1,week
+public_web,zh-CN,2026-08-10,han,traditional,1,week
+public_web,zh-CN,2026-08-10,seal,premium,1,week
+public_web,zh-CN,2026-08-10,seal,traditional,1,week

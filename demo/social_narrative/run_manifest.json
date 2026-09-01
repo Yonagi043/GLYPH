@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.1.0",
+  "collection_run_id": "social_run_demo_20260901",
+  "platform": "public_web",
+  "source_kind": "imported_export",
+  "query_ids": ["q_example_typography_en"],
+  "window": {
+    "start": "2026-08-01T00:00:00Z",
+    "end": "2026-08-31T23:59:59Z",
+    "timezone": "UTC"
+  },
+  "sampling": {
+    "method": "imported_export",
+    "max_items": 5,
+    "page_size": null,
+    "sort_order": "synthetic_fixture_order",
+    "deduplication": "platform_item_id",
+    "inclusion_rule": "Synthetic item explicitly describes a letterform, script, style, or wordmark.",
+    "exclusion_rule": "No real platform content is included.",
+    "random_seed": null
+  },
+  "collector": {
+    "tool": "synthetic-fixture",
+    "tool_version": "1.0.0",
+    "endpoint": null,
+    "api_version": null,
+    "adapter_commit": null
+  },
+  "created_at": "2026-09-01T00:00:00Z",
+  "completed_at": "2026-09-01T00:00:00Z",
+  "input_files": [
+    {
+      "path": "demo/social_narrative/input.json",
+      "sha256": "526c9b15ae1baf9f1165a6ecea31a763e4acc71e256e107e4d40af16073d2356",
+      "byte_size": 4388
+    }
+  ],
+  "governance": {
+    "terms_checked_at": "2026-09-01",
+    "license_status": "open",
+    "raw_storage": "not_stored",
+    "release_decision": "permitted",
+    "reviewer_ref": "annotator_demo01",
+    "notes": "Synthetic fixture only; no platform request or real person is represented."
+  },
+  "status": "normalized",
+  "counts": {
+    "requested": 5,
+    "received": 5,
+    "normalized": 5,
+    "failures": 0,
+    "human_verified": 4
+  },
+  "notes": "Synthetic demo; use only to test the offline pipeline."
+}

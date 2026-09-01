@@ -15,7 +15,7 @@ import sys
 import urllib.parse
 import urllib.request
 from collections import Counter, defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -103,11 +103,21 @@ def main() -> None:
     parser.add_argument("--demo", action="store_true", help="Use included demo data; no API request")
     args = parser.parse_args()
     try:
-        payload, mode = (DEMO, "offline demo data") if args.demo else (fetch(args.query, args.token, args.limit), "X API v2 recent-search sample")
-        if not args.demo and not args.token: raise ValueError("Missing token. Set X_BEARER_TOKEN or run with --demo.")
+        if args.limit < 1:
+            raise ValueError("--limit must be positive")
+        if args.demo:
+            payload, mode = DEMO, "offline demo data"
+        else:
+            # Check credentials before constructing a network request.  A
+            # plain invocation must fail fast and remain safe in offline CI.
+            if not args.token:
+                raise ValueError("Missing token. Set X_BEARER_TOKEN or run with --demo.")
+            payload, mode = fetch(args.query, args.token, args.limit), "X API v2 recent-search sample"
     except Exception as error:
         print(f"Could not fetch X data: {error}", file=sys.stderr); print("Tip: run with --demo for the meeting-safe report.", file=sys.stderr); raise SystemExit(2)
-    Path(args.out).write_text(render(analyse(payload), args.query, mode), encoding="utf-8")
+    output_path = Path(args.out)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(render(analyse(payload), args.query, mode), encoding="utf-8")
     print(f"Wrote {args.out} ({mode})")
 
 if __name__ == "__main__": main()

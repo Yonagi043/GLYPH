@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH social collection run manifest",
+  "description": "Reproducibility record for one bounded public-social collection run. It describes how an input was obtained; it is not a dataset or a claim about platform traffic.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "collection_run_id",
+    "platform",
+    "source_kind",
+    "query_ids",
+    "window",
+    "sampling",
+    "collector",
+    "created_at",
+    "governance",
+    "status"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "0.1.0" },
+    "collection_run_id": {
+      "type": "string",
+      "pattern": "^social_run_[a-z0-9][a-z0-9_-]{2,127}$"
+    },
+    "platform": {
+      "type": "string",
+      "enum": ["reddit", "youtube", "x", "bluesky", "instagram", "tiktok", "douyin", "xiaohongshu", "pinterest", "bilibili", "telegram", "public_web", "manual_capture", "google_trends", "other"]
+    },
+    "source_kind": {
+      "type": "string",
+      "enum": ["official_api", "public_web", "manual_capture", "browser_capture", "imported_export"]
+    },
+    "query_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^q_[a-z0-9][a-z0-9_-]{2,127}$" }
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end", "timezone"],
+      "properties": {
+        "start": { "type": ["string", "null"], "format": "date-time" },
+        "end": { "type": ["string", "null"], "format": "date-time" },
+        "timezone": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
+    },
+    "sampling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "max_items", "deduplication", "inclusion_rule", "exclusion_rule"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["api_pagination", "fixed_quota_search", "manual_fixed_quota", "browser_capture", "imported_export"]
+        },
+        "max_items": { "type": "integer", "minimum": 1 },
+        "page_size": { "type": ["integer", "null"], "minimum": 1 },
+        "sort_order": { "type": ["string", "null"], "maxLength": 128 },
+        "deduplication": { "type": "string", "enum": ["platform_item_id", "url", "content_hash", "manual", "none"] },
+        "inclusion_rule": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "exclusion_rule": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "random_seed": { "type": ["string", "null"], "maxLength": 128 }
+      }
+    },
+    "collector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool", "tool_version", "endpoint", "api_version"],
+      "properties": {
+        "tool": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "tool_version": { "type": ["string", "null"], "maxLength": 128 },
+        "endpoint": { "type": ["string", "null"], "maxLength": 1000 },
+        "api_version": { "type": ["string", "null"], "maxLength": 128 },
+        "adapter_commit": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9._/-]{1,128}$" }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "completed_at": { "type": ["string", "null"], "format": "date-time" },
+    "input_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string", "pattern": "^(?!/)(?![A-Za-z]:).+", "maxLength": 1000 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "byte_size": { "type": ["integer", "null"], "minimum": 0 }
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["terms_checked_at", "license_status", "raw_storage", "release_decision"],
+      "properties": {
+        "terms_checked_at": { "type": "string", "format": "date" },
+        "license_status": { "type": "string", "enum": ["open", "research_only", "permission_required", "unknown"] },
+        "raw_storage": { "type": "string", "enum": ["ignored_local", "encrypted_local", "not_stored"] },
+        "release_decision": { "type": "string", "enum": ["metadata_only", "derived_only", "pending_review", "permitted"] },
+        "reviewer_ref": { "type": ["string", "null"], "maxLength": 128 },
+        "notes": { "type": ["string", "null"], "maxLength": 4000 }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "collected", "normalized", "reviewed", "closed"]
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requested": { "type": ["integer", "null"], "minimum": 0 },
+        "received": { "type": ["integer", "null"], "minimum": 0 },
+        "normalized": { "type": ["integer", "null"], "minimum": 0 },
+        "failures": { "type": ["integer", "null"], "minimum": 0 },
+        "human_verified": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "notes": { "type": ["string", "null"], "maxLength": 4000 }
+  }
+}

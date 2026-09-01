@@ -9,6 +9,7 @@
     "fonttools": {"version": "4.55.0", "source": "PyPI", "sha256_required": true},
     "uharfbuzz": {"version": "0.43.0", "source": "PyPI", "sha256_required": true},
     "jsonschema": {"version": "4.25.1", "source": "PyPI", "sha256_required": true},
+    "referencing": {"version": "0.37.0", "source": "PyPI", "sha256_required": true},
     "pytest": {"version": "8.4.1", "source": "PyPI", "sha256_required": true, "scope": "dev"}
   },
   "resolver": "uv.lock (generated with uv 0.11.23); hashes and transitive pins are authoritative there."

@@ -1,0 +1,7 @@
+canonical_label,object_type,aliases,writing_system,style_family,font_id,stimulus_id,active,notes
+latin,writing_system,"Latin|Latin alphabet|拉丁字母",latin,none,,,true,"Conceptual label; use a font_id only when the source names a specific GLYPH font."
+han,writing_system,"Han|Chinese characters|汉字",han,none,,,true,"Conceptual label; do not treat language and writing system as interchangeable."
+kana,writing_system,"Kana|Japanese kana|假名",kana,none,,,true,
+hangul,writing_system,"Hangul|Korean script|韩文",hangul,none,,,true,
+seal,style_family,"Seal script|小篆|篆书",han,seal,,,true,
+sans,style_family,"Sans|黑体|无衬线",mixed,sans,,,true,

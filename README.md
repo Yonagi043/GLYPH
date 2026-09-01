@@ -62,3 +62,39 @@ The pipeline produces grayscale and binary records, keeps missing samples, and
 never produces a composite aesthetic score.
 
 数据许可和受试者隐私协议尚未冻结；在发布真实资产或评分前必须补充相应许可与伦理文件。
+
+## Social-narrative monitoring (offline core)
+
+The cultural-narrative line has a small, offline core that accepts an export
+from an approved API, public-web capture, Facepager, or Zeeschuimer session.
+It never logs in or crawls a platform itself.  Normalize an export into the
+independent `schema/social_observation.schema.json` contract, then build the
+two conditional-probability matrices and `Lift` summary:
+
+```bash
+RUN_ID=example
+python tools/normalize_social_records.py \
+  --input data/raw/social/public_web/social_run_example_20260901/export.json \
+  --output data/processed/social_narrative_v0/observations.jsonl \
+  --sources-output data/processed/social_narrative_v0/sources.csv \
+  --platform public_web --source-kind imported_export \
+  --collection-run-id social_run_example_20260901 \
+  --query-id q_example_typography_en \
+  --normalized-at 2026-09-01T00:00:00Z
+python tools/validate_social_observations.py \
+  --input data/processed/social_narrative_v0/observations.jsonl \
+  --queries data/templates/social_queries.csv \
+  --codebook data/templates/social_codebook.csv \
+  --objects data/templates/social_object_map.csv \
+  --sources data/processed/social_narrative_v0/sources.csv \
+  --run-manifest data/templates/social_run_manifest.json
+python tools/summarize_narratives.py \
+  --input data/processed/social_narrative_v0/observations.jsonl \
+  --output-dir data/processed/social_narrative_v0/matrices/summary_$RUN_ID
+```
+
+The complete sampling, rights, privacy, annotation, and interpretation rules
+are in the bilingual guides [`docs/social_narrative_monitoring_zh.md`](docs/social_narrative_monitoring_zh.md) and [`docs/social_narrative_monitoring.md`](docs/social_narrative_monitoring.md).
+A deterministic, entirely synthetic end-to-end example is checked in at
+[`demo/social_narrative/`](demo/social_narrative/); it contains no platform or
+user data.

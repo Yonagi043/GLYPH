@@ -1,0 +1,4 @@
+source_observation_id,source_platform,source_item_id,target_item_id,relation,source_published_at,target_url
+obs_311c72fe621147eb8261baaea9748fd5,public_web,demo-002,demo-001,link,2026-08-11T09:00:00Z,https://example.org/case/latin
+obs_692472e81b4c7fdf8d2a6e4fe77ce7b8,public_web,demo-003,demo-002,quote,2026-08-12T09:00:00Z,https://example.org/case/han
+obs_b0a057fe81bc1c4bb65797d7c25b899c,public_web,demo-004,outside-999,mention,2026-08-13T09:00:00Z,

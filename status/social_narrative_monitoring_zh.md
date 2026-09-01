@@ -1,4 +1,6 @@
-# GLYPH 跨平台文化叙事监测：文字—审美联想矩阵
+# GLYPH 跨平台文化叙事监测：文字—审美联想矩阵（历史概念稿）
+
+> **状态说明（2026-09-02）：** 本文件保留早期概念设计，字段名和流程可能与当前实现不同，不能作为数据接口或复现说明。当前可执行的契约、命令和边界以 [`docs/social_narrative_monitoring_zh.md`](../docs/social_narrative_monitoring_zh.md)、[`schema/social_observation.schema.json`](../schema/social_observation.schema.json) 和 [`status/social_narrative_methods_review_zh.md`](social_narrative_methods_review_zh.md) 为准。
 
 ## 目标
 

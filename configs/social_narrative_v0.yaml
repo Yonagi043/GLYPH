@@ -1,0 +1,93 @@
+{
+  "protocol_version": "social_narrative_v0.1.0",
+  "schema_versions": {
+    "social_run_manifest": "0.1.0",
+    "social_observation": "0.1.0",
+    "cultural_narrative": "1.0.0"
+  },
+  "purpose": "Describe public co-occurrence of writing systems, styles, fonts and aesthetic language in a bounded sample.",
+  "analysis_unit": "one_platform_item",
+  "primary_measure": "record_count",
+  "secondary_descriptive_measures": ["visible_interaction_count", "view_count"],
+  "platform_order": ["reddit", "youtube", "x", "public_web", "manual_capture"],
+  "platforms": {
+    "reddit": {
+      "source_kind": "official_api",
+      "collector": "PRAW",
+      "collection_rule": "OAuth API search; respect the returned rate-limit headers",
+      "first_pass_max_items_per_query": 100,
+      "enabled": true
+    },
+    "youtube": {
+      "source_kind": "official_api",
+      "collector": "YouTube Data API v3",
+      "collection_rule": "API search and commentThreads endpoints; record quota usage",
+      "first_pass_max_items_per_query": 100,
+      "enabled": true
+    },
+    "x": {
+      "source_kind": "official_api",
+      "collector": "X API v2 / XDK",
+      "collection_rule": "Enable only after project approval; request post fields needed for the question",
+      "first_pass_max_items_per_query": 100,
+      "enabled": false,
+      "reason_disabled": "Pay-per-use credits and platform policy review are required"
+    },
+    "public_web": {
+      "source_kind": "public_web",
+      "collector": "manual export or ordinary HTTP request",
+      "collection_rule": "Collect only public design/brand/award pages; retain URL and access date",
+      "first_pass_max_items_per_query": 100,
+      "enabled": true
+    },
+    "manual_capture": {
+      "source_kind": "manual_capture",
+      "collector": "Zeeschuimer or researcher browser capture",
+      "collection_rule": "Fixed browsing script and quota; do not bypass login, CAPTCHA, or anti-bot controls",
+      "first_pass_max_items_per_query": 50,
+      "enabled": false,
+      "reason_disabled": "Pilot only; browser capture is not a platform-wide traffic sample"
+    }
+  },
+  "registries": {
+    "queries": "data/templates/social_queries.csv",
+    "codebook": "data/templates/social_codebook.csv",
+    "object_map": "data/templates/social_object_map.csv"
+  },
+  "first_pass_design": {
+    "languages_per_platform": 2,
+    "queries_per_language": 4,
+    "max_items_per_query": 100,
+    "time_window": "pre-register an inclusive UTC start and end for every run",
+    "deduplication_key": "platform + collection_run_id + platform_item_id",
+    "screening": "keep an item only when the text or an explicitly cited image caption discusses the object or an aesthetic term",
+    "failure_policy": "write every parse, permission, deletion, and duplicate failure to the run failure CSV"
+  },
+  "annotation": {
+    "candidate_generation": "keyword or LLM suggestions are allowed only as a queue",
+    "final_status": "human_verified",
+    "minimum_reviewers_for_release": 2,
+    "required_evidence": ["object_label", "aesthetic_terms", "evidence_span", "stance"],
+    "agreement_sample": "double-code at least 20 percent of each platform-language cell before reporting a comparison"
+  },
+  "privacy_and_rights": {
+    "author_default": "not_collected",
+    "raw_payload_location": "data/raw/social/<platform>/<collection_run_id>/",
+    "public_repository": "metadata, permitted excerpts, hashes, and derived tables only",
+    "credentials": "environment variables or a local secret manager; never files under the repository",
+    "deletion": "honor platform deletion and correction requests; follow each platform's retention terms"
+  },
+  "interpretation": {
+    "allowed": [
+      "descriptive co-occurrence within a declared platform, language, time window, and query set",
+      "comparison of the same measure across pre-registered cells",
+      "hypotheses for the controlled human-rating study"
+    ],
+    "not_allowed": [
+      "total traffic or algorithmic exposure estimates",
+      "population prevalence or causal influence claims",
+      "cross-platform ranking of popularity from raw counts",
+      "claim that a script inherently has an aesthetic meaning"
+    ]
+  }
+}
