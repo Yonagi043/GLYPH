@@ -1,0 +1,14 @@
+﻿src,out,src_sha1,orig_w,orig_h,content_w,content_h,scale,canvas,content_max,grayscale,binarize,bg,kind
+标准化输出/字体样张/_raw\拉丁文字\Lato-Bold.png,标准化输出/字体样张\拉丁文字\Lato-Bold.png,b1344732ec57,1781,191,1698,111,0.2638,512,448,True,False,255,font
+标准化输出/字体样张/_raw\拉丁文字\Lato-Regular.png,标准化输出/字体样张\拉丁文字\Lato-Regular.png,4349656585b5,1776,190,1693,110,0.2646,512,448,True,False,255,font
+标准化输出/字体样张/_raw\拉丁文字\OpenSans-Variable.png,标准化输出/字体样张\拉丁文字\OpenSans-Variable.png,b1d97faac328,1819,200,1737,120,0.2579,512,448,True,False,255,font
+标准化输出/字体样张/_raw\拉丁文字\Roboto-Variable.png,标准化输出/字体样张\拉丁文字\Roboto-Variable.png,104072a8ffa4,1766,195,1683,115,0.2662,512,448,True,False,255,font
+标准化输出/字体样张/_raw\汉字\MaShanZheng-Regular.png,标准化输出/字体样张\汉字\MaShanZheng-Regular.png,4ebddae177e9,1522,196,1429,116,0.3135,512,448,True,False,255,font
+标准化输出/字体样张/_raw\汉字\NotoSansSC-Variable.png,标准化输出/字体样张\汉字\NotoSansSC-Variable.png,81eeec453889,1620,190,1528,110,0.2932,512,448,True,False,255,font
+标准化输出/字体样张/_raw\汉字\NotoSerifSC-Regular.png,标准化输出/字体样张\汉字\NotoSerifSC-Regular.png,d87622ffcd91,1666,194,1575,113,0.2844,512,448,True,False,255,font
+标准化输出/字体样张/_raw\片假名\MPLUS1p-Regular.png,标准化输出/字体样张\片假名\MPLUS1p-Regular.png,1a0684ae4f0d,1736,183,1632,103,0.2745,512,448,True,False,255,font
+标准化输出/字体样张/_raw\片假名\NotoSansJP-Variable.png,标准化输出/字体样张\片假名\NotoSansJP-Variable.png,9eb00cf512bc,1620,178,1517,98,0.2953,512,448,True,False,255,font
+标准化输出/字体样张/_raw\片假名\NotoSerifJP-Regular.png,标准化输出/字体样张\片假名\NotoSerifJP-Regular.png,61877967737f,1666,182,1562,102,0.2868,512,448,True,False,255,font
+标准化输出/字体样张/_raw\韩文\NanumGothic-Regular.png,标准化输出/字体样张\韩文\NanumGothic-Regular.png,5979d9ba6c06,1548,192,1451,112,0.3088,512,448,True,False,255,font
+标准化输出/字体样张/_raw\韩文\NotoSansKR-Variable.png,标准化输出/字体样张\韩文\NotoSansKR-Variable.png,401c1397d09a,1420,187,1324,106,0.3384,512,448,True,False,255,font
+标准化输出/字体样张/_raw\韩文\NotoSerifKR-Regular.png,标准化输出/字体样张\韩文\NotoSerifKR-Regular.png,4838467d5b22,1514,198,1422,118,0.315,512,448,True,False,255,font
