@@ -1,0 +1,15 @@
+{
+  "weights": {
+    "balance": 0.10,
+    "symmetry": 0.10,
+    "proportion": 0.10,
+    "unity": 0.10,
+    "rhythm": 0.10,
+    "brushwork": 0.10,
+    "structure": 0.10,
+    "spacing": 0.10,
+    "ink": 0.10,
+    "qi_proxy": 0.10
+  },
+  "note": "仅为初始规则权重；有人工盲评数据后应由校准模型学习。"
+}

@@ -1,0 +1,45 @@
+field,中文名,type,definition,channel,notes
+sample_id,样本ID,string,全局唯一ID,all,不可包含奖项或作者语义
+source_sha256,原图SHA256,string,原始文件哈希,all,用于审计
+source_url,来源URL,string,原图或页面来源,all,记录访问日期
+script_or_logo_type,文字/Logo类型,categorical,汉字书体或Logo类别,all,用于分层校准
+award_label,奖项标签,categorical,社会学变量,metadata,不得作为视觉真值
+year,年份,integer,样本年份,metadata,可作为社会变量
+channel,分析通道,categorical,A_layout/B_shape/C_ink,all,三通道之一
+canvas_w,画布宽度,float,归一化或原始宽度,all,记录单位
+canvas_h,画布高度,float,归一化或原始高度,all,记录单位
+fg_area,前景面积,float,mask中前景像素数,all,比例化后再比较
+ink_density,墨量密度,float,fg_area/canvas_area,A/C,不等同于审美好坏
+centroid_x,视觉重心X,float,ΣA*x/ΣA,A,用于D1
+centroid_y,视觉重心Y,float,ΣA*y/ΣA,A,用于D1
+balance_moment,平衡力矩,float,相对画布中心的一阶矩,A,用于D1
+sym_h,水平对称,float,1-L1(mask-flip_h)/L1(mask),B,用于D2
+sym_v,垂直对称,float,1-L1(mask-flip_v)/L1(mask),B,用于D2
+aspect_ratio,宽高比,float,bbox_w/bbox_h,A/B,用于D3
+stroke_width_median,中位笔画宽,float,骨架距离变换中位数×2,B/C,用于D3/C1
+stroke_width_cv,笔画宽变异系数,float,笔画宽标准差/均值,B,用于C1/C5
+unity_pairwise,一致性,float,部件风格向量平均距离的反向值,B,用于D4
+rhythm_autocorr,节奏自相关,float,序列的非零滞后最大自相关,D5/C5,保留原始值
+rhythm_spectral_peak,节奏频谱峰,float,合理频段功率峰/总功率,D5/C5,保留频段设置
+grid_q1_to_q8,米字格八区占比,json,array,八个区域前景占比,B,用于C2
+skeleton_ssim,骨架SSIM,float,对齐骨架结构相似度,B,用于C2
+margin_top,上边界留白,float,前景到画布上边缘距离,A,用于C3
+margin_bottom,下边界留白,float,前景到画布下边缘距离,A,用于C3
+margin_left,左边界留白,float,前景到画布左边缘距离,A,用于C3
+margin_right,右边界留白,float,前景到画布右边缘距离,A,用于C3
+hole_area_ratio,内部空腔比例,float,holes_area/fg_area,B,用于C2/C3
+gray_mean,平均灰度,float,墨迹区域平均灰度,C,用于C4
+gray_entropy,灰度熵,float,-Σp log p,C,用于C4
+local_contrast,局部对比,float,patch灰度标准差均值,C,用于C4
+edge_spread,边缘扩散,float,边缘过渡宽度,C,用于C4
+direction_coherence,方向一致性,float,|mean exp(i theta)|,B,用于C5
+continuity_proxy,相邻方向连续,float,相邻段方向距离的指数反向值,B,用于C5
+connected_components,连通域数,integer,8-connected components,A/B,用于C5并做QC
+human_overall,总体审美,float,盲评结果,ratings,建议1-7
+human_balance,平衡评分,float,盲评结果,ratings,建议1-7
+human_structure,结构评分,float,盲评结果,ratings,建议1-7
+human_rhythm,节奏/动态评分,float,盲评结果,ratings,建议1-7
+human_ink,墨法评分,float,盲评结果,ratings,不适用时为空
+participant_mother_tongue,母语组,categorical,受试者协变量,ratings,不用于改写样本视觉特征
+participant_design_training,设计训练,categorical,受试者协变量,ratings,可作随机斜率或分层
+participant_calligraphy_training,书法训练,categorical,受试者协变量,ratings,可作随机斜率或分层
