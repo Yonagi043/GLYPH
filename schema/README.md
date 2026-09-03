@@ -1,8 +1,8 @@
 # GLYPH Shared Schema
 
 基础共享 schema 版本：`1.1.0`（冻结，2026-08-29）。社会叙事采集层另有独立的
-`social_observation`/`social_run_manifest` `0.1.0` 版本，不会改写视觉特征、刺激、
-评分或既有文化叙事契约。
+`social_observation`/`social_run_manifest` `0.2.0` 版本；历史 `0.1.0` 记录继续原样校验，
+Mastodon 记录必须使用 `0.2.0`。该最小扩展不会改写视觉特征、刺激、评分或既有文化叙事契约。
 
 这套 schema 是四条研究线的共同数据契约。它把“刺激是什么”“视觉上测到了什么”“谁如何评价”“公共话语如何描述它”“依据来自哪里”分开记录，再用稳定 ID 联结。
 
@@ -29,6 +29,8 @@
 6. 任何文化叙事结论都必须能通过 `source_id` 找回 URL、访问日期和 `evidence_span` 原文片段。
 7. `social_observation.schema.json` 是采集层契约：它保留平台项目 ID、查询、内容可得状态、可见互动数、引用关系、治理状态和规范化哈希；`observation_id` 同时绑定平台、采集运行和平台条目，因此重复运行不会覆盖历史观察。它不等同于全网流量。人工确认后，记录可以投影到 `cultural_narrative.schema.json`。
 8. 每次社会叙事采集都应同时保存 `social_run_manifest.schema.json`；观察记录中的 `collection_run_id` 必须能回到该运行的查询、时间窗和抽样规则。
+9. `social_run_manifest.sampling.method=realtime_stream` 用于 Jetstream 等有增量游标的实时官方流；游标、包含式重放和幂等策略必须进入本地运行审计，不得把流式样本描述为平台总体。
+10. Mastodon 使用 `sampling.method=api_pagination`。选定实例、访问方式、分页上限和逐请求间隔冻结在 query；实例级分页状态、高水位和 sighting 保存在本地审计层。跨实例观察不等于 Mastodon 全网样本，原始账号与 payload 不进入发布导出。
 
 模板中的全零 SHA-256 只是占位符；发布闸门默认拒绝它。只有检查模板结构时才显式使用 `--allow-zero-hash`，真实运行必须写入实际输入和记录哈希。
 

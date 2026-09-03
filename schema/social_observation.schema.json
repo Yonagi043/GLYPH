@@ -24,7 +24,7 @@
     "normalization"
   ],
   "properties": {
-    "schema_version": { "type": "string", "const": "0.1.0" },
+    "schema_version": { "type": "string", "enum": ["0.1.0", "0.2.0"] },
     "observation_id": {
       "type": "string",
       "pattern": "^obs_[a-z0-9][a-z0-9_-]{2,127}$",
@@ -36,7 +36,7 @@
     },
     "platform": {
       "type": "string",
-      "enum": ["reddit", "youtube", "x", "bluesky", "instagram", "tiktok", "douyin", "xiaohongshu", "pinterest", "bilibili", "telegram", "public_web", "manual_capture", "google_trends", "other"]
+      "enum": ["reddit", "youtube", "x", "bluesky", "mastodon", "instagram", "tiktok", "douyin", "xiaohongshu", "pinterest", "bilibili", "telegram", "public_web", "manual_capture", "google_trends", "other"]
     },
     "platform_item_id": { "type": "string", "minLength": 1, "maxLength": 512 },
     "source_id": { "$ref": "shared.schema.json#/$defs/id" },
@@ -257,6 +257,10 @@
     }
   },
   "allOf": [
+    {
+      "if": { "properties": { "platform": { "const": "mastodon" } }, "required": ["platform"] },
+      "then": { "properties": { "schema_version": { "const": "0.2.0" } } }
+    },
     {
       "if": { "properties": { "annotation_status": { "const": "human_verified" } }, "required": ["annotation_status"] },
       "then": {

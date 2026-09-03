@@ -1,0 +1,114 @@
+{
+  "schema_version": "youtube_screening_fixture_v0.1.0",
+  "cases": [
+    {
+      "case_id": "explicit_object_aesthetic",
+      "kind": "video",
+      "expected_decision": "include",
+      "reason": "明确连接 Latin typography 与 premium。",
+      "resource": {
+        "id": "fixturePositive01",
+        "snippet": {
+          "publishedAt": "2026-09-02T08:00:00Z",
+          "defaultLanguage": "en",
+          "title": "Latin typography and premium identity",
+          "description": "The Latin letterforms make the identity feel premium."
+        },
+        "statistics": {"viewCount": "120"}
+      }
+    },
+    {
+      "case_id": "creator_promotion",
+      "kind": "video",
+      "expected_decision": "exclude",
+      "reason": "premium 仅修饰推广套餐，没有对象—评价关系。",
+      "resource": {
+        "id": "fixturePromotion01",
+        "snippet": {
+          "publishedAt": "2026-09-02T08:01:00Z",
+          "defaultLanguage": "en",
+          "title": "Premium launch offer",
+          "description": "Buy our premium package today; typography tutorial included."
+        },
+        "statistics": {"viewCount": "80"}
+      }
+    },
+    {
+      "case_id": "technical_question",
+      "kind": "comment",
+      "video_id": "fixturePositive01",
+      "expected_decision": "exclude",
+      "reason": "技术问答未表达对象评价。",
+      "resource": {
+        "id": "fixtureTechnical01",
+        "snippet": {
+          "videoId": "fixturePositive01",
+          "publishedAt": "2026-09-02T08:10:00Z",
+          "textOriginal": "Which software did you use to adjust the typography kerning?"
+        }
+      }
+    },
+    {
+      "case_id": "generic_praise",
+      "kind": "comment",
+      "video_id": "fixturePositive01",
+      "expected_decision": "exclude",
+      "reason": "泛称赞没有明确指向对象或评价维度。",
+      "resource": {
+        "id": "fixturePraise01",
+        "snippet": {
+          "videoId": "fixturePositive01",
+          "publishedAt": "2026-09-02T08:11:00Z",
+          "textOriginal": "Great work, I love it!"
+        }
+      }
+    },
+    {
+      "case_id": "explicit_negation_top_comment",
+      "kind": "comment",
+      "video_id": "fixturePositive01",
+      "expected_decision": "include",
+      "reason": "顶层评论明确否定 Latin typography 的 premium 评价。",
+      "resource": {
+        "id": "fixtureNegative01",
+        "snippet": {
+          "videoId": "fixturePositive01",
+          "publishedAt": "2026-09-02T08:12:00Z",
+          "textOriginal": "This Latin typography does not feel premium; it looks generic."
+        }
+      }
+    },
+    {
+      "case_id": "parent_context_reply",
+      "kind": "reply",
+      "video_id": "fixturePositive01",
+      "parent_comment_id": "fixtureNegative01",
+      "expected_decision": "include",
+      "reason": "回复借用父评论语境并明确评价 typography 为 modern。",
+      "resource": {
+        "id": "fixtureReply01",
+        "snippet": {
+          "parentId": "fixtureNegative01",
+          "videoId": "fixturePositive01",
+          "publishedAt": "2026-09-02T08:13:00Z",
+          "textOriginal": "I disagree: that typography feels modern to me."
+        }
+      }
+    },
+    {
+      "case_id": "mixed_language_uncertain",
+      "kind": "comment",
+      "video_id": "fixturePositive01",
+      "expected_decision": "uncertain",
+      "reason": "中英混合短句需要人工确认对象指代和语言。",
+      "resource": {
+        "id": "fixtureMixed01",
+        "snippet": {
+          "videoId": "fixturePositive01",
+          "publishedAt": "2026-09-02T08:14:00Z",
+          "textOriginal": "这个 type 看起来很 modern，但我不确定是不是在说 Latin 字形。"
+        }
+      }
+    }
+  ]
+}

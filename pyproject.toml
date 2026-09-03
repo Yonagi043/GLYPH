@@ -6,11 +6,17 @@ name = "glyph-features"
 version = "1.2.0"
 description = "Reproducible GLYPH visual feature extraction protocol"
 requires-python = ">=3.11,<3.12"
-dependencies = ["Pillow==11.3.0", "numpy==2.0.2", "scipy==1.14.1", "scikit-image==0.24.0", "fonttools==4.55.0", "uharfbuzz==0.43.0", "jsonschema==4.25.1", "referencing==0.37.0"]
+dependencies = ["Pillow==11.3.0", "numpy==2.0.2", "scipy==1.14.1", "scikit-image==0.24.0", "fonttools==4.55.0", "uharfbuzz==0.43.0", "jsonschema==4.25.1", "referencing==0.37.0", "fastapi==0.141.1", "uvicorn[standard]==0.52.4", "websockets==17.1", "APScheduler==3.11.0", "krippendorff==0.8.2"]
 [project.optional-dependencies]
-dev = ["pytest==8.4.1"]
+dev = ["pytest==8.4.1", "httpx2==2.12.0"]
+[project.scripts]
+glyph-social = "glyph_features.social_system.cli:main"
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["src", "."]
+include = ["glyph_features*", "tools*"]
+
+[tool.setuptools.package-data]
+"glyph_features.social_system" = ["static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

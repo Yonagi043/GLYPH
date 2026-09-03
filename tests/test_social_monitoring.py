@@ -143,6 +143,28 @@ def test_social_run_manifest_template_validates():
     assert list(check.iter_errors(manifest)) == []
 
 
+def test_social_schema_v02_adds_mastodon_without_relabeling_legacy_records():
+    from tools.social_io import schema_validator
+
+    legacy_observation = _record(1, "latin", ["premium"])
+    assert validation_errors(legacy_observation, validator()) == []
+
+    mastodon_observation = {**legacy_observation, "schema_version": "0.2.0", "platform": "mastodon"}
+    assert validation_errors(mastodon_observation, validator()) == []
+    mastodon_observation["schema_version"] = "0.1.0"
+    assert validation_errors(mastodon_observation, validator())
+
+    manifest_path = ROOT / "data/templates/social_run_manifest.json"
+    legacy_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    check = schema_validator(ROOT / "schema/social_run_manifest.schema.json")
+    assert list(check.iter_errors(legacy_manifest)) == []
+
+    mastodon_manifest = {**legacy_manifest, "schema_version": "0.2.0", "platform": "mastodon"}
+    assert list(check.iter_errors(mastodon_manifest)) == []
+    mastodon_manifest["schema_version"] = "0.1.0"
+    assert list(check.iter_errors(mastodon_manifest))
+
+
 def test_human_verified_record_requires_evidence():
     record = _record(1, "latin", ["premium"])
     record["evidence_span"] = None
@@ -173,6 +195,7 @@ def test_normalizer_accepts_pretty_printed_api_payload_and_is_deterministic(tmp_
     assert out_a.read_bytes() == out_b.read_bytes()
     rows = [json.loads(line) for line in out_a.read_text(encoding="utf-8").splitlines()]
     assert len(rows) == 1
+    assert rows[0]["schema_version"] == "0.1.0"
     assert rows[0]["author_ref"] is None
     assert rows[0]["engagement"]["comment_count"] == 2
     assert validation_errors(rows[0], validator()) == []
@@ -183,6 +206,33 @@ def test_normalizer_accepts_pretty_printed_api_payload_and_is_deterministic(tmp_
         capture_output=True,
     )
     assert audit.returncode == 0, audit.stderr
+
+
+def test_normalizer_emits_schema_v02_for_mastodon(tmp_path: Path):
+    source = tmp_path / "mastodon.json"
+    source.write_text(json.dumps({
+        "id": "109876543210",
+        "url": "https://example.social/@redacted/109876543210",
+        "text": "Typography example",
+        "created_at": "2026-09-02T10:00:00Z",
+    }), encoding="utf-8")
+    output = tmp_path / "mastodon.jsonl"
+    command = [
+        sys.executable,
+        str(ROOT / "tools/normalize_social_records.py"),
+        "--input", str(source),
+        "--output", str(output),
+        "--platform", "mastodon",
+        "--source-kind", "official_api",
+        "--collection-run-id", "social_run_mastodon_fixture",
+        "--normalized-at", "2026-09-02T10:01:00Z",
+    ]
+    result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    record = json.loads(output.read_text(encoding="utf-8"))
+    assert record["schema_version"] == "0.2.0"
+    assert record["platform"] == "mastodon"
+    assert validation_errors(record, validator()) == []
 
 
 def test_normalizer_preserves_failures(tmp_path: Path):

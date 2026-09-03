@@ -1,0 +1,119 @@
+{
+  "oauth_token_response": {
+    "access_token": "REDACTED_FIXTURE_ACCESS_TOKEN",
+    "token_type": "bearer",
+    "expires_in": 3600,
+    "scope": "read",
+    "refresh_token": "REDACTED_FIXTURE_REFRESH_TOKEN"
+  },
+  "search_pages": [
+    {
+      "request": {
+        "subreddit": "typography",
+        "query": "latin typography modern",
+        "after": null,
+        "limit": 2,
+        "sort": "new",
+        "restrict_sr": true
+      },
+      "response": {
+        "kind": "Listing",
+        "data": {
+          "after": "t3_fixture002",
+          "before": null,
+          "children": [
+            {
+              "kind": "t3",
+              "data": {
+                "id": "fixture001",
+                "name": "t3_fixture001",
+                "subreddit": "typography",
+                "title": "A modern Latin sans wordmark",
+                "selftext": "The letterforms feel clear and restrained.",
+                "author": "redacted_fixture_author",
+                "created_utc": 1788260400,
+                "permalink": "/r/typography/comments/fixture001/modern_wordmark/",
+                "url": "https://www.reddit.com/r/typography/comments/fixture001/modern_wordmark/",
+                "score": 12,
+                "ups": 12,
+                "num_comments": 2,
+                "is_self": true,
+                "over_18": false,
+                "removed_by_category": null
+              }
+            },
+            {
+              "kind": "t3",
+              "data": {
+                "id": "fixture_removed",
+                "name": "t3_fixture_removed",
+                "subreddit": "typography",
+                "title": "Removed fixture post",
+                "selftext": "[removed]",
+                "author": "[deleted]",
+                "created_utc": 1788264000,
+                "permalink": "/r/typography/comments/fixture_removed/removed/",
+                "url": "https://www.reddit.com/r/typography/comments/fixture_removed/removed/",
+                "score": 0,
+                "ups": 0,
+                "num_comments": 0,
+                "is_self": true,
+                "over_18": false,
+                "removed_by_category": "moderator"
+              }
+            }
+          ]
+        }
+      },
+      "rate_limit_headers": {
+        "X-Ratelimit-Used": "1",
+        "X-Ratelimit-Remaining": "59",
+        "X-Ratelimit-Reset": "60"
+      }
+    },
+    {
+      "request": {
+        "subreddit": "typography",
+        "query": "latin typography modern",
+        "after": "t3_fixture002",
+        "limit": 2,
+        "sort": "new",
+        "restrict_sr": true
+      },
+      "response": {
+        "kind": "Listing",
+        "data": {
+          "after": null,
+          "before": "t3_fixture001",
+          "children": [
+            {
+              "kind": "t3",
+              "data": {
+                "id": "fixture002",
+                "name": "t3_fixture002",
+                "subreddit": "typography",
+                "title": "Latin lettering in a packaging identity",
+                "selftext": "A descriptive fixture for bounded API testing.",
+                "author": "second_redacted_fixture_author",
+                "created_utc": 1788267600,
+                "permalink": "/r/typography/comments/fixture002/packaging_identity/",
+                "url": "https://www.reddit.com/r/typography/comments/fixture002/packaging_identity/",
+                "score": 4,
+                "ups": 4,
+                "num_comments": 1,
+                "is_self": true,
+                "over_18": false,
+                "removed_by_category": null
+              }
+            }
+          ]
+        }
+      },
+      "rate_limit_headers": {
+        "X-Ratelimit-Used": "2",
+        "X-Ratelimit-Remaining": "58",
+        "X-Ratelimit-Reset": "59"
+      }
+    }
+  ]
+}

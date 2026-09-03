@@ -1,0 +1,193 @@
+{
+  "token_response": {
+    "access_token": "REDACTED_FIXTURE_CLIENT_ACCESS_TOKEN",
+    "expires_in": 7200,
+    "token_type": "Bearer"
+  },
+  "video_query_pages": [
+    {
+      "request": {
+        "query": {
+          "and": [
+            {
+              "operation": "IN",
+              "field_name": "region_code",
+              "field_values": ["US", "GB"]
+            },
+            {
+              "operation": "EQ",
+              "field_name": "keyword",
+              "field_values": ["latin typography"]
+            }
+          ]
+        },
+        "start_date": "20260901",
+        "end_date": "20260903",
+        "max_count": 1,
+        "cursor": 0
+      },
+      "response": {
+        "data": {
+          "videos": [
+            {
+              "id": "7520000000000000001",
+              "video_description": "A modern Latin typography study.",
+              "create_time": 1788260400,
+              "region_code": "US",
+              "hashtag_names": ["typography", "lettering"],
+              "view_count": 120,
+              "like_count": 20,
+              "comment_count": 2,
+              "share_count": 3,
+              "favorites_count": 4
+            }
+          ],
+          "cursor": 1,
+          "has_more": true,
+          "search_id": "REDACTED_FIXTURE_SEARCH_ID"
+        },
+        "error": {
+          "code": "ok",
+          "message": "",
+          "log_id": "REDACTED_FIXTURE_LOG_1"
+        }
+      }
+    },
+    {
+      "request": {
+        "query": {
+          "and": [
+            {
+              "operation": "IN",
+              "field_name": "region_code",
+              "field_values": ["US", "GB"]
+            },
+            {
+              "operation": "EQ",
+              "field_name": "keyword",
+              "field_values": ["latin typography"]
+            }
+          ]
+        },
+        "start_date": "20260901",
+        "end_date": "20260903",
+        "max_count": 1,
+        "cursor": 1,
+        "search_id": "REDACTED_FIXTURE_SEARCH_ID"
+      },
+      "response": {
+        "data": {
+          "videos": [
+            {
+              "id": "7520000000000000002",
+              "video_description": "Packaging lettering fixture.",
+              "create_time": 1788267600,
+              "region_code": "GB",
+              "hashtag_names": ["typography"],
+              "view_count": 80,
+              "like_count": 10,
+              "comment_count": 0,
+              "share_count": 1,
+              "favorites_count": 2
+            }
+          ],
+          "cursor": 2,
+          "has_more": false,
+          "search_id": "REDACTED_FIXTURE_SEARCH_ID"
+        },
+        "error": {
+          "code": "ok",
+          "message": "",
+          "log_id": "REDACTED_FIXTURE_LOG_2"
+        }
+      }
+    }
+  ],
+  "comment_pages": {
+    "7520000000000000001": [
+      {
+        "request": {
+          "video_id": "7520000000000000001",
+          "max_count": 100,
+          "cursor": 0
+        },
+        "response": {
+          "data": {
+            "comments": [
+              {
+                "id": "7530000000000000001",
+                "video_id": "7520000000000000001",
+                "text": "The lettering feels restrained and clear.",
+                "like_count": 3,
+                "reply_count": 1,
+                "parent_comment_id": "",
+                "create_time": 1788264000
+              }
+            ],
+            "cursor": 1,
+            "has_more": false
+          },
+          "error": {
+            "code": "ok",
+            "message": "",
+            "log_id": "REDACTED_FIXTURE_COMMENT_LOG"
+          }
+        }
+      }
+    ],
+    "7520000000000000002": [
+      {
+        "request": {
+          "video_id": "7520000000000000002",
+          "max_count": 100,
+          "cursor": 0
+        },
+        "response": {
+          "data": {
+            "comments": [],
+            "cursor": 0,
+            "has_more": false
+          },
+          "error": {
+            "code": "ok",
+            "message": "",
+            "log_id": "REDACTED_FIXTURE_EMPTY_COMMENT_LOG"
+          }
+        }
+      }
+    ]
+  },
+  "reply_pages": {
+    "7530000000000000001": [
+      {
+        "request": {
+          "comment_id": "7530000000000000001",
+          "max_count": 100,
+          "cursor": 0
+        },
+        "response": {
+          "data": {
+            "comments": [
+              {
+                "id": "7530000000000000002",
+                "video_id": "7520000000000000001",
+                "text": "A descriptive reply fixture.",
+                "like_count": 1,
+                "reply_count": 0,
+                "parent_comment_id": "7530000000000000001",
+                "create_time": 1788265800
+              }
+            ],
+            "cursor": 1,
+            "has_more": false
+          },
+          "error": {
+            "code": "ok",
+            "message": "",
+            "log_id": "REDACTED_FIXTURE_REPLY_LOG"
+          }
+        }
+      }
+    ]
+  }
+}

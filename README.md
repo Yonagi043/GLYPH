@@ -98,3 +98,45 @@ are in the bilingual guides [`docs/social_narrative_monitoring_zh.md`](docs/soci
 A deterministic, entirely synthetic end-to-end example is checked in at
 [`demo/social_narrative/`](demo/social_narrative/); it contains no platform or
 user data.
+
+## 本机社会叙事系统（六平台统一运行层）
+
+本机运行层通过 Bluesky 官方公开 Jetstream v2 接收实时帖文，也可通过 YouTube Data API v3
+采集有界视频、频道元数据、公开评论与回复，或从冻结的 Mastodon 实例列表采集有界 hashtag
+timeline/status search。M5 另提供 Reddit Data API、TikTok Research API 与 X API v2 recent search
+的离线待接入适配器；三者只有在资格、凭据、固定代理和平台专属预算门禁全部满足后才可创建 run。
+原始证据、Bluesky `seq` 游标、YouTube 分页状态和配额用量、Mastodon
+逐实例分页/高水位/sighting、规范化 observation、query、source、run manifest、失败与人工审核历史
+保存在同一 SQLite 数据库中。主分析仍只读取 `human_verified` observation，并继续使用离线核心的
+Matrix A/B、Lift 与周趋势定义。持久化 schedule、停止/重跑、按 run 验证导出、SQLite
+一致性备份恢复及操作监控均在本机完成。
+
+```bash
+uv sync --locked --extra dev
+GLYPH_OUTBOUND_PROXY=http://127.0.0.1:7897 uv run glyph-social serve \
+  --database "${TMPDIR:-/tmp}/glyph-social-m5-offline.sqlite3"
+```
+
+当前源码目标 schema 为 v17，而生产主库仍有意保持 v14；在迁移另行获批前必须显式使用临时
+数据库，不能省略上述 `--database`。也可以使用 `--proxy http://127.0.0.1:7897` 传入代理。代理只用于
+平台外网连接；Web 界面仍默认绑定 `127.0.0.1`。带凭证的代理地址只能放在 shell 环境
+或被 Git 忽略的本地 `.env` 中，不能提交到仓库、日志、fixture 或运行 manifest。
+
+浏览器打开 <http://127.0.0.1:8765>。系统默认只监听本机回环地址；生产数据库位于
+`data/raw/social/glyph-social.sqlite3`，该目录已被 Git 忽略。Bluesky 公开实时流不需要
+账号或密钥；YouTube 仅从本机 `GLYPH_YOUTUBE_API_KEY` 环境变量读取 key，并受可配置日预算
+守卫约束；Mastodon token map 仅从本机 `GLYPH_MASTODON_ACCESS_TOKENS_JSON` 读取。Reddit、
+TikTok 和 X 凭据同样只允许来自本机进程环境；X 还要求日期化价格快照、run/billing-cycle cap、
+已人工核验的 Developer Console hard spending limit 和关闭状态的费用熔断器。不要把真实
+key/token 写入仓库、日志、fixture、manifest 或聊天。停止服务使用 `Ctrl-C`；
+采集任务停止时，已处理游标/checkpoint、配额用量和运行审计会保留。
+
+完整的 macOS 前台/launchd 启停、升级、调度恢复、导出、备份恢复和故障处理步骤见
+[`docs/social_narrative_local_ops_zh.md`](docs/social_narrative_local_ops_zh.md)。默认备份保存在
+`data/raw/social/backups/`，验证导出保存在
+`data/processed/social_narrative_v0/exports/`；两者都默认被 Git 忽略。
+
+当前链路只覆盖已登记关键词、语言和 UTC 时间窗内的有界样本，不代表任一平台全网或总体舆论。
+M5 的 Reddit、TikTok 与 X 仅完成本地实现和去敏 fixture 验证；未登录、未申请、未接受条款、
+未配置真实凭据、未购买 credits、未启用付费，也未发真实平台请求。原始 payload 仅供本机证据核验，任何发布仍须遵守现有
+权利、隐私、双人复核和发布闸门。

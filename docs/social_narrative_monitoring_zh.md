@@ -1,5 +1,10 @@
 # GLYPH 社会叙事监测系统
 
+> 路线状态（2026-09-02）：M5 已按 Reddit → TikTok Research API → X 完成统一系统的本地实现、
+> 去敏 fixture 和离线验证。三者都处于“离线待接入”，不代表平台批准或真实接入；未登录、未提交
+> 申请、未接受条款、未配置真实凭据、未购买 credits、未启用付费，也未发真实平台请求。
+> 本轮不继续 M3 人工流程、不执行 Mastodon pilot，也不进入 M6。
+
 这是文化—历史叙事线的公开实现说明。系统回答的是：**在一组明确声明的
 平台、语言、时间窗和检索式中，哪些文字/书体/字体与哪些描述共同出现**。
 它不测量全网流量、曝光量、公众总体意见，也不证明因果传播。
@@ -11,9 +16,10 @@
 | [4CAT](https://github.com/digitalmethodsinitiative/4cat)（MPL-2.0） | 采集、处理、数据集和运行记录分开，保留中间结果 | 采用同样的分层原则；只实现轻量离线核心，不依赖易变的插件栈 |
 | [Zeeschuimer](https://github.com/digitalmethodsinitiative/zeeschuimer)（MPL-2.0） | 正常浏览时可以得到没有稳定 API 的平台观察 | 只作为有固定配额的人工观察输入；不绕过登录、验证码或反爬，也不称为平台总体样本 |
 | [Facepager](https://github.com/strohne/Facepager)（MIT） | 分页、限速、SQLite、请求日志是可复查性的基础 | 可接收它的导出；运行说明和结果统一进入 GLYPH schema |
-| [PRAW](https://github.com/praw-dev/praw)（BSD-2-Clause） | OAuth 与限速响应处理适合 Reddit | 作为可选上游采集器；账号和网络代码不放进本仓库 |
+| [PRAW](https://github.com/praw-dev/praw)（BSD-2-Clause） | OAuth 与限速响应处理适合 Reddit | 借鉴生命周期；本仓库使用可注入 token provider 和官方 JSON 结构，不嵌入 PRAW |
 | [YouTube Data Tools](https://github.com/bernorieder/YouTube-Data-Tools-v2)（GPL-3.0-or-later） | 批量请求、配额记录、作者伪名化、离线 fixture、运行报告 | 借鉴控制措施，不嵌入 GPL 应用；导出后由 GLYPH 规范化 |
 | [X API v2/XDK](https://docs.x.com/x-api/getting-started/about-x-api.md) | 固定查询和 API 响应可以审计；公开指标不等于曝光 | 获批并设预算后才启用，只请求必要字段，遵守 ID/数据分发限制 |
+| [TikTok Research API](https://developers.tiktok.com/products/research-api/) | 官方研究接口提供视频、评论与回复的有界分页 | 只有资格获批后才启用；冻结 query AST、`search_id`、UTC 日预算和分层上限 |
 | [Taguette](https://gitlab.com/remram44/taguette)（BSD-3-Clause） | 人工高亮和编码使文本证据可检查 | 机器/LLM 只生成待办候选；正式编码必须有原文片段、编码员和时间 |
 
 数字痕迹方法还提醒我们：API、浏览器观察和数据捐赠观察到的不是同一个
@@ -52,8 +58,8 @@ tools/x_discourse_monitor.py                  # 可选的旧版 X 快照演示
 2. 在本地 raw 运行目录复制 `social_run_manifest.json`，填写采集器、端点/API
    版本、原始文件 SHA-256、条款检查日期、保留决定和完成时间。
 3. 将获准 API 或人工导出放入
-   `data/raw/social/<platform>/<collection_run_id>/`。本仓库没有爬虫；只接收
-   官方 API 或研究者正常浏览得到的导出。
+   `data/raw/social/<platform>/<collection_run_id>/`。统一本机运行层只实现明确登记的官方 API
+   适配器；它不抓取网页、不绕过访问控制，也可继续接收研究者正常浏览得到的导出。
    4. 离线规范化。工具按“平台 + 运行 + 平台条目 ID”生成观察身份，按稳定 ID 排序，默认不保留直接作者标识；它只移除已知追踪参数和 fragment，不联网跟随重定向；每一行都校验，
    失败写入 CSV，绝不静默丢弃。失败表是待修复工作队列；修复上游导出后必须重新运行，未清零的失败不能进入 release。
 
@@ -131,11 +137,11 @@ Lift 大于 1 只表示在这组过滤条件下共同出现多于样本基线，
 
 ## 平台取舍
 
-第一轮用 Reddit（PRAW）、YouTube（官方 Data API）和公开设计/奖项/品牌页面。
-X 取得 API 批准并设置消费上限后再启用。Instagram、TikTok、抖音、小红书在有
-合法稳定入口前只作为人工/浏览器捕获输入。Pushshift、snscrape、CrowdTangle、
-已归档 TCAT 仅作历史方法参考，不作为当前依赖。绝不通过浏览器自动化绕过平台
-API 或反爬。
+统一运行层已覆盖 Bluesky、YouTube、Mastodon、Reddit、TikTok Research API 和 X。Reddit、
+TikTok、X 当前只有离线待接入能力：必须分别满足 OAuth/用途、Research Tools 资格、X 价格与
+双层费用上限门禁后，才可提交独立真实 pilot 批准。Instagram、抖音、小红书在有合法稳定入口前
+只作为人工/浏览器捕获输入。Pushshift、snscrape、CrowdTangle、已归档 TCAT 仅作历史方法参考，
+不作为当前依赖。绝不通过浏览器自动化绕过平台 API 或反爬。
 
 ## 结果边界
 

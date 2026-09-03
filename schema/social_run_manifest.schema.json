@@ -18,14 +18,14 @@
     "status"
   ],
   "properties": {
-    "schema_version": { "type": "string", "const": "0.1.0" },
+    "schema_version": { "type": "string", "enum": ["0.1.0", "0.2.0"] },
     "collection_run_id": {
       "type": "string",
       "pattern": "^social_run_[a-z0-9][a-z0-9_-]{2,127}$"
     },
     "platform": {
       "type": "string",
-      "enum": ["reddit", "youtube", "x", "bluesky", "instagram", "tiktok", "douyin", "xiaohongshu", "pinterest", "bilibili", "telegram", "public_web", "manual_capture", "google_trends", "other"]
+      "enum": ["reddit", "youtube", "x", "bluesky", "mastodon", "instagram", "tiktok", "douyin", "xiaohongshu", "pinterest", "bilibili", "telegram", "public_web", "manual_capture", "google_trends", "other"]
     },
     "source_kind": {
       "type": "string",
@@ -54,7 +54,7 @@
       "properties": {
         "method": {
           "type": "string",
-          "enum": ["api_pagination", "fixed_quota_search", "manual_fixed_quota", "browser_capture", "imported_export"]
+          "enum": ["api_pagination", "realtime_stream", "fixed_quota_search", "manual_fixed_quota", "browser_capture", "imported_export"]
         },
         "max_items": { "type": "integer", "minimum": 1 },
         "page_size": { "type": ["integer", "null"], "minimum": 1 },
@@ -121,5 +121,11 @@
       }
     },
     "notes": { "type": ["string", "null"], "maxLength": 4000 }
-  }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "platform": { "const": "mastodon" } }, "required": ["platform"] },
+      "then": { "properties": { "schema_version": { "const": "0.2.0" } } }
+    }
+  ]
 }

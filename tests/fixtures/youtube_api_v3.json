@@ -1,0 +1,113 @@
+{
+  "search": {
+    "kind": "youtube#searchListResponse",
+    "nextPageToken": "SEARCH_PAGE_2",
+    "items": [
+      {
+        "kind": "youtube#searchResult",
+        "id": {"kind": "youtube#video", "videoId": "vidTypography01"},
+        "snippet": {
+          "publishedAt": "2026-09-02T08:29:59Z",
+          "channelId": "UCResearchExample",
+          "title": "Typography and wordmark study",
+          "description": "A bounded public design discussion.",
+          "channelTitle": "Design Research Example"
+        }
+      }
+    ]
+  },
+  "videos": {
+    "kind": "youtube#videoListResponse",
+    "items": [
+      {
+        "kind": "youtube#video",
+        "id": "vidTypography01",
+        "snippet": {
+          "publishedAt": "2026-09-02T08:29:59Z",
+          "channelId": "UCResearchExample",
+          "title": "Typography and wordmark study",
+          "description": "A bounded public design discussion.",
+          "defaultLanguage": "en"
+        },
+        "statistics": {
+          "viewCount": "1200",
+          "likeCount": "81",
+          "commentCount": "2"
+        }
+      }
+    ]
+  },
+  "channels": {
+    "kind": "youtube#channelListResponse",
+    "items": [
+      {
+        "kind": "youtube#channel",
+        "id": "UCResearchExample",
+        "snippet": {
+          "title": "Design Research Example",
+          "description": "Public channel metadata retained only in local raw evidence."
+        }
+      }
+    ]
+  },
+  "commentThreads": {
+    "kind": "youtube#commentThreadListResponse",
+    "items": [
+      {
+        "kind": "youtube#commentThread",
+        "id": "threadComment01",
+        "snippet": {
+          "videoId": "vidTypography01",
+          "totalReplyCount": 2,
+          "topLevelComment": {
+            "kind": "youtube#comment",
+            "id": "commentTop01",
+            "snippet": {
+              "videoId": "vidTypography01",
+              "textOriginal": "The wordmark typography feels premium.",
+              "authorChannelId": {"value": "UCCommenterRedacted"},
+              "likeCount": 5,
+              "publishedAt": "2026-09-02T09:00:00Z",
+              "updatedAt": "2026-09-02T09:00:00Z"
+            }
+          }
+        },
+        "replies": {
+          "comments": [
+            {
+              "kind": "youtube#comment",
+              "id": "commentReply01",
+              "snippet": {
+                "parentId": "commentTop01",
+                "videoId": "vidTypography01",
+                "textOriginal": "The letter spacing supports that reading.",
+                "authorChannelId": {"value": "UCReplyAuthorRedacted"},
+                "likeCount": 2,
+                "publishedAt": "2026-09-02T09:05:00Z",
+                "updatedAt": "2026-09-02T09:05:00Z"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "comments": {
+    "kind": "youtube#commentListResponse",
+    "items": [
+      {
+        "kind": "youtube#comment",
+        "id": "commentReply02",
+        "snippet": {
+          "parentId": "commentTop01",
+          "videoId": "vidTypography01",
+          "textOriginal": "This reply is loaded from comments.list.",
+          "authorChannelId": {"value": "UCAdditionalAuthorRedacted"},
+          "likeCount": 1,
+          "publishedAt": "2026-09-02T09:10:00Z",
+          "updatedAt": "2026-09-02T09:10:00Z"
+        }
+      }
+    ]
+  }
+}

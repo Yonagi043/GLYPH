@@ -454,7 +454,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--input", type=Path, required=True, help="canonical social-observation JSONL")
     parser.add_argument("--output-dir", type=Path, required=True, help="directory for matrix CSVs and summary.json")
     parser.add_argument("--status", action="append", choices=["human_verified", "candidate"], help="annotation status to include (repeat for more; default: human_verified)")
-    parser.add_argument("--platform", choices=["reddit", "youtube", "x", "bluesky", "instagram", "tiktok", "douyin", "xiaohongshu", "pinterest", "bilibili", "telegram", "public_web", "manual_capture", "google_trends", "other"])
+    parser.add_argument("--platform", choices=["reddit", "youtube", "x", "bluesky", "mastodon", "instagram", "tiktok", "douyin", "xiaohongshu", "pinterest", "bilibili", "telegram", "public_web", "manual_capture", "google_trends", "other"])
     parser.add_argument("--language", help="exact BCP-47 language filter, e.g. zh-CN")
     parser.add_argument("--collection-run-id", help="restrict analysis to one collection run")
     parser.add_argument("--weight", choices=["records", "interactions", "engagement", "likes", "comments", "shares", "quotes", "views", "score"], default="records", help="records or one platform-local visible metric; non-record modes require --platform")

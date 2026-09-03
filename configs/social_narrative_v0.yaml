@@ -1,16 +1,27 @@
+# 路线状态说明（2026-09-02）：本文件中的 platform_order/enabled 字段是协议配置，不是网络请求授权。
+# 当前唯一实施范围是 M4 Mastodon 本地实现与离线验证；真实 Mastodon pilot 仍需单独批准，
+# 不得据此启动 Reddit、public_web、X、Mastodon 真实请求或其他后续平台。
 {
-  "protocol_version": "social_narrative_v0.1.0",
+  "protocol_version": "social_narrative_v0.2.0",
   "schema_versions": {
-    "social_run_manifest": "0.1.0",
-    "social_observation": "0.1.0",
+    "social_run_manifest": "0.2.0",
+    "social_observation": "0.2.0",
     "cultural_narrative": "1.0.0"
   },
   "purpose": "Describe public co-occurrence of writing systems, styles, fonts and aesthetic language in a bounded sample.",
   "analysis_unit": "one_platform_item",
   "primary_measure": "record_count",
   "secondary_descriptive_measures": ["visible_interaction_count", "view_count"],
-  "platform_order": ["reddit", "youtube", "x", "public_web", "manual_capture"],
+  "platform_order": ["bluesky", "reddit", "youtube", "mastodon", "x", "public_web", "manual_capture"],
   "platforms": {
+    "bluesky": {
+      "source_kind": "official_api",
+      "collector": "Bluesky Jetstream v2",
+      "collection_rule": "Public subscribeEvents stream; filter registered keywords, languages, and UTC window; resume from inclusive seq cursor",
+      "first_pass_max_items_per_query": 100,
+      "enabled": true,
+      "coverage_boundary": "Bounded public Jetstream events matching the registered scope; not a platform-wide sample"
+    },
     "reddit": {
       "source_kind": "official_api",
       "collector": "PRAW",
@@ -24,6 +35,15 @@
       "collection_rule": "API search and commentThreads endpoints; record quota usage",
       "first_pass_max_items_per_query": 100,
       "enabled": true
+    },
+    "mastodon": {
+      "source_kind": "official_api",
+      "collector": "Mastodon REST API selected-instance collector",
+      "collection_rule": "Freeze selected instances, hashtag timeline or status search, inclusive UTC window, page limits, per-request delay, and total max_items; retain per-instance state and sightings",
+      "first_pass_max_items_per_query": 100,
+      "enabled": false,
+      "reason_disabled": "Local implementation is offline-validated; real instance requests require a separately approved frozen pilot",
+      "coverage_boundary": "Public or unlisted statuses observed through selected instances; not a Mastodon-wide sample"
     },
     "x": {
       "source_kind": "official_api",

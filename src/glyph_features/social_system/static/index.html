@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GLYPH 社会叙事</title>
+  <link rel="stylesheet" href="/static/app.css?v=0.6.0-m5">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">G</span><strong>GLYPH 社会叙事</strong></div>
+    <div class="system-state"><span id="health-dot" class="status-dot"></span><span id="health-text">正在连接本机系统</span></div>
+  </header>
+  <div class="workspace">
+    <nav class="rail" aria-label="研究工作区">
+      <button class="nav-button active" data-view="dashboard"><span>⌁</span>分析</button>
+      <button class="nav-button" data-view="scopes"><span>◎</span>范围</button>
+      <button class="nav-button" data-view="review"><span>✓</span>人审</button>
+      <button class="nav-button" data-view="quality"><span>α</span>质量</button>
+      <button class="nav-button" data-view="runs"><span>↻</span>运行</button>
+      <button class="nav-button" data-view="system"><span>◇</span>系统</button>
+    </nav>
+    <main>
+      <section id="view-dashboard" class="view active">
+        <div class="section-heading">
+          <div><p class="eyebrow">HUMAN VERIFIED ONLY</p><h1>社会叙事分析</h1></div>
+          <button class="icon-button" id="refresh-dashboard" title="刷新分析" aria-label="刷新分析">↻</button>
+        </div>
+        <div class="metrics-strip">
+          <div><span>已确认记录</span><strong id="metric-verified">0</strong></div>
+          <div><span>待审核</span><strong id="metric-pending">0</strong></div>
+          <div><span>采集记录</span><strong id="metric-observations">0</strong></div>
+          <div><span>活动任务</span><strong id="metric-active">0</strong></div>
+        </div>
+        <div class="analysis-grid">
+          <section class="table-panel">
+            <div class="panel-title analysis-title"><h2 id="matrix-title">对象 → 审美术语</h2><div class="segmented" aria-label="分析矩阵"><button class="active" data-matrix="matrix_a">A</button><button data-matrix="matrix_b">B</button><button data-matrix="lift">Lift</button></div></div>
+            <div class="table-wrap"><table><thead><tr id="matrix-head"></tr></thead><tbody id="matrix-body"></tbody></table></div>
+          </section>
+          <aside class="evidence-panel" id="evidence-panel">
+            <div class="panel-title"><h2>证据下钻</h2><span id="evidence-status">未选择</span></div>
+            <div id="evidence-content" class="empty-state">从人工审核记录中打开证据链</div>
+          </aside>
+        </div>
+        <div class="support-grid">
+          <section class="table-panel"><div class="panel-title"><h2>周趋势</h2><span>人工确认记录</span></div><div class="table-wrap"><table><thead><tr><th>周起始</th><th>对象</th><th>术语</th><th>记录数</th></tr></thead><tbody id="trend-body"></tbody></table></div></section>
+          <section class="table-panel"><div class="panel-title"><h2>平台视图</h2><span>统一人工核验口径</span></div><div id="platform-summary" class="metric-list"></div></section>
+        </div>
+      </section>
+
+      <section id="view-scopes" class="view">
+        <div class="section-heading"><div><p class="eyebrow">BLUESKY / YOUTUBE / MASTODON / REDDIT / TIKTOK / X</p><h1>研究范围</h1></div></div>
+        <div class="split-layout">
+          <form id="scope-form" class="editor-panel">
+            <input type="hidden" name="scope_id">
+            <div class="form-grid">
+              <fieldset class="platform-field wide"><legend>采集平台</legend><div class="platform-switch"><label><input type="radio" name="platform" value="bluesky" checked><span>Bluesky</span></label><label><input type="radio" name="platform" value="youtube"><span>YouTube</span></label><label><input type="radio" name="platform" value="mastodon"><span>Mastodon</span></label><label><input type="radio" name="platform" value="reddit"><span>Reddit</span></label><label><input type="radio" name="platform" value="tiktok"><span>TikTok</span></label><label><input type="radio" name="platform" value="x"><span>X</span></label></div></fieldset>
+              <label class="wide">研究名称<input name="name" required placeholder="例如：拉丁字形的专业感叙事"></label>
+              <label>对象类型<select name="object_type" required></select></label>
+              <label>对象标签<select name="object_label" required></select></label>
+              <label class="wide">关键词<input name="keywords" required placeholder="typography, wordmark, typeface"></label>
+              <label>查询族<select name="query_family" required><option value="object_aesthetic">对象 × 审美</option><option value="object_context">对象 × 品牌/品类</option><option value="aesthetic_context">审美 × 品牌/品类</option><option value="legacy_scope_keywords">兼容关键词查询</option></select></label>
+              <label>研究阶段<select name="phase" required><option value="exploratory">探索</option><option value="calibration">校准</option><option value="confirmatory">确认</option></select></label>
+              <label class="wide">精确平台查询<input name="exact_query" required placeholder='例如："Latin" typography'></label>
+              <div class="platform-options wide" data-platform-options="mastodon" hidden>
+                <label class="wide">选定实例<input name="mastodon_instances" placeholder="mastodon.social, hachyderm.io"></label>
+                <label>访问方式<select name="mastodon_access_method"><option value="hashtag_timeline">Hashtag timeline</option><option value="search_statuses">Status search</option></select></label>
+                <label>每页状态数<input name="mastodon_page_size" type="number" min="1" max="40" value="40"></label>
+                <label>每实例页数<input name="mastodon_max_pages_per_instance" type="number" min="1" max="20" value="1"></label>
+                <label>逐请求间隔（秒）<input name="mastodon_request_delay_seconds" type="number" min="0" max="60" step="0.1" value="1"></label>
+              </div>
+              <div class="platform-options wide" data-platform-options="reddit" hidden>
+                <label class="wide">选定 subreddit<input name="reddit_subreddits" placeholder="typography, design"></label>
+                <label>访问方式<select name="reddit_access_method"><option value="subreddit_search">Subreddit search</option><option value="subreddit_new">Subreddit new listing</option></select></label>
+                <label>排序<select name="reddit_sort"><option value="relevance">relevance</option><option value="new">new</option><option value="hot">hot</option><option value="top">top</option><option value="comments">comments</option></select></label>
+                <label>时间范围<select name="reddit_time_filter"><option value="all">all</option><option value="hour">hour</option><option value="day">day</option><option value="week">week</option><option value="month">month</option><option value="year">year</option></select></label>
+                <label>每页帖子数<input name="reddit_page_size" type="number" min="1" max="100" value="100"></label>
+                <label>每 subreddit 页数<input name="reddit_max_pages_per_subreddit" type="number" min="1" max="20" value="1"></label>
+                <label>逐请求间隔（秒）<input name="reddit_request_delay_seconds" type="number" min="0" max="60" step="0.1" value="1"></label>
+              </div>
+              <div class="platform-options wide" data-platform-options="tiktok" hidden>
+                <label class="wide">Research API query AST<textarea name="tiktok_query" rows="6">{
+  "and": [
+    {"operation": "EQ", "field_name": "keyword", "field_values": ["typography"]}
+  ]
+}</textarea></label>
+                <label>每页视频数<input name="tiktok_video_page_size" type="number" min="1" max="100" value="100"></label>
+                <label>视频页数<input name="tiktok_max_video_pages" type="number" min="1" max="20" value="1"></label>
+                <label>每页评论数<input name="tiktok_comment_page_size" type="number" min="1" max="100" value="100"></label>
+                <label>每视频评论页数<input name="tiktok_max_comment_pages_per_video" type="number" min="1" max="20" value="1"></label>
+                <label>每页回复数<input name="tiktok_reply_page_size" type="number" min="1" max="100" value="100"></label>
+                <label>每评论回复页数<input name="tiktok_max_reply_pages_per_comment" type="number" min="1" max="20" value="1"></label>
+                <label>逐请求间隔（秒）<input name="tiktok_request_delay_seconds" type="number" min="0" max="60" step="0.1" value="1"></label>
+              </div>
+              <div class="platform-options wide" data-platform-options="x" hidden>
+                <label>每页 post 数<input name="x_page_size" type="number" min="10" max="100" value="10"></label>
+                <label>最大页数<input name="x_max_pages" type="number" min="1" max="20" value="1"></label>
+                <label>逐请求间隔（秒）<input name="x_request_delay_seconds" type="number" min="0" max="60" step="0.1" value="1"></label>
+                <label>本机 run 预算（微美元）<input name="x_local_run_budget_microusd" type="number" min="1" step="1" value="50000"></label>
+              </div>
+              <label class="wide">附加精确平台查询<div class="inline-control"><input name="additional_exact_query" placeholder='例如："Latin" "brand identity"'><button type="button" id="add-scope-query" class="secondary-button" disabled>＋ 登记</button></div></label>
+              <label>语言<input name="languages" required value="en" placeholder="en, zh"></label>
+              <label>评论/回复运行上限<input name="max_items" type="number" min="1" max="1000" value="20" required></label>
+              <label>每 query 视频数<input name="max_videos" type="number" min="1" max="100" value="10" required></label>
+              <label>每视频线程数<input name="max_comment_threads_per_video" type="number" min="0" max="100" value="20" required></label>
+              <label>每线程回复数<input name="max_replies_per_thread" type="number" min="0" max="100" value="5" required></label>
+              <label>校准候选 k<input name="query_yield_evaluation_k" type="number" min="1" max="50" value="20" required></label>
+              <label>top-k 最低纳入<input name="query_yield_min_included_at_k" type="number" min="0" max="50" value="5" required></label>
+              <label>最低 precision<input name="query_yield_min_precision_at_k" type="number" min="0" max="1" step="0.01" value="0.25" required></label>
+              <label>Wilson 最低下界<input name="query_yield_min_precision_lower_bound" type="number" min="0" max="1" step="0.01" value="0.10" required></label>
+              <label>区间置信水平<select name="query_yield_confidence_level"><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select></label>
+              <label>窗口开始<input name="window_start" type="datetime-local" required></label>
+              <label>窗口结束<input name="window_end" type="datetime-local" required></label>
+              <label>运行频率（分钟）<input name="interval_minutes" type="number" min="1" max="10080" value="60" required></label>
+              <label class="toggle-label"><input name="schedule_enabled" type="checkbox">启用持续调度</label>
+            </div>
+            <div class="form-actions"><span id="scope-message" class="form-message"></span><button type="button" id="scope-reset" class="secondary-button">新建</button><button type="submit" class="primary-button" id="scope-submit">保存范围</button></div>
+          </form>
+          <section class="list-panel"><div class="panel-title"><h2>已登记范围</h2><span id="scope-count">0</span></div><div id="scope-list" class="record-list"></div></section>
+        </div>
+      </section>
+
+      <section id="view-review" class="view">
+        <div class="section-heading"><div><p class="eyebrow">SINGLE RESEARCHER REVIEW</p><h1>人工审核</h1></div><span id="queue-count" class="count-badge">0 待处理</span></div>
+        <label class="run-selector">筛选运行<select id="review-run-select"><option value="">全部运行</option></select></label>
+        <div class="review-layout">
+          <section class="queue-panel"><div id="review-list" class="record-list"></div></section>
+          <form id="review-form" class="review-editor">
+            <input type="hidden" name="observation_id">
+            <div id="review-source" class="source-text empty-state">选择一条候选记录</div>
+            <div class="form-grid compact">
+              <label>对象类型<select name="object_type" required></select></label>
+              <label>对象标签<select name="object_label" required></select></label>
+              <label class="wide">审美术语<select name="aesthetic_terms" multiple size="5" required></select></label>
+              <label class="wide">逐字证据<textarea name="evidence_span" rows="3"></textarea></label>
+              <label>立场<select name="stance"><option value="descriptive">描述</option><option value="positive">正向</option><option value="negative">负向</option><option value="mixed">混合</option><option value="counterexample">反例</option><option value="unclear">不明确</option></select></label>
+              <label>来源角色<select name="author_role"><option value="unknown">未知</option><option value="ordinary_user">普通用户</option><option value="creator">创作者</option><option value="brand">品牌</option><option value="design_studio">设计工作室</option><option value="designer">设计师</option><option value="design_media">设计媒体</option><option value="researcher">研究者</option></select></label>
+              <label>置信度 <output id="confidence-value">0.90</output><input name="confidence" type="range" min="0" max="1" step="0.05" value="0.9"></label>
+              <label class="wide">筛选理由<input name="screening_reason" placeholder="说明对象—评价关系为何纳入、排除或不确定"></label>
+              <label class="wide">排除原因<input name="exclusion_reason" placeholder="仅在排除时填写"></label>
+            </div>
+            <p id="review-registry-status" class="form-message">尚未载入 run registry</p>
+            <div class="form-actions"><button type="button" id="screen-exclude-button" class="secondary-button">筛选排除</button><button type="button" id="screen-uncertain-button" class="secondary-button">仍不确定</button><button type="button" id="screen-include-button" class="primary-button">纳入编码</button></div>
+            <div class="form-actions"><button type="button" id="exclude-button" class="secondary-button">× 排除</button><button type="submit" class="primary-button">✓ 人工确认</button></div>
+            <section class="history-section"><div class="panel-title"><h2>审核历史</h2><span id="history-count">0</span></div><div id="review-history" class="record-list"></div></section>
+          </form>
+        </div>
+      </section>
+
+      <section id="view-quality" class="view">
+        <div class="section-heading"><div><p class="eyebrow">INDEPENDENT CODING / ADJUDICATION</p><h1>质量与发布</h1></div><button class="icon-button" id="refresh-quality" title="刷新质量证据" aria-label="刷新质量证据">↻</button></div>
+        <label class="run-selector">研究运行<select id="quality-run-select"></select></label>
+        <section class="table-panel query-yield-panel">
+          <div class="panel-title"><h2>Query 产出校准</h2><div class="action-group"><span id="query-yield-state">未评价</span><button id="evaluate-query-yield" class="secondary-button">冻结当前报告</button></div></div>
+          <div id="query-yield-summary" class="definition-list"></div>
+          <div class="table-wrap"><table><thead><tr><th>Query</th><th>阶段</th><th>候选 / 已决</th><th>纳入</th><th>Precision@k</th><th>Wilson 95%</th><th>结论</th></tr></thead><tbody id="query-yield-body"></tbody></table></div>
+          <form id="query-promotion-form" class="promotion-form">
+            <fieldset id="query-promotion-fields" disabled>
+              <div class="form-grid compact">
+                <label class="wide">确认范围名称<input name="name" required></label>
+                <label>确认窗口开始<input name="window_start" type="datetime-local" required></label>
+                <label>确认窗口结束<input name="window_end" type="datetime-local" required></label>
+                <label>评论/回复运行上限<input name="max_items" type="number" min="1" max="1000" value="120" required></label>
+                <label>每 query 视频数<input name="max_videos" type="number" min="1" max="50" value="20" required></label>
+                <label>每视频线程数<input name="max_comment_threads_per_video" type="number" min="0" max="100" value="10" required></label>
+                <label>每线程回复数<input name="max_replies_per_thread" type="number" min="0" max="100" value="5" required></label>
+              </div>
+            </fieldset>
+            <div class="form-actions"><span id="query-promotion-status" class="form-message">没有可晋级 query</span><button id="promote-query-yield" class="primary-button" type="submit" disabled>创建独立确认范围</button></div>
+          </form>
+        </section>
+        <div class="quality-layout">
+          <section class="queue-panel quality-queue"><div class="panel-title"><h2>纳入记录</h2><span id="quality-observation-count">0</span></div><div id="quality-observation-list" class="record-list"></div></section>
+          <form id="quality-form" class="review-editor">
+            <input type="hidden" name="observation_id">
+            <div id="quality-source" class="source-text empty-state">选择一条纳入记录</div>
+            <div class="form-grid compact">
+              <label>操作<select name="action_type"><option value="independent">独立编码</option><option value="adjudication">第三人裁决</option></select></label>
+              <label>研究者 ID<input name="actor_id" required value="annotator_aa" pattern="annotator_[A-Za-z0-9][A-Za-z0-9_-]{1,54}"></label>
+              <label>对象类型<select name="object_type" required></select></label>
+              <label>对象标签<select name="object_label" required></select></label>
+              <label class="wide">审美术语<select name="aesthetic_terms" multiple size="5" required></select></label>
+              <label class="wide">逐字证据<textarea name="evidence_span" rows="3" required></textarea></label>
+              <label>立场<select name="stance"><option value="descriptive">描述</option><option value="positive">正向</option><option value="negative">负向</option><option value="mixed">混合</option><option value="counterexample">反例</option><option value="unclear">不明确</option></select></label>
+              <label>来源角色<select name="author_role"><option value="ordinary_user">普通用户</option><option value="creator">创作者</option><option value="brand">品牌</option><option value="design_studio">设计工作室</option><option value="designer">设计师</option><option value="design_media">设计媒体</option><option value="researcher">研究者</option></select></label>
+              <label class="toggle-label"><input name="language_confirmed" type="checkbox" checked>语言已人工确认</label>
+              <label>裁决置信度<input name="confidence" type="number" min="0" max="1" step="0.05" value="1"></label>
+              <label class="wide">裁决理由<input name="reason"></label>
+            </div>
+            <div class="form-actions"><span id="quality-form-status" class="form-message">尚未选择记录</span><button type="submit" class="primary-button">提交质量决定</button></div>
+          </form>
+        </div>
+        <div class="quality-summary-grid">
+          <section class="table-panel"><div class="panel-title"><h2>编码与裁决</h2><span id="quality-evidence-count">0</span></div><div id="quality-evidence-list" class="record-list"></div></section>
+          <section class="table-panel"><div class="panel-title"><h2>发布闸门</h2><button id="evaluate-quality" class="secondary-button">运行质量检查</button></div><div id="quality-report" class="definition-list"></div><form id="release-form" class="release-form"><label>治理理由<input name="reason" required></label><div class="action-group"><button type="button" class="quiet-button" data-release="false">撤销授权</button><button type="button" class="primary-button" data-release="true">授权发布</button></div></form></section>
+        </div>
+      </section>
+
+      <section id="view-runs" class="view">
+        <div class="section-heading"><div><p class="eyebrow">AT-LEAST-ONCE / RESUMABLE</p><h1>采集运行</h1></div><button class="icon-button" id="refresh-runs" title="刷新运行" aria-label="刷新运行">↻</button></div>
+        <div class="run-layout"><section class="table-panel"><div class="panel-title"><h2>运行记录</h2><span>本机审计</span></div><div id="run-list" class="record-list"></div></section><section class="error-panel"><div class="panel-title"><h2>失败记录</h2><span id="error-count">0</span></div><div id="error-list" class="record-list"></div></section></div>
+      </section>
+
+      <section id="view-system" class="view">
+        <div class="section-heading"><div><p class="eyebrow">LOCAL OPERATIONS</p><h1>系统与备份</h1></div><button class="icon-button" id="refresh-system" title="刷新系统状态" aria-label="刷新系统状态">↻</button></div>
+        <div class="metrics-strip system-metrics">
+          <div><span>数据库</span><strong id="system-database">0 B</strong></div>
+          <div><span>WAL</span><strong id="system-wal">0 B</strong></div>
+          <div><span>磁盘可用</span><strong id="system-disk">0 B</strong></div>
+          <div><span>YouTube 剩余配额</span><strong id="system-quota">0</strong></div>
+        </div>
+        <div class="system-grid">
+          <section class="table-panel"><div class="panel-title"><h2>运行监控</h2><span id="monitor-checked">—</span></div><div id="monitor-details" class="definition-list"></div><form id="quota-form" class="quota-form"><label>共享单位日预算<input name="daily_budget" type="number" min="1" max="1000000000" required></label><label>搜索调用日预算<input name="search_daily_call_budget" type="number" min="1" max="100" required></label><button class="primary-button" type="submit">更新预算</button></form></section>
+          <section class="table-panel"><div class="panel-title"><h2>一致性备份</h2><button id="create-backup" class="primary-button">＋ 创建备份</button></div><div id="backup-list" class="record-list"></div></section>
+        </div>
+        <section class="table-panel audit-panel"><div class="panel-title"><h2>操作审计</h2><span id="audit-count">0</span></div><div id="audit-list" class="record-list"></div></section>
+      </section>
+    </main>
+  </div>
+  <dialog id="run-budget-dialog">
+    <form id="run-budget-form" class="dialog-form">
+      <div class="panel-title"><div><p class="eyebrow">YOUTUBE RUN SNAPSHOT</p><h2>冻结本次运行预算</h2></div><button type="button" class="icon-button" id="close-run-budget" title="关闭" aria-label="关闭">×</button></div>
+      <div class="form-grid">
+        <label>搜索调用上限<input name="youtube_run_search_call_budget" type="number" min="1" max="100" required></label>
+        <label>共享单位上限<input name="youtube_run_shared_unit_budget" type="number" min="1" max="1000000000" required></label>
+      </div>
+      <div class="form-actions"><button type="button" id="cancel-run-budget" class="secondary-button">取消</button><button type="submit" class="primary-button">启动采集</button></div>
+    </form>
+  </dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/static/app.js?v=0.6.0-m5" defer></script>
+</body>
+</html>

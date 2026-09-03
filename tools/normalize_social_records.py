@@ -55,10 +55,11 @@ except ImportError:  # Imported as ``tools.normalize_social_records``
     )
 
 
-SCHEMA_VERSION = "0.1.0"
+LEGACY_SCHEMA_VERSION = "0.1.0"
+MASTODON_SCHEMA_VERSION = "0.2.0"
 NORMALIZER_VERSION = "social_normalize_v0.1.0"
 PLATFORMS = {
-    "reddit", "youtube", "x", "bluesky", "instagram", "tiktok", "douyin",
+    "reddit", "youtube", "x", "bluesky", "mastodon", "instagram", "tiktok", "douyin",
     "xiaohongshu", "pinterest", "bilibili", "telegram", "public_web",
     "manual_capture", "google_trends", "other",
 }
@@ -402,7 +403,9 @@ def normalize_row(
     effective_query_text = first_nonempty(query_text, row.get("query_text"))
     source_id = _source_id(url, row.get("source_id"))
     record: dict[str, Any] = {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": (
+            MASTODON_SCHEMA_VERSION if platform == "mastodon" else LEGACY_SCHEMA_VERSION
+        ),
         "observation_id": _observation_id(platform, collection_run_id, item_id, row.get("observation_id")),
         "collection_run_id": collection_run_id,
         "platform": platform,
@@ -468,7 +471,12 @@ def normalize_row(
 
 def source_row(record: dict[str, Any], source_license: str | None = None) -> dict[str, Any]:
     platform = record["platform"]
-    source_type = "video" if platform == "youtube" else "social_post"
+    source_type = (
+        "video"
+        if platform in {"youtube", "tiktok"}
+        and record["platform_item_id"].startswith("video:")
+        else "social_post"
+    )
     return {
         "source_id": record["source_id"],
         "source_type": source_type,

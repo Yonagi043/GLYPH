@@ -1,0 +1,107 @@
+{
+  "price_snapshot": {
+    "currency": "USD",
+    "effective_date": "2026-09-02",
+    "resource": "post_read",
+    "source_url": "https://docs.x.com/x-api/getting-started/pricing",
+    "unit_price_usd": "0.005"
+  },
+  "search_pages": [
+    {
+      "request": {
+        "end_time": "2026-09-02T15:00:00Z",
+        "max_results": 10,
+        "query": "(typography OR wordmark) lang:en -is:retweet",
+        "start_time": "2026-08-27T15:00:00Z",
+        "tweet.fields": "created_at,lang,public_metrics,referenced_tweets"
+      },
+      "response": {
+        "data": [
+          {
+            "created_at": "2026-09-01T12:00:00Z",
+            "id": "1962900000000000001",
+            "lang": "en",
+            "public_metrics": {
+              "like_count": 18,
+              "quote_count": 2,
+              "reply_count": 3,
+              "retweet_count": 4
+            },
+            "text": "Latin wordmark typography can signal precision in this identity system."
+          },
+          {
+            "created_at": "2026-09-01T12:30:00Z",
+            "id": "1962900000000000002",
+            "lang": "en",
+            "public_metrics": {
+              "like_count": 7,
+              "quote_count": 0,
+              "reply_count": 1,
+              "retweet_count": 1
+            },
+            "referenced_tweets": [
+              {
+                "id": "1962900000000000001",
+                "type": "replied_to"
+              }
+            ],
+            "text": "The cultural association should be separated from the letterform geometry."
+          }
+        ],
+        "meta": {
+          "newest_id": "1962900000000000002",
+          "next_token": "REDACTED_FIXTURE_NEXT_TOKEN_1",
+          "oldest_id": "1962900000000000001",
+          "result_count": 2
+        }
+      },
+      "response_headers": {
+        "x-rate-limit-limit": "450",
+        "x-rate-limit-remaining": "449",
+        "x-rate-limit-reset": "1788362100"
+      }
+    },
+    {
+      "request": {
+        "end_time": "2026-09-02T15:00:00Z",
+        "max_results": 10,
+        "pagination_token": "REDACTED_FIXTURE_NEXT_TOKEN_1",
+        "query": "(typography OR wordmark) lang:en -is:retweet",
+        "start_time": "2026-08-27T15:00:00Z",
+        "tweet.fields": "created_at,lang,public_metrics,referenced_tweets"
+      },
+      "response": {
+        "data": [
+          {
+            "created_at": "2026-08-31T09:15:00Z",
+            "id": "1962400000000000003",
+            "lang": "en",
+            "public_metrics": {
+              "like_count": 11,
+              "quote_count": 1,
+              "reply_count": 0,
+              "retweet_count": 2
+            },
+            "referenced_tweets": [
+              {
+                "id": "1962000000000000000",
+                "type": "quoted"
+              }
+            ],
+            "text": "A restrained wordmark is not automatically neutral across contexts."
+          }
+        ],
+        "meta": {
+          "newest_id": "1962400000000000003",
+          "oldest_id": "1962400000000000003",
+          "result_count": 1
+        }
+      },
+      "response_headers": {
+        "x-rate-limit-limit": "450",
+        "x-rate-limit-remaining": "448",
+        "x-rate-limit-reset": "1788362100"
+      }
+    }
+  ]
+}

@@ -10,7 +10,13 @@
     "uharfbuzz": {"version": "0.43.0", "source": "PyPI", "sha256_required": true},
     "jsonschema": {"version": "4.25.1", "source": "PyPI", "sha256_required": true},
     "referencing": {"version": "0.37.0", "source": "PyPI", "sha256_required": true},
-    "pytest": {"version": "8.4.1", "source": "PyPI", "sha256_required": true, "scope": "dev"}
+    "fastapi": {"version": "0.141.1", "source": "PyPI", "sha256_required": true},
+    "uvicorn": {"version": "0.52.4", "source": "PyPI", "sha256_required": true},
+    "websockets": {"version": "17.1", "source": "PyPI", "sha256_required": true},
+    "APScheduler": {"version": "3.11.0", "source": "PyPI", "sha256_required": true},
+    "krippendorff": {"version": "0.8.2", "source": "PyPI", "sha256_required": true},
+    "pytest": {"version": "8.4.1", "source": "PyPI", "sha256_required": true, "scope": "dev"},
+    "httpx2": {"version": "2.12.0", "source": "PyPI", "sha256_required": true, "scope": "dev"}
   },
   "resolver": "uv.lock (generated with uv 0.11.23); hashes and transitive pins are authoritative there."
 }
