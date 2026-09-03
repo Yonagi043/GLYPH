@@ -1,0 +1,15 @@
+{
+  "award": "Indigo",
+  "scope": "国际奖项",
+  "note": "Indigo Design Award (国际数字设计奖). 年份页 /winners/competition/<YEAR> 的 __NEXT_DATA__ 内嵌该届获奖数据; 取 Branding(品牌识别)分类下各行业子类的获奖作品封面图(S3原图)。competition.name 即年份, 已校验。最近5年 2020-2024。",
+  "categories": ["Branding"],
+  "max_per_year": 18,
+  "min_bytes": 8000,
+  "pages": [
+    {"year": "2020"},
+    {"year": "2021"},
+    {"year": "2022"},
+    {"year": "2023"},
+    {"year": "2024"}
+  ]
+}

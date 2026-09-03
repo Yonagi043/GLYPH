@@ -1,0 +1,14 @@
+{
+  "award": "WOLDA",
+  "scope": "国际奖项",
+  "note": "补抓 2022/2023 两届，加大渲染预算。",
+  "img_regex": "wp-content/uploads/.*\\.(jpg|jpeg|png)",
+  "prefer_largest": true,
+  "exclude": ["-80x", "-36x", "-120x", "-150x150", "150x150", "logo_", "/logo-", "banner", "avatar", "icon", "wolda-logo", "header", "footer", "sponsor", "preloader"],
+  "max_per_year": 18,
+  "min_bytes": 8000,
+  "pages": [
+    {"year": "2022", "edition": "14th", "url": "https://wolda.org/14-wolda-logos-redesign/", "budget_ms": 20000},
+    {"year": "2023", "edition": "15th", "url": "https://wolda.org/15-wolda-logos-redesign-2/", "budget_ms": 20000}
+  ]
+}

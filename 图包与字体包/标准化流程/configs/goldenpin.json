@@ -1,0 +1,19 @@
+{
+  "award": "Golden Pin",
+  "scope": "中文奖项",
+  "note": "金點設計獎 Golden Pin Design Award (Taiwan Design Research Institute). 站点为 SPA，获奖列表通过带 CSRF+Cookie 的 POST API /goldenpin/api/v1/get_total_works 加载，无按年份/类别的静态 URL，故通用 scrape_award.py(渲染URL) 无法驱动；改用同目录 scrape_goldenpin.py 调用该 API。类别取 傳達設計(Communication Design) 下 企業/品牌識別(Corporate and brand identity) 子类。站点仅提供 2022-2026，无 2020/2021 数据，故最近可用 5 年取 2022-2025(2026 尚未评选)。图片为 storage.googleapis.com/goldenpin/award_work/list_image/<id>/image_*.jpeg 原图(约 2480x1748, 300DPI)。",
+  "api": "https://goldenpin.org.tw/goldenpin/api/v1/get_total_works",
+  "index_page": "https://goldenpin.org.tw/goldenpin/zh-TW/winners/",
+  "prize": "1",
+  "img_regex": "storage.googleapis.com/goldenpin/award_work/list_image/.*\\.(jpg|jpeg|png|webp)",
+  "prefer_largest": true,
+  "exclude": ["thumb_image", "thumb_2x", "og.png", "avatar", "icon"],
+  "max_per_year": 18,
+  "min_bytes": 8000,
+  "pages": [
+    {"year": "2022", "main_category": 6,   "sub_category": 6,   "note": "傳達設計 B-01 企業/品牌識別"},
+    {"year": "2023", "main_category": 100, "sub_category": 206, "note": "傳達設計 企業/品牌識別"},
+    {"year": "2024", "main_category": 109, "sub_category": 300, "note": "傳達設計 企業/品牌識別"},
+    {"year": "2025", "main_category": 128, "sub_category": 449, "note": "傳達設計 企業/品牌識別"}
+  ]
+}

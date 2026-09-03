@@ -1,0 +1,20 @@
+{
+  "award": "DFA",
+  "scope": "中文奖项",
+  "note": "DFA Design for Asia Awards (香港设计中心). 数据来源为 POST JSON API: https://dfaa.dfaawards.com/en/lib/ajax/winner-dfa/list/ (params: keyword,year,design_category). design_category=3 = COMMUNICATION (传播/视觉传播设计, 含品牌识别/视觉识别/logo). 该站为AJAX驱动, 通用 scrape_award.py(Chrome+正则)无法消费JSON, 故用 fetch_dfa.py 抓取, 输出格式与其一致(年份目录+sources.csv). 每个项目取封面图1张, 避免同项目多张产品照/mockup.",
+  "api": "https://dfaa.dfaawards.com/en/lib/ajax/winner-dfa/list/",
+  "design_category": "3",
+  "design_category_name": "COMMUNICATION",
+  "img_regex": "dfaawards\\.com/lib/uploads/.*\\.(jpg|jpeg|png)",
+  "prefer_largest": true,
+  "exclude": ["logo/hkdc", "favicon", "wechat-qr", "footer", "sponsor", "banner"],
+  "max_per_year": 16,
+  "min_bytes": 8000,
+  "pages": [
+    {"year": "2020", "design_category": "3"},
+    {"year": "2021", "design_category": "3"},
+    {"year": "2022", "design_category": "3"},
+    {"year": "2023", "design_category": "3"},
+    {"year": "2024", "design_category": "3"}
+  ]
+}

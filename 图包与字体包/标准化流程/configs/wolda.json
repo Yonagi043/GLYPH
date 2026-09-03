@@ -1,0 +1,17 @@
+{
+  "award": "WOLDA",
+  "scope": "国际奖项",
+  "note": "Worldwide Logo Design Award; 按届次映射年份(12th≈2020,13th≈2021,14th≈2022,15th≈2023,16th≈2024)。取 Logos(new) 类别为主的纯字标/图形标样本。",
+  "img_regex": "wp-content/uploads/.*\\.(jpg|jpeg|png)",
+  "prefer_largest": true,
+  "exclude": ["-80x", "-36x", "-120x", "-150x150", "150x150", "logo_", "/logo-", "banner", "avatar", "icon", "wolda-logo", "header", "footer", "sponsor"],
+  "max_per_year": 18,
+  "min_bytes": 8000,
+  "pages": [
+    {"year": "2020", "edition": "12th", "url": "https://wolda.org/12-wolda-logos-redesign/"},
+    {"year": "2021", "edition": "13th", "url": "https://wolda.org/13-wolda-logos-redesign-2/"},
+    {"year": "2022", "edition": "14th", "url": "https://wolda.org/14-wolda-logos-redesign/"},
+    {"year": "2023", "edition": "15th", "url": "https://wolda.org/15-wolda-logos-redesign-2/"},
+    {"year": "2024", "edition": "16th", "url": "https://wolda.org/16-wolda-logos-redesign/"}
+  ]
+}
