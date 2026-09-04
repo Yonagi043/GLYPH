@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "license": "CC0-1.0",
+  "generation": "Synthetic rectangles encode disconnected-component edge cases; they are not typeface specimens.",
+  "cases": [
+    {
+      "case_id": "latn_detached_diacritic",
+      "script_code": "Latn",
+      "rectangles": [[8, 8, 16, 22], [11, 3, 13, 5]],
+      "expected_component_count": 2
+    },
+    {
+      "case_id": "hani_separate_dot_strokes",
+      "script_code": "Hani",
+      "rectangles": [[8, 6, 16, 22], [3, 4, 5, 7], [19, 4, 21, 7]],
+      "expected_component_count": 3
+    },
+    {
+      "case_id": "hangul_separate_jamo",
+      "script_code": "Hang",
+      "rectangles": [[3, 4, 8, 20], [11, 4, 16, 20], [6, 23, 15, 27]],
+      "expected_component_count": 3
+    },
+    {
+      "case_id": "kana_dakuten",
+      "script_code": "Kana",
+      "rectangles": [[5, 7, 16, 24], [20, 3, 22, 6], [24, 3, 26, 6]],
+      "expected_component_count": 3
+    },
+    {
+      "case_id": "calligraphy_broken_edge",
+      "script_code": "Hani-calligraphy",
+      "rectangles": [[5, 5, 9, 25], [12, 5, 16, 25], [19, 5, 21, 8]],
+      "expected_component_count": 3
+    },
+    {
+      "case_id": "multi_component_logo",
+      "script_code": "Zsym",
+      "rectangles": [[2, 4, 8, 12], [11, 4, 17, 12], [20, 4, 27, 12], [8, 18, 21, 22]],
+      "expected_component_count": 4
+    }
+  ]
+}

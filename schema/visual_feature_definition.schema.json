@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH visual feature definition registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol_version",
+    "registry_version",
+    "measurement_schema_version",
+    "accepted_task01_commit",
+    "algorithm_defaults",
+    "algorithm_config_sha256",
+    "quality",
+    "dimensions",
+    "constructs",
+    "features"
+  ],
+  "properties": {
+    "protocol_version": {"const": "visual_measurements_v2.0.0"},
+    "registry_version": {"const": "2.0.0"},
+    "measurement_schema_version": {"const": "1.0.0"},
+    "accepted_task01_commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "algorithm_defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binary_threshold", "component_connectivity", "hole_connectivity", "skeleton_algorithm", "symmetry_alignment", "tonal_bins"],
+      "properties": {
+        "binary_threshold": {"type": "integer", "minimum": 1, "maximum": 254},
+        "component_connectivity": {"enum": [4, 8]},
+        "hole_connectivity": {"enum": [4, 8]},
+        "skeleton_algorithm": {"type": "string", "minLength": 1},
+        "symmetry_alignment": {"const": "representation_canvas"},
+        "tonal_bins": {"type": "integer", "minimum": 2}
+      }
+    },
+    "algorithm_config_sha256": {"$ref": "#/$defs/sha256"},
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["threshold_sensitivity", "absolute_warning", "relative_warning"],
+      "properties": {
+        "threshold_sensitivity": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 1, "maximum": 254}},
+        "absolute_warning": {"type": "number", "exclusiveMinimum": 0},
+        "relative_warning": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "dimensions": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {"$ref": "#/$defs/namedConcept"}
+    },
+    "constructs": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "allOf": [
+          {"$ref": "#/$defs/namedConcept"},
+          {
+            "type": "object",
+            "required": ["calibration_status", "interpretation_boundary"],
+            "properties": {
+              "calibration_status": {"const": "uncalibrated_proxy"},
+              "interpretation_boundary": {"type": "string", "minLength": 1}
+            }
+          }
+        ]
+      }
+    },
+    "features": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/featureDefinition"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "namedConcept": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "name_en", "name_zh", "description"],
+      "properties": {
+        "code": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$"},
+        "name_en": {"type": "string", "minLength": 1},
+        "name_zh": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "calibration_status": {"const": "uncalibrated_proxy"},
+        "interpretation_boundary": {"type": "string", "minLength": 1}
+      }
+    },
+    "featureDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "feature_code", "definition_version", "name_en", "name_zh", "formula",
+        "input_representations", "object_levels", "unit", "value_range", "numerator", "denominator",
+        "zero_meaning", "applicability", "algorithm", "dimensions", "construct_mappings",
+        "cross_script_comparability", "status", "literature_sources", "known_biases"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0.0"},
+        "feature_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "definition_version": {"const": "2.0.0"},
+        "name_en": {"type": "string", "minLength": 1},
+        "name_zh": {"type": "string", "minLength": 1},
+        "formula": {"type": "string", "minLength": 1},
+        "input_representations": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"enum": ["A_layout", "B_shape", "C_ink", "raster_binary", "raster_grayscale", "contour", "skeleton"]}
+        },
+        "object_levels": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"enum": ["single_glyph", "multi_glyph", "ecological_image", "calligraphy"]}
+        },
+        "unit": {"enum": ["ratio", "count", "normalized_length", "bits"]},
+        "value_range": {
+          "type": "object", "additionalProperties": false, "required": ["minimum", "maximum"],
+          "properties": {"minimum": {"type": ["number", "null"]}, "maximum": {"type": ["number", "null"]}}
+        },
+        "numerator": {"type": ["string", "null"]},
+        "denominator": {"type": ["string", "null"]},
+        "zero_meaning": {"type": "string", "minLength": 1},
+        "applicability": {
+          "type": "object", "additionalProperties": false, "required": ["requires", "missing_codes"],
+          "properties": {
+            "requires": {"type": "array", "items": {"type": "string"}},
+            "missing_codes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"}}
+          }
+        },
+        "algorithm": {
+          "type": "object", "additionalProperties": false, "required": ["name", "version", "parameter_schema", "default_config_sha256"],
+          "properties": {
+            "name": {"type": "string", "minLength": 1},
+            "version": {"type": "string", "minLength": 1},
+            "parameter_schema": {"type": "object"},
+            "default_config_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "dimensions": {
+          "type": "object", "additionalProperties": false, "required": ["primary", "secondary"],
+          "properties": {
+            "primary": {"type": "string"},
+            "secondary": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+          }
+        },
+        "construct_mappings": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["construct_code", "role", "evidence_level", "citation_ids"],
+            "properties": {
+              "construct_code": {"type": "string"},
+              "role": {"enum": ["primary_proxy", "secondary_proxy", "diagnostic"]},
+              "evidence_level": {"enum": ["A", "B", "C", "D"]},
+              "citation_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}
+            }
+          }
+        },
+        "cross_script_comparability": {"enum": ["direct", "protocol_dependent", "within_script_only", "not_applicable"]},
+        "status": {"enum": ["core", "diagnostic", "experimental", "deprecated"]},
+        "literature_sources": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "known_biases": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

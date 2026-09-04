@@ -12,6 +12,8 @@ dev = ["pytest==8.4.1", "httpx2==2.12.0"]
 [project.scripts]
 glyph-social = "glyph_features.social_system.cli:main"
 glyph-assets = "glyph_features.asset_system.cli:main"
+glyph-vision = "glyph_features.vision_system.cli:main"
+glyph-vision-legacy = "glyph_features.vision_system.legacy_mvp:main"
 [tool.setuptools.packages.find]
 where = ["src", "."]
 include = ["glyph_features*", "tools*"]

@@ -1,0 +1,2213 @@
+{
+  "accepted_task01_commit": "af3820836a6ffa92c63016b0e308f624f9b42db0",
+  "algorithm_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+  "algorithm_defaults": {
+    "binary_threshold": 128,
+    "component_connectivity": 8,
+    "hole_connectivity": 4,
+    "skeleton_algorithm": "skimage.morphology.skeletonize",
+    "symmetry_alignment": "representation_canvas",
+    "tonal_bins": 32
+  },
+  "constructs": [
+    {
+      "calibration_status": "uncalibrated_proxy",
+      "code": "D1_balance",
+      "description": "Distribution of visual mass and space.",
+      "interpretation_boundary": "Offset is descriptive and is not automatically bad.",
+      "name_en": "Balance",
+      "name_zh": "平衡"
+    },
+    {
+      "calibration_status": "uncalibrated_proxy",
+      "code": "D2_symmetry",
+      "description": "Reflection correspondence on a declared representation.",
+      "interpretation_boundary": "No monotonic aesthetic direction is assumed.",
+      "name_en": "Symmetry",
+      "name_zh": "对称"
+    },
+    {
+      "calibration_status": "uncalibrated_proxy",
+      "code": "D3_proportion_scale",
+      "description": "Relations among extents, ink, and negative space.",
+      "interpretation_boundary": "No golden-ratio optimum is encoded.",
+      "name_en": "Proportion and scale",
+      "name_zh": "比例与尺度"
+    },
+    {
+      "calibration_status": "uncalibrated_proxy",
+      "code": "D4_unity_consistency",
+      "description": "Variation in a shared visible form system.",
+      "interpretation_boundary": "Hierarchy is not treated as inconsistency by default.",
+      "name_en": "Unity and consistency",
+      "name_zh": "统一与一致性"
+    },
+    {
+      "calibration_status": "uncalibrated_proxy",
+      "code": "D5_rhythm_sequence",
+      "description": "Repeated or varying formal sequences.",
+      "interpretation_boundary": "Formal sequence is not measured reading speed.",
+      "name_en": "Rhythm and sequence",
+      "name_zh": "节奏与序列"
+    },
+    {
+      "calibration_status": "uncalibrated_proxy",
+      "code": "C1_brushwork_line_quality",
+      "description": "Visible stroke-result width and continuity proxies.",
+      "interpretation_boundary": "Raster evidence cannot recover the writing action.",
+      "name_en": "Brushwork and line quality",
+      "name_zh": "笔法与线质"
+    },
+    {
+      "calibration_status": "uncalibrated_proxy",
+      "code": "C2_character_structure",
+      "description": "Internal occupancy and topology.",
+      "interpretation_boundary": "Default comparison is within character and script cohorts.",
+      "name_en": "Character structure",
+      "name_zh": "结体"
+    },
+    {
+      "calibration_status": "uncalibrated_proxy",
+      "code": "C3_spatial_arrangement",
+      "description": "Ink and negative-space organization at declared object levels.",
+      "interpretation_boundary": "Glyph-internal and whole-layout measures remain separate.",
+      "name_en": "Spatial arrangement",
+      "name_zh": "布白与章法"
+    },
+    {
+      "calibration_status": "uncalibrated_proxy",
+      "code": "C4_ink_tone",
+      "description": "Tonal and edge-level measurements on C_ink.",
+      "interpretation_boundary": "Binary digital glyphs are explicitly not applicable.",
+      "name_en": "Ink tone",
+      "name_zh": "墨法与墨色"
+    },
+    {
+      "calibration_status": "uncalibrated_proxy",
+      "code": "C5_qi_movement_proxy",
+      "description": "Direction, continuity, width, and connectivity measurements.",
+      "interpretation_boundary": "Only low-level proxies are observed; qi is not directly measured.",
+      "name_en": "Movement proxies",
+      "name_zh": "气韵与行气代理"
+    }
+  ],
+  "dimensions": [
+    {
+      "code": "geometry",
+      "description": "Contour, reflection, and topology measurements.",
+      "name_en": "Geometry",
+      "name_zh": "几何度"
+    },
+    {
+      "code": "density",
+      "description": "Ink and negative-space occupancy measurements.",
+      "name_en": "Density",
+      "name_zh": "稠密度"
+    },
+    {
+      "code": "proportion",
+      "description": "Relative extents and scale relationships.",
+      "name_en": "Proportion",
+      "name_zh": "比例"
+    },
+    {
+      "code": "stroke_gesture",
+      "description": "Skeleton direction and width-result proxies, not writing actions.",
+      "name_en": "Stroke gesture",
+      "name_zh": "笔势"
+    },
+    {
+      "code": "layout",
+      "description": "Spatial arrangement on the preserved canvas.",
+      "name_en": "Layout",
+      "name_zh": "排版"
+    },
+    {
+      "code": "visual_center",
+      "description": "Foreground mass location on the preserved canvas.",
+      "name_en": "Visual center",
+      "name_zh": "视觉重心"
+    },
+    {
+      "code": "reading_rhythm",
+      "description": "Visible sequence structure, not psychological reading speed.",
+      "name_en": "Formal sequence",
+      "name_zh": "阅读节奏"
+    },
+    {
+      "code": "uniformity",
+      "description": "Variation among visible components or stroke-result measurements.",
+      "name_en": "Uniformity",
+      "name_zh": "统一度"
+    }
+  ],
+  "features": [
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "binary occupancy",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND"
+        ],
+        "requires": [
+          "nonempty foreground"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S09"
+          ],
+          "construct_code": "D3_proportion_scale",
+          "evidence_level": "B",
+          "role": "secondary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C3_spatial_arrangement",
+          "evidence_level": "A",
+          "role": "primary_proxy"
+        }
+      ],
+      "cross_script_comparability": "direct",
+      "definition_version": "2.0.0",
+      "denominator": "canvas_pixels",
+      "dimensions": {
+        "primary": "density",
+        "secondary": [
+          "layout"
+        ]
+      },
+      "feature_code": "ink_coverage_ratio",
+      "formula": "foreground_pixels / canvas_pixels",
+      "input_representations": [
+        "A_layout",
+        "B_shape",
+        "raster_binary"
+      ],
+      "known_biases": [
+        "Threshold and canvas protocol affect the ratio."
+      ],
+      "literature_sources": [
+        "S09",
+        "S17"
+      ],
+      "name_en": "Ink coverage",
+      "name_zh": "墨迹覆盖率",
+      "numerator": "foreground_pixels",
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "core",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "zero_meaning": "No foreground under the frozen threshold."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "binary bbox occupancy",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "nonempty foreground bbox"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S09"
+          ],
+          "construct_code": "D3_proportion_scale",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C2_character_structure",
+          "evidence_level": "A",
+          "role": "secondary_proxy"
+        }
+      ],
+      "cross_script_comparability": "direct",
+      "definition_version": "2.0.0",
+      "denominator": "foreground_bbox_pixels",
+      "dimensions": {
+        "primary": "density",
+        "secondary": [
+          "proportion"
+        ]
+      },
+      "feature_code": "bbox_fill_ratio",
+      "formula": "foreground_pixels / foreground_bbox_pixels",
+      "input_representations": [
+        "B_shape",
+        "raster_binary"
+      ],
+      "known_biases": [
+        "B_shape target geometry must be human confirmed."
+      ],
+      "literature_sources": [
+        "S09",
+        "S17"
+      ],
+      "name_en": "Bounding-box fill",
+      "name_zh": "字框填充率",
+      "numerator": "foreground_pixels",
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "core",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "zero_meaning": "No foreground occupancy."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "foreground extent",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "positive bbox height"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S01"
+          ],
+          "construct_code": "D3_proportion_scale",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C2_character_structure",
+          "evidence_level": "A",
+          "role": "diagnostic"
+        }
+      ],
+      "cross_script_comparability": "direct",
+      "definition_version": "2.0.0",
+      "denominator": "bbox_height",
+      "dimensions": {
+        "primary": "proportion",
+        "secondary": [
+          "geometry"
+        ]
+      },
+      "feature_code": "bbox_aspect_ratio",
+      "formula": "bbox_width / bbox_height",
+      "input_representations": [
+        "A_layout",
+        "B_shape",
+        "raster_binary"
+      ],
+      "known_biases": [
+        "Different normalization profiles answer different scale questions."
+      ],
+      "literature_sources": [
+        "S01",
+        "S17"
+      ],
+      "name_en": "Bounding-box aspect ratio",
+      "name_zh": "字框宽高比",
+      "numerator": "bbox_width",
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "core",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "Not valid for a nonempty foreground."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "canvas reflection difference",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "REPRESENTATION_NOT_APPLICABLE"
+        ],
+        "requires": [
+          "nonempty B_shape mask"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S06"
+          ],
+          "construct_code": "D2_symmetry",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "canvas_pixels",
+      "dimensions": {
+        "primary": "geometry",
+        "secondary": [
+          "proportion"
+        ]
+      },
+      "feature_code": "symmetry_horizontal",
+      "formula": "1 - differing_pixels(mask, flip_lr(mask)) / canvas_pixels",
+      "input_representations": [
+        "B_shape",
+        "raster_binary"
+      ],
+      "known_biases": [
+        "Canvas alignment and target geometry affect reflection similarity."
+      ],
+      "literature_sources": [
+        "S06"
+      ],
+      "name_en": "Left-right reflection similarity",
+      "name_zh": "左右镜像相似度",
+      "numerator": "matching_canvas_pixels",
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "core",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "zero_meaning": "No canvas-pixel agreement after reflection."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "canvas reflection difference",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "REPRESENTATION_NOT_APPLICABLE"
+        ],
+        "requires": [
+          "nonempty B_shape mask"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S06"
+          ],
+          "construct_code": "D2_symmetry",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "canvas_pixels",
+      "dimensions": {
+        "primary": "geometry",
+        "secondary": [
+          "proportion"
+        ]
+      },
+      "feature_code": "symmetry_vertical",
+      "formula": "1 - differing_pixels(mask, flip_ud(mask)) / canvas_pixels",
+      "input_representations": [
+        "B_shape",
+        "raster_binary"
+      ],
+      "known_biases": [
+        "Canvas alignment and target geometry affect reflection similarity."
+      ],
+      "literature_sources": [
+        "S06"
+      ],
+      "name_en": "Top-bottom reflection similarity",
+      "name_zh": "上下镜像相似度",
+      "numerator": "matching_canvas_pixels",
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "core",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "zero_meaning": "No canvas-pixel agreement after reflection."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "binary image moment",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND"
+        ],
+        "requires": [
+          "nonempty foreground"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S08"
+          ],
+          "construct_code": "D1_balance",
+          "evidence_level": "A",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C3_spatial_arrangement",
+          "evidence_level": "A",
+          "role": "secondary_proxy"
+        }
+      ],
+      "cross_script_comparability": "direct",
+      "definition_version": "2.0.0",
+      "denominator": "canvas_width",
+      "dimensions": {
+        "primary": "visual_center",
+        "secondary": [
+          "layout"
+        ]
+      },
+      "feature_code": "centroid_x_norm",
+      "formula": "mean(foreground_x) / canvas_width",
+      "input_representations": [
+        "A_layout",
+        "raster_binary"
+      ],
+      "known_biases": [
+        "A_layout must preserve the source canvas and position."
+      ],
+      "literature_sources": [
+        "S08",
+        "S17"
+      ],
+      "name_en": "Normalized horizontal centroid",
+      "name_zh": "归一化水平重心",
+      "numerator": "mean_foreground_x",
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "core",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "zero_meaning": "Foreground centroid lies on the left canvas edge."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "binary image moment",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND"
+        ],
+        "requires": [
+          "nonempty foreground"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S08"
+          ],
+          "construct_code": "D1_balance",
+          "evidence_level": "A",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C3_spatial_arrangement",
+          "evidence_level": "A",
+          "role": "secondary_proxy"
+        }
+      ],
+      "cross_script_comparability": "direct",
+      "definition_version": "2.0.0",
+      "denominator": "canvas_height",
+      "dimensions": {
+        "primary": "visual_center",
+        "secondary": [
+          "layout"
+        ]
+      },
+      "feature_code": "centroid_y_norm",
+      "formula": "mean(foreground_y) / canvas_height",
+      "input_representations": [
+        "A_layout",
+        "raster_binary"
+      ],
+      "known_biases": [
+        "A_layout must preserve the source canvas and position."
+      ],
+      "literature_sources": [
+        "S08",
+        "S17"
+      ],
+      "name_en": "Normalized vertical centroid",
+      "name_zh": "归一化垂直重心",
+      "numerator": "mean_foreground_y",
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "core",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "zero_meaning": "Foreground centroid lies on the top canvas edge."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "preserved-canvas margin statistics",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "REPRESENTATION_NOT_APPLICABLE"
+        ],
+        "requires": [
+          "nonempty foreground"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S08"
+          ],
+          "construct_code": "D1_balance",
+          "evidence_level": "A",
+          "role": "secondary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C3_spatial_arrangement",
+          "evidence_level": "A",
+          "role": "primary_proxy"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": null,
+      "dimensions": {
+        "primary": "layout",
+        "secondary": [
+          "visual_center"
+        ]
+      },
+      "feature_code": "margin_imbalance",
+      "formula": "population_sd(top,bottom,left,right normalized margins)",
+      "input_representations": [
+        "A_layout"
+      ],
+      "known_biases": [
+        "Cropping before measurement destroys this feature."
+      ],
+      "literature_sources": [
+        "S08",
+        "S17"
+      ],
+      "name_en": "Canvas margin imbalance",
+      "name_zh": "画布边距不均衡",
+      "numerator": null,
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "core",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "All four normalized margins are equal."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "connected component statistics",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "SEQUENCE_TOO_SHORT",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "at least two declared or connected components"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S03"
+          ],
+          "construct_code": "D4_unity_consistency",
+          "evidence_level": "B",
+          "role": "secondary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S04"
+          ],
+          "construct_code": "D5_rhythm_sequence",
+          "evidence_level": "B",
+          "role": "diagnostic"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "mean_component_area",
+      "dimensions": {
+        "primary": "uniformity",
+        "secondary": [
+          "reading_rhythm"
+        ]
+      },
+      "feature_code": "component_area_cv",
+      "formula": "population_sd(component_area) / mean(component_area)",
+      "input_representations": [
+        "A_layout",
+        "B_shape"
+      ],
+      "known_biases": [
+        "Connected components are not characters or strokes."
+      ],
+      "literature_sources": [
+        "S03",
+        "S04"
+      ],
+      "name_en": "Component area variation",
+      "name_zh": "组件面积变异系数",
+      "numerator": "population_sd_component_area",
+      "object_levels": [
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "diagnostic",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "All detected components have equal area."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "component centroid sequence",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "SEQUENCE_TOO_SHORT",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "at least three ordered declared or connected components"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S04"
+          ],
+          "construct_code": "D5_rhythm_sequence",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C3_spatial_arrangement",
+          "evidence_level": "A",
+          "role": "diagnostic"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "mean_adjacent_spacing",
+      "dimensions": {
+        "primary": "reading_rhythm",
+        "secondary": [
+          "layout",
+          "uniformity"
+        ]
+      },
+      "feature_code": "component_spacing_cv",
+      "formula": "population_sd(adjacent_center_spacing) / mean(adjacent_center_spacing)",
+      "input_representations": [
+        "A_layout"
+      ],
+      "known_biases": [
+        "Connected-component ordering cannot replace declared glyph clusters."
+      ],
+      "literature_sources": [
+        "S04",
+        "S17"
+      ],
+      "name_en": "Component spacing variation",
+      "name_zh": "组件间距变异系数",
+      "numerator": "population_sd_adjacent_spacing",
+      "object_levels": [
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "diagnostic",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "All detected adjacent spacings are equal."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "connected component labeling",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND"
+        ],
+        "requires": [
+          "binary foreground"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C2_character_structure",
+          "evidence_level": "A",
+          "role": "diagnostic"
+        },
+        {
+          "citation_ids": [
+            "S14"
+          ],
+          "construct_code": "C5_qi_movement_proxy",
+          "evidence_level": "B",
+          "role": "diagnostic"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": null,
+      "dimensions": {
+        "primary": "geometry",
+        "secondary": [
+          "density"
+        ]
+      },
+      "feature_code": "connected_component_count",
+      "formula": "count(8_connected_foreground_components)",
+      "input_representations": [
+        "B_shape",
+        "raster_binary"
+      ],
+      "known_biases": [
+        "Components must not be interpreted as glyphs or strokes."
+      ],
+      "literature_sources": [
+        "S14",
+        "S17"
+      ],
+      "name_en": "Connected component count",
+      "name_zh": "连通组件数",
+      "numerator": null,
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "diagnostic",
+      "unit": "count",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "No foreground components."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "complement component labeling",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND"
+        ],
+        "requires": [
+          "nonempty foreground bbox"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C2_character_structure",
+          "evidence_level": "A",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S09"
+          ],
+          "construct_code": "D3_proportion_scale",
+          "evidence_level": "B",
+          "role": "diagnostic"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": null,
+      "dimensions": {
+        "primary": "density",
+        "secondary": [
+          "geometry"
+        ]
+      },
+      "feature_code": "closure_count",
+      "formula": "count(4_connected_background_regions_not_touching_bbox_edge)",
+      "input_representations": [
+        "B_shape",
+        "raster_binary"
+      ],
+      "known_biases": [
+        "Threshold changes can open or close narrow counters."
+      ],
+      "literature_sources": [
+        "S09",
+        "S17"
+      ],
+      "name_en": "Enclosed background count",
+      "name_zh": "封闭空间数",
+      "numerator": null,
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "diagnostic",
+      "unit": "count",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "No enclosed background region is detected."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "distance transform on skeleton",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "SKELETON_UNSTABLE",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "stable skeleton",
+          "positive bbox height"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C1_brushwork_line_quality",
+          "evidence_level": "A",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S14"
+          ],
+          "construct_code": "D3_proportion_scale",
+          "evidence_level": "B",
+          "role": "secondary_proxy"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "bbox_height",
+      "dimensions": {
+        "primary": "stroke_gesture",
+        "secondary": [
+          "proportion",
+          "uniformity"
+        ]
+      },
+      "feature_code": "stroke_width_mean_norm",
+      "formula": "mean(2 * distance_transform_at_skeleton) / bbox_height",
+      "input_representations": [
+        "B_shape",
+        "skeleton"
+      ],
+      "known_biases": [
+        "Skeleton and raster resolution influence local width."
+      ],
+      "literature_sources": [
+        "S14",
+        "S17"
+      ],
+      "name_en": "Normalized mean local width",
+      "name_zh": "归一化平均局部宽度",
+      "numerator": "mean_local_width",
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "diagnostic",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "No measurable local width."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "distance transform on skeleton",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "SKELETON_UNSTABLE",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "stable skeleton",
+          "positive mean width"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C1_brushwork_line_quality",
+          "evidence_level": "A",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S03"
+          ],
+          "construct_code": "D4_unity_consistency",
+          "evidence_level": "B",
+          "role": "secondary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S14"
+          ],
+          "construct_code": "C5_qi_movement_proxy",
+          "evidence_level": "B",
+          "role": "secondary_proxy"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "mean_local_width",
+      "dimensions": {
+        "primary": "stroke_gesture",
+        "secondary": [
+          "uniformity"
+        ]
+      },
+      "feature_code": "stroke_width_cv",
+      "formula": "population_sd(local_width) / mean(local_width)",
+      "input_representations": [
+        "B_shape",
+        "skeleton"
+      ],
+      "known_biases": [
+        "Expressive variation is not automatically inconsistency."
+      ],
+      "literature_sources": [
+        "S03",
+        "S14",
+        "S17"
+      ],
+      "name_en": "Local width variation",
+      "name_zh": "局部宽度变异系数",
+      "numerator": "population_sd_local_width",
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "diagnostic",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "All measured local widths are equal."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "skeleton local orientation resultant",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "SKELETON_UNSTABLE"
+        ],
+        "requires": [
+          "stable skeleton with local directions"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S12"
+          ],
+          "construct_code": "C5_qi_movement_proxy",
+          "evidence_level": "C",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S04"
+          ],
+          "construct_code": "D5_rhythm_sequence",
+          "evidence_level": "B",
+          "role": "diagnostic"
+        }
+      ],
+      "cross_script_comparability": "within_script_only",
+      "definition_version": "2.0.0",
+      "denominator": null,
+      "dimensions": {
+        "primary": "stroke_gesture",
+        "secondary": [
+          "reading_rhythm"
+        ]
+      },
+      "feature_code": "direction_coherence",
+      "formula": "abs(mean(exp(i * undirected_local_orientation)))",
+      "input_representations": [
+        "B_shape",
+        "skeleton"
+      ],
+      "known_biases": [
+        "This is an unordered image proxy and does not recover stroke order."
+      ],
+      "literature_sources": [
+        "S04",
+        "S12"
+      ],
+      "name_en": "Skeleton direction coherence",
+      "name_zh": "骨架方向一致性",
+      "numerator": null,
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "experimental",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "zero_meaning": "Sampled undirected orientations cancel completely."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "skeleton topology",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "SKELETON_UNSTABLE"
+        ],
+        "requires": [
+          "stable skeleton"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C1_brushwork_line_quality",
+          "evidence_level": "A",
+          "role": "diagnostic"
+        },
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C2_character_structure",
+          "evidence_level": "A",
+          "role": "diagnostic"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": null,
+      "dimensions": {
+        "primary": "stroke_gesture",
+        "secondary": [
+          "geometry"
+        ]
+      },
+      "feature_code": "skeleton_endpoint_count",
+      "formula": "count(skeleton pixels with one 8-neighbor)",
+      "input_representations": [
+        "B_shape",
+        "skeleton"
+      ],
+      "known_biases": [
+        "Spurs and raster artifacts inflate endpoint counts."
+      ],
+      "literature_sources": [
+        "S17"
+      ],
+      "name_en": "Skeleton endpoint count",
+      "name_zh": "骨架端点数",
+      "numerator": null,
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph",
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "diagnostic",
+      "unit": "count",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "No skeleton endpoints are detected."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "foreground tonal statistics",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "INSUFFICIENT_TONAL_RANGE",
+          "REPRESENTATION_NOT_APPLICABLE"
+        ],
+        "requires": [
+          "C_ink with meaningful tonal range"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S14"
+          ],
+          "construct_code": "C4_ink_tone",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "foreground_pixels",
+      "dimensions": {
+        "primary": "density",
+        "secondary": [
+          "stroke_gesture"
+        ]
+      },
+      "feature_code": "gray_mean_ink",
+      "formula": "mean(1 - gray / 255 over foreground)",
+      "input_representations": [
+        "C_ink",
+        "raster_grayscale"
+      ],
+      "known_biases": [
+        "Paper, exposure, and background correction remain quality covariates."
+      ],
+      "literature_sources": [
+        "S14"
+      ],
+      "name_en": "Mean normalized ink darkness",
+      "name_zh": "平均墨色浓度",
+      "numerator": "sum_normalized_darkness",
+      "object_levels": [
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "experimental",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "zero_meaning": "Foreground samples are white."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "foreground gray histogram",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "INSUFFICIENT_TONAL_RANGE",
+          "REPRESENTATION_NOT_APPLICABLE"
+        ],
+        "requires": [
+          "C_ink with meaningful tonal range"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S14"
+          ],
+          "construct_code": "C4_ink_tone",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": null,
+      "dimensions": {
+        "primary": "density",
+        "secondary": [
+          "stroke_gesture"
+        ]
+      },
+      "feature_code": "gray_entropy_ink",
+      "formula": "-sum(p_bin * log2(p_bin))",
+      "input_representations": [
+        "C_ink",
+        "raster_grayscale"
+      ],
+      "known_biases": [
+        "Entropy depends on quantization and capture conditions."
+      ],
+      "literature_sources": [
+        "S14"
+      ],
+      "name_en": "Foreground gray entropy",
+      "name_zh": "前景灰度熵",
+      "numerator": null,
+      "object_levels": [
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "experimental",
+      "unit": "bits",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "All foreground samples occupy one gray bin."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "foreground tonal dispersion",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "INSUFFICIENT_TONAL_RANGE",
+          "REPRESENTATION_NOT_APPLICABLE"
+        ],
+        "requires": [
+          "C_ink with meaningful tonal range"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S14"
+          ],
+          "construct_code": "C4_ink_tone",
+          "evidence_level": "B",
+          "role": "secondary_proxy"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": null,
+      "dimensions": {
+        "primary": "stroke_gesture",
+        "secondary": [
+          "density"
+        ]
+      },
+      "feature_code": "local_contrast_ink",
+      "formula": "population_sd(gray / 255 over foreground)",
+      "input_representations": [
+        "C_ink",
+        "raster_grayscale"
+      ],
+      "known_biases": [
+        "This global foreground statistic is only a local-contrast proxy."
+      ],
+      "literature_sources": [
+        "S14"
+      ],
+      "name_en": "Foreground gray standard deviation",
+      "name_zh": "前景局部对比代理",
+      "numerator": null,
+      "object_levels": [
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "experimental",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "zero_meaning": "Foreground gray values are constant."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "Sobel boundary gradient",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "2.0.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND",
+          "INSUFFICIENT_TONAL_RANGE",
+          "REPRESENTATION_NOT_APPLICABLE"
+        ],
+        "requires": [
+          "C_ink with meaningful tonal range and boundary"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S14"
+          ],
+          "construct_code": "C4_ink_tone",
+          "evidence_level": "B",
+          "role": "diagnostic"
+        },
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C1_brushwork_line_quality",
+          "evidence_level": "A",
+          "role": "diagnostic"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "255",
+      "dimensions": {
+        "primary": "stroke_gesture",
+        "secondary": [
+          "geometry"
+        ]
+      },
+      "feature_code": "edge_spread_ink",
+      "formula": "mean(gradient_magnitude at foreground boundary) / 255",
+      "input_representations": [
+        "C_ink",
+        "raster_grayscale"
+      ],
+      "known_biases": [
+        "Scanner sharpening and compression alter edge gradients."
+      ],
+      "literature_sources": [
+        "S14",
+        "S17"
+      ],
+      "name_en": "Normalized edge transition spread",
+      "name_zh": "边缘扩散代理",
+      "numerator": "mean_boundary_gradient",
+      "object_levels": [
+        "ecological_image",
+        "calligraphy"
+      ],
+      "schema_version": "1.0.0",
+      "status": "experimental",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "No gray transition is detected at the boundary."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "v1 canvas occupancy",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "1.1.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "EMPTY_FOREGROUND"
+        ],
+        "requires": [
+          "frozen v1 canvas"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C3_spatial_arrangement",
+          "evidence_level": "A",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S09"
+          ],
+          "construct_code": "D3_proportion_scale",
+          "evidence_level": "B",
+          "role": "secondary_proxy"
+        }
+      ],
+      "cross_script_comparability": "direct",
+      "definition_version": "2.0.0",
+      "denominator": "canvas_pixels",
+      "dimensions": {
+        "primary": "density",
+        "secondary": [
+          "layout"
+        ]
+      },
+      "feature_code": "whitespace_ratio",
+      "formula": "1 - foreground_pixels / canvas_pixels",
+      "input_representations": [
+        "raster_binary",
+        "raster_grayscale"
+      ],
+      "known_biases": [
+        "Canvas normalization determines the apparent whitespace."
+      ],
+      "literature_sources": [
+        "S09",
+        "S17"
+      ],
+      "name_en": "Canvas whitespace ratio",
+      "name_zh": "画布留白率",
+      "numerator": "background_pixels",
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph"
+      ],
+      "schema_version": "1.0.0",
+      "status": "deprecated",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "zero_meaning": "Every canvas pixel is foreground."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "v1 skeleton direction",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "1.1.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "SKELETON_UNSTABLE",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "stable skeleton"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C1_brushwork_line_quality",
+          "evidence_level": "A",
+          "role": "diagnostic"
+        },
+        {
+          "citation_ids": [
+            "S12"
+          ],
+          "construct_code": "C5_qi_movement_proxy",
+          "evidence_level": "C",
+          "role": "diagnostic"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "total_skeleton_length",
+      "dimensions": {
+        "primary": "stroke_gesture",
+        "secondary": [
+          "geometry"
+        ]
+      },
+      "feature_code": "straight_curve_ratio",
+      "formula": "locally_straight_skeleton_length / total_skeleton_length",
+      "input_representations": [
+        "raster_binary",
+        "raster_grayscale",
+        "skeleton"
+      ],
+      "known_biases": [
+        "Skeletonization and local angle thresholds are script sensitive."
+      ],
+      "literature_sources": [
+        "S12",
+        "S17"
+      ],
+      "name_en": "Straight skeleton share",
+      "name_zh": "骨架直段比例",
+      "numerator": "locally_straight_skeleton_length",
+      "object_levels": [
+        "single_glyph",
+        "multi_glyph"
+      ],
+      "schema_version": "1.0.0",
+      "status": "deprecated",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "zero_meaning": "No sampled skeleton segment meets the straightness rule."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "v1 declared glyph-box spacing",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "1.1.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "SEQUENCE_TOO_SHORT",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "at least two declared glyph boxes"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S04"
+          ],
+          "construct_code": "D5_rhythm_sequence",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S17"
+          ],
+          "construct_code": "C3_spatial_arrangement",
+          "evidence_level": "A",
+          "role": "primary_proxy"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "ink_bbox_height",
+      "dimensions": {
+        "primary": "layout",
+        "secondary": [
+          "reading_rhythm"
+        ]
+      },
+      "feature_code": "inter_glyph_spacing_mean_norm",
+      "formula": "mean(adjacent_signed_bbox_gap) / ink_bbox_height",
+      "input_representations": [
+        "raster_binary",
+        "raster_grayscale"
+      ],
+      "known_biases": [
+        "Only comparable under the same shaping and cluster protocol."
+      ],
+      "literature_sources": [
+        "S04",
+        "S17"
+      ],
+      "name_en": "Mean signed glyph spacing",
+      "name_zh": "平均字间距",
+      "numerator": "mean_adjacent_signed_gap",
+      "object_levels": [
+        "multi_glyph"
+      ],
+      "schema_version": "1.0.0",
+      "status": "deprecated",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": null,
+        "minimum": null
+      },
+      "zero_meaning": "Adjacent glyph boxes touch on average."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "v1 declared glyph-box spacing",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "1.1.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "SEQUENCE_TOO_SHORT",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "at least three declared glyph boxes"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S04"
+          ],
+          "construct_code": "D5_rhythm_sequence",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S03"
+          ],
+          "construct_code": "D4_unity_consistency",
+          "evidence_level": "B",
+          "role": "diagnostic"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "ink_bbox_height",
+      "dimensions": {
+        "primary": "reading_rhythm",
+        "secondary": [
+          "layout",
+          "uniformity"
+        ]
+      },
+      "feature_code": "inter_glyph_spacing_sd_norm",
+      "formula": "population_sd(adjacent_signed_bbox_gap) / ink_bbox_height",
+      "input_representations": [
+        "raster_binary",
+        "raster_grayscale"
+      ],
+      "known_biases": [
+        "Only comparable under the same shaping and cluster protocol."
+      ],
+      "literature_sources": [
+        "S03",
+        "S04"
+      ],
+      "name_en": "Signed glyph spacing deviation",
+      "name_zh": "字间距标准差",
+      "numerator": "population_sd_adjacent_signed_gap",
+      "object_levels": [
+        "multi_glyph"
+      ],
+      "schema_version": "1.0.0",
+      "status": "deprecated",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "All adjacent signed gaps are equal."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "v1 normalized spacing autocorrelation",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "1.1.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "SEQUENCE_TOO_SHORT",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "at least four adjacent gaps"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S04"
+          ],
+          "construct_code": "D5_rhythm_sequence",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": null,
+      "dimensions": {
+        "primary": "reading_rhythm",
+        "secondary": [
+          "layout"
+        ]
+      },
+      "feature_code": "rhythm_periodicity",
+      "formula": "maximum absolute nonzero-lag normalized autocorrelation",
+      "input_representations": [
+        "raster_binary",
+        "raster_grayscale"
+      ],
+      "known_biases": [
+        "Short sequences provide no stable periodicity estimate."
+      ],
+      "literature_sources": [
+        "S04"
+      ],
+      "name_en": "Spacing autocorrelation peak",
+      "name_zh": "间距周期性",
+      "numerator": null,
+      "object_levels": [
+        "multi_glyph"
+      ],
+      "schema_version": "1.0.0",
+      "status": "deprecated",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "zero_meaning": "No nonzero-lag spacing autocorrelation is detected."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "v1 declared-unit statistics",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "1.1.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "SEQUENCE_TOO_SHORT",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "at least two declared glyph boxes"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S03"
+          ],
+          "construct_code": "D4_unity_consistency",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S04"
+          ],
+          "construct_code": "D5_rhythm_sequence",
+          "evidence_level": "B",
+          "role": "secondary_proxy"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "mean_unit_ink_area",
+      "dimensions": {
+        "primary": "uniformity",
+        "secondary": [
+          "reading_rhythm"
+        ]
+      },
+      "feature_code": "unit_area_cv",
+      "formula": "population_sd(unit_ink_area) / mean(unit_ink_area)",
+      "input_representations": [
+        "raster_binary",
+        "raster_grayscale"
+      ],
+      "known_biases": [
+        "Declared units are required; connected components are not substitutes."
+      ],
+      "literature_sources": [
+        "S03",
+        "S04"
+      ],
+      "name_en": "Declared-unit area variation",
+      "name_zh": "单位面积变异系数",
+      "numerator": "population_sd_unit_ink_area",
+      "object_levels": [
+        "multi_glyph"
+      ],
+      "schema_version": "1.0.0",
+      "status": "deprecated",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "All declared units have equal ink area."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "v1 declared-unit statistics",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "1.1.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "SEQUENCE_TOO_SHORT",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "at least two declared glyph boxes"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S03"
+          ],
+          "construct_code": "D4_unity_consistency",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S01"
+          ],
+          "construct_code": "D3_proportion_scale",
+          "evidence_level": "B",
+          "role": "diagnostic"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "mean_unit_bbox_width",
+      "dimensions": {
+        "primary": "uniformity",
+        "secondary": [
+          "proportion"
+        ]
+      },
+      "feature_code": "unit_width_cv",
+      "formula": "population_sd(unit_bbox_width) / mean(unit_bbox_width)",
+      "input_representations": [
+        "raster_binary",
+        "raster_grayscale"
+      ],
+      "known_biases": [
+        "Declared units are required; connected components are not substitutes."
+      ],
+      "literature_sources": [
+        "S01",
+        "S03"
+      ],
+      "name_en": "Declared-unit width variation",
+      "name_zh": "单位宽度变异系数",
+      "numerator": "population_sd_unit_bbox_width",
+      "object_levels": [
+        "multi_glyph"
+      ],
+      "schema_version": "1.0.0",
+      "status": "deprecated",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "All declared units have equal bbox width."
+    },
+    {
+      "algorithm": {
+        "default_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+        "name": "v1 declared-unit statistics",
+        "parameter_schema": {
+          "type": "object"
+        },
+        "version": "1.1.0"
+      },
+      "applicability": {
+        "missing_codes": [
+          "SEQUENCE_TOO_SHORT",
+          "ZERO_DENOMINATOR"
+        ],
+        "requires": [
+          "at least two declared glyph boxes"
+        ]
+      },
+      "construct_mappings": [
+        {
+          "citation_ids": [
+            "S03"
+          ],
+          "construct_code": "D4_unity_consistency",
+          "evidence_level": "B",
+          "role": "primary_proxy"
+        },
+        {
+          "citation_ids": [
+            "S01"
+          ],
+          "construct_code": "D3_proportion_scale",
+          "evidence_level": "B",
+          "role": "diagnostic"
+        }
+      ],
+      "cross_script_comparability": "protocol_dependent",
+      "definition_version": "2.0.0",
+      "denominator": "mean_unit_bbox_height",
+      "dimensions": {
+        "primary": "uniformity",
+        "secondary": [
+          "proportion"
+        ]
+      },
+      "feature_code": "unit_height_cv",
+      "formula": "population_sd(unit_bbox_height) / mean(unit_bbox_height)",
+      "input_representations": [
+        "raster_binary",
+        "raster_grayscale"
+      ],
+      "known_biases": [
+        "Declared units are required; connected components are not substitutes."
+      ],
+      "literature_sources": [
+        "S01",
+        "S03"
+      ],
+      "name_en": "Declared-unit height variation",
+      "name_zh": "单位高度变异系数",
+      "numerator": "population_sd_unit_bbox_height",
+      "object_levels": [
+        "multi_glyph"
+      ],
+      "schema_version": "1.0.0",
+      "status": "deprecated",
+      "unit": "ratio",
+      "value_range": {
+        "maximum": null,
+        "minimum": 0
+      },
+      "zero_meaning": "All declared units have equal bbox height."
+    }
+  ],
+  "measurement_schema_version": "1.0.0",
+  "protocol_version": "visual_measurements_v2.0.0",
+  "quality": {
+    "absolute_warning": 0.02,
+    "relative_warning": 0.05,
+    "threshold_sensitivity": [
+      96,
+      160
+    ]
+  },
+  "registry_version": "2.0.0"
+}

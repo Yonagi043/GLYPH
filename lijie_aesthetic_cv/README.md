@@ -11,6 +11,11 @@
 - [05_字段字典.csv](05_字段字典.csv)：建议输出的数据字段，便于蒋雨辰的图包和后续模型直接对接。
 - [06_参考文献.bib](06_参考文献.bib)：可导入 Zotero/参考文献管理软件的 BibTeX。
 - [cv_program/](cv_program/)：可运行的 10 项指标 CV 程序、总分公式、依赖及测试输出说明。
+- [../docs/visual_measurement_migration_zh.md](../docs/visual_measurement_migration_zh.md)：正式 v2 接管方式、历史宽表兼容和不可迁移字段。
+
+## 生产状态
+
+本目录的理论、公式、字段字典和检索日志继续作为理论来源保存。`cv_program/` 现为历史原型，不再是独立生产管线；其中未经真人校准的规则分和 `total_score` 不进入 canonical 数据或联合分析。可执行迁移入口已并入根锁定环境的 `glyph-vision-legacy`，并只输出版本化 registry 定义的原始/诊断测量。
 
 ## 重要结论
 
