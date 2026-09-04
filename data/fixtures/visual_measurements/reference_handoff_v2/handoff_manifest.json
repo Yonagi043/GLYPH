@@ -1,0 +1,393 @@
+{
+  "blocked_human_gates": [
+    {
+      "gate_id": "GATE-EXPERT",
+      "packet_path": "data/fixtures/visual_measurements/reference_handoff_v2/GATE-EXPERT.json",
+      "reasons": [
+        "Two independent visual or type-domain reviewers have not reviewed fixture face validity and cross-script failure modes."
+      ],
+      "status": "blocked"
+    }
+  ],
+  "calibration_status": "not_calibrated",
+  "contract_compatibility": {
+    "backward_compatible": false,
+    "canonical_long_form": "1.0.0",
+    "notes": "Handoff 1.1.0 requires TASK-01 candidate/stimulus snapshots and cross-artifact lineage validation; 1.0.0 bundles must be regenerated. Visual v1.1 tables remain readable and round-trippable.",
+    "previous_handoff": "1.0.0",
+    "visual_v1_readable": true,
+    "visual_v1_roundtrip": true
+  },
+  "contract_versions": {
+    "expert_gate": "1.0.0",
+    "feature_registry": "2.0.1",
+    "handoff": "1.1.0",
+    "long_measurement": "1.0.0",
+    "visual_v1": "1.1.0-compatible"
+  },
+  "created_at": "2026-09-04T11:00:00Z",
+  "git_commit": "e3fc34883a0a2ec6ff30fbd56dd950d7c7fd2306",
+  "handoff_schema_version": "1.1.0",
+  "input_snapshots": [
+    {
+      "logical_type": "task01_handoff",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "2.0.0",
+      "sha256": "acc193134495401b9a026aab0e7a866d7f15202b9b865db0d73d6f689bd1bdab"
+    },
+    {
+      "logical_type": "task01_asset_candidates",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/asset_candidates.jsonl",
+      "record_count": 5,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "e132abc1bc2658315ac89a7d9c7772ac0bf3e510500eb8a8adda2d9c695c01ad"
+    },
+    {
+      "logical_type": "task01_stimuli",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/stimuli.jsonl",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "2.0.0",
+      "sha256": "a7c49d069effc90ba1d696e38681ff91326edfcfe874c0bf270dac4e368c6f4a"
+    },
+    {
+      "logical_type": "feature_registry_config",
+      "path": "configs/visual_measurements_v2.yaml",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": "2.0.1",
+      "sha256": "af093ac82a3042b63d80e96aaf080c9a8e60af08079b063dc6e43f6aa8edb4eb"
+    },
+    {
+      "logical_type": "fixture_representation",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_6e451135614c28ccf86c714a.A_layout.png",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "09d33c2db0b15601b2f778885e6290be0755ce16c7c6aab126fa5e0d712dee3a"
+    },
+    {
+      "logical_type": "fixture_representation",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+    },
+    {
+      "logical_type": "fixture_representation",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_e3d69a8b57fddd8087ffb0f1.C_ink.png",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "09d33c2db0b15601b2f778885e6290be0755ce16c7c6aab126fa5e0d712dee3a"
+    },
+    {
+      "logical_type": "fixture_supporting_representation",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_904a6f00145466ed82ec606f.mask.png",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "90f01a5a1c2d63daa596d0f73050aaf9f3cef00a9bb202318b9148eda59fbd6b"
+    }
+  ],
+  "joint_analysis_exclusions": [
+    "total_score",
+    "uncalibrated_dimension_scores",
+    "unbound_manual_weights",
+    "qi_as_direct_observation"
+  ],
+  "known_limitations": [
+    "The reference run contains one generated open fixture and cannot support population, aesthetic, or script-level claims.",
+    "Threshold sensitivity warnings remain visible and have not been tuned away.",
+    "Surface validity awaits two independent domain reviewers.",
+    "Construct and predictive validity await TASK-03 real human ratings and held-out calibration.",
+    "Eight visual v1-only definitions are retained as deprecated compatibility metadata and are not active v2 outputs."
+  ],
+  "metrics": {
+    "active_feature_count": 20,
+    "failure_count": 0,
+    "measurement_count": 60,
+    "missing_measurement_count": 41,
+    "registry_definition_count": 28,
+    "representation_count": 3,
+    "sensitivity_warning_count": 14,
+    "stimulus_count": 1,
+    "valid_measurement_count": 19
+  },
+  "next_task_entrypoints": [
+    {
+      "notes": "Use the frozen dictionary for questionnaire stratification only; do not expose proxy values to participants.",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/feature_registry.json",
+      "status": "fixture_only",
+      "task_id": "TASK-03"
+    },
+    {
+      "notes": "Use within-script applicability and low-level stroke/ink APIs; expert conclusions remain blocked.",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/feature_registry.json",
+      "status": "metadata_only",
+      "task_id": "TASK-04"
+    },
+    {
+      "notes": "Integrate only for contract and product dry-runs; enforce joint_analysis_exclusions.",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/measurements.jsonl",
+      "status": "fixture_only",
+      "task_id": "TASK-05"
+    }
+  ],
+  "outputs": [
+    {
+      "logical_type": "feature_registry",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/feature_registry.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": "2.0.1",
+      "sha256": "c5341ea8b55d96d870cfa5aa19de1f82f5231706226f7c82707befeda1bf0dbd"
+    },
+    {
+      "logical_type": "long_measurements",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/measurements.jsonl",
+      "record_count": 60,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "1e50e12da8d3c41b9391e779d50d7e0a4f1766d884617291a50dcc7b8368483a"
+    },
+    {
+      "logical_type": "extraction_failures",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/failures.jsonl",
+      "record_count": 0,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "logical_type": "run_manifest",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/run_manifest.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.1.0",
+      "sha256": "cbc800ddade4e21843711e78f654d6ab0e88188def4c672a207a4a30c22815d0"
+    },
+    {
+      "logical_type": "quality_report",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/quality_report.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "2fcfac83c1eae10df52e2d74a3f885c8d6c5bcc2e76b7d78f347d4737da72b3b"
+    },
+    {
+      "logical_type": "quality_report_markdown",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/quality_report.md",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": null,
+      "sha256": "7044bbf8d05386b62b47deeb28ae1d16c9b27d4159395afabb86386a9c47a00c"
+    },
+    {
+      "logical_type": "sensitivity_report",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/sensitivity_report.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "4e98b4d87cfba653b8f52e9189dd9f923ab77eb3bfa366c109f082e9abb60e19"
+    },
+    {
+      "logical_type": "representation_comparison",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/representation_comparison.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "096443a91c9050332a8ae8a40a0f1288b7eef614ab0d2d9e9b0c5153c966756c"
+    },
+    {
+      "logical_type": "reference_checksums",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/checksums.sha256",
+      "record_count": 8,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": null,
+      "sha256": "c499e4d085358016da96ba5a65427b6f0ebf18cd98787782367b518541cfd761"
+    },
+    {
+      "logical_type": "cross_script_fixture",
+      "path": "data/fixtures/visual_measurements/cross_script_component_cases.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "2d0b08c7b1be2511de38ab33143e17b5167471c03a6c0cde8e8d7c1c3184fdde"
+    },
+    {
+      "logical_type": "feature_definition_schema",
+      "path": "schema/visual_feature_definition.schema.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": "1.0.0",
+      "sha256": "11068df4fc22591f4b3b00e4c71ab7d10fa3abbcc56bf17beaf3044db51416f9"
+    },
+    {
+      "logical_type": "measurement_schema",
+      "path": "schema/visual_measurement.schema.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": "1.0.0",
+      "sha256": "9be9e6f2c1cab6998e1de98254d6dfd0203e6a4ec1273b24310aa4465f5c4f0e"
+    },
+    {
+      "logical_type": "protocol_documentation",
+      "path": "docs/visual_measurement_protocol_zh.md",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": null,
+      "sha256": "7fb9248feb32ec8f7fc1e0a7f8e31f40ae5e98b9f948070a6c2415c2f9b8a0c5"
+    },
+    {
+      "logical_type": "migration_documentation",
+      "path": "docs/visual_measurement_migration_zh.md",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": null,
+      "sha256": "b4a5463b458db525d21eb4565d1d41843a58f75a0f0863b39ff89dbb6c79bd97"
+    },
+    {
+      "logical_type": "expert_gate_packet",
+      "path": "data/fixtures/visual_measurements/reference_handoff_v2/GATE-EXPERT.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "9b7a142d92456d6736b0b40dd3ca25b07bb6635d2f64f5b8cd769ac5bb223cd4"
+    }
+  ],
+  "producer_provenance": {
+    "aggregate_sha256": "da50876efbfd620f217c0c9f45d8a960dab8c383693ba93e5ca01290f8dd0202",
+    "files": [
+      {
+        "path": "configs/visual_measurements_v2.yaml",
+        "role": "config",
+        "sha256": "af093ac82a3042b63d80e96aaf080c9a8e60af08079b063dc6e43f6aa8edb4eb"
+      },
+      {
+        "path": "pyproject.toml",
+        "role": "entrypoint",
+        "sha256": "d720ef0295d0fb15ef1fd8d8e16e0991690df4363b52b2e6596d3ff0998a7cc5"
+      },
+      {
+        "path": "runtime.lock.json",
+        "role": "dependency_lock",
+        "sha256": "c6b987aea4fe72fb3e55ade4a0554bb8d20b35373d75c2a33ed9c88423159536"
+      },
+      {
+        "path": "schema/visual_expert_gate.schema.json",
+        "role": "schema",
+        "sha256": "0b7fdc4fd3d81a8b689c54e763adc085422dbc42638fa8d806450092a221e959"
+      },
+      {
+        "path": "schema/visual_feature_definition.schema.json",
+        "role": "schema",
+        "sha256": "11068df4fc22591f4b3b00e4c71ab7d10fa3abbcc56bf17beaf3044db51416f9"
+      },
+      {
+        "path": "schema/visual_measurement.schema.json",
+        "role": "schema",
+        "sha256": "9be9e6f2c1cab6998e1de98254d6dfd0203e6a4ec1273b24310aa4465f5c4f0e"
+      },
+      {
+        "path": "schema/visual_measurement_handoff.schema.json",
+        "role": "schema",
+        "sha256": "362dc1b54efa0c713065aa46a45c00df3aa34aea7a43d99875dcade8ac4c5987"
+      },
+      {
+        "path": "src/glyph_features/vision_system/__init__.py",
+        "role": "producer_source",
+        "sha256": "7445f1450c4ed4d13655b01779ee523e9664afc001bcb98f0b8fdbca3b24edc6"
+      },
+      {
+        "path": "src/glyph_features/vision_system/cli.py",
+        "role": "producer_source",
+        "sha256": "759cbe29dd6307035088445f6ce662da06f30b3cf570c4427eaab1398cef520b"
+      },
+      {
+        "path": "src/glyph_features/vision_system/compat.py",
+        "role": "producer_source",
+        "sha256": "827485e5a08c4bf29d2dcfa72c935d8f5ecc6ab9cf77b9329018a8cd5577a5a9"
+      },
+      {
+        "path": "src/glyph_features/vision_system/definitions.py",
+        "role": "producer_source",
+        "sha256": "6518efc8971cf02903c57a43ef090042d26cb00eafab348a6b81ee40844152e9"
+      },
+      {
+        "path": "src/glyph_features/vision_system/extract.py",
+        "role": "producer_source",
+        "sha256": "7b66e01e42d026d7907382e2c294b05af255da12aa73794d254f87a6f29334fd"
+      },
+      {
+        "path": "src/glyph_features/vision_system/handoff.py",
+        "role": "producer_source",
+        "sha256": "d8406e5651348a025145c0ceb0a60750f46c45af6096fb7dd5f02f71c4726343"
+      },
+      {
+        "path": "src/glyph_features/vision_system/legacy_mvp.py",
+        "role": "producer_source",
+        "sha256": "418d0e67bd15fd1aff62d85072c9036227908026ed4c56bf5e5637db880ea863"
+      },
+      {
+        "path": "src/glyph_features/vision_system/qc.py",
+        "role": "producer_source",
+        "sha256": "361e354c2f435fe56f249ee990ef72c8bfe547305a5e9f3c861b079c3c44288c"
+      }
+    ],
+    "git_commit": "e3fc34883a0a2ec6ff30fbd56dd950d7c7fd2306",
+    "producer_snapshot_matches_commit": true,
+    "working_tree_state": "clean"
+  },
+  "producer_version": "visual_measurements_v2.0.1",
+  "quality_gates": [
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_run_v2/quality_report.json",
+      "gate_id": "schema_validation",
+      "status": "passed"
+    },
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_run_v2/checksums.sha256",
+      "gate_id": "input_and_config_integrity",
+      "status": "passed"
+    },
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_run_v2/quality_report.json",
+      "gate_id": "computational_stability",
+      "status": "passed"
+    },
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_run_v2/sensitivity_report.json",
+      "gate_id": "representation_sensitivity",
+      "status": "needs_review"
+    },
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_handoff_v2/GATE-EXPERT.json",
+      "gate_id": "surface_validity",
+      "status": "blocked"
+    },
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_run_v2/quality_report.json",
+      "gate_id": "construct_validity",
+      "status": "blocked"
+    },
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_run_v2/quality_report.json",
+      "gate_id": "predictive_validity",
+      "status": "blocked"
+    }
+  ],
+  "readiness": {
+    "engineering_ready": true,
+    "pilot_ready": false,
+    "research_validated": false
+  },
+  "task_id": "TASK-02",
+  "upstream_commits": {
+    "TASK-01": "af3820836a6ffa92c63016b0e308f624f9b42db0"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "computational_stability": {
+    "repeat_mismatch_count": 0,
+    "status": "passed"
+  },
+  "construct_validity": {
+    "reason": "No expert construct review or real human rating association has been performed.",
+    "status": "blocked"
+  },
+  "errors": [],
+  "extraction_failure_count": 0,
+  "extraction_run_id": "task02_fixture_reference_v1",
+  "input_integrity": {
+    "status": "passed"
+  },
+  "measurement_count": 60,
+  "missing_measurement_count": 41,
+  "predictive_validity": {
+    "reason": "No TASK-03 real participant ratings or held-out calibration run exist.",
+    "status": "blocked"
+  },
+  "qc_error_count": 0,
+  "readiness": {
+    "engineering_ready": true,
+    "pilot_ready": false,
+    "research_validated": false
+  },
+  "representation_sensitivity": {
+    "policy": "Sensitivity warnings are retained and do not rewrite frozen measurements.",
+    "status": "needs_review",
+    "warning_count": 14
+  },
+  "schema_validation": {
+    "status": "passed"
+  },
+  "schema_version": "1.0.0",
+  "surface_validity": {
+    "gate_id": "GATE-EXPERT",
+    "reason": "Two independent visual or type-domain reviewers have not reviewed the fixture package.",
+    "status": "blocked"
+  }
+}

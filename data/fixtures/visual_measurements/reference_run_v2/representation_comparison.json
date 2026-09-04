@@ -1,0 +1,24 @@
+{
+  "comparisons": [
+    {
+      "feature_code": "bbox_aspect_ratio",
+      "interpretation": "representation_sensitive_description_only",
+      "range": 0.013452914798206317,
+      "values": {
+        "A_layout": 1.0,
+        "B_shape": 1.0134529147982063
+      }
+    },
+    {
+      "feature_code": "ink_coverage_ratio",
+      "interpretation": "representation_sensitive_description_only",
+      "range": 0.00384521484375,
+      "values": {
+        "A_layout": 0.1875,
+        "B_shape": 0.18365478515625
+      }
+    }
+  ],
+  "schema_version": "1.0.0",
+  "warning": "A/B/C preserve different information and are not interchangeable cleaned images."
+}

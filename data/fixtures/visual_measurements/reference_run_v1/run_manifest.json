@@ -1,0 +1,52 @@
+{
+  "accepted_task01_commit": "af3820836a6ffa92c63016b0e308f624f9b42db0",
+  "algorithm_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+  "canonical_output": "measurements.jsonl",
+  "created_at": "2026-09-04T08:00:00Z",
+  "extraction_run_id": "task02_fixture_reference_v1",
+  "failure_count": 0,
+  "fixture_only": true,
+  "implementation_sha256": "4c22e2e6b86341f52a241cc033f5ee960569a891aad85d55c6ff81a9d760b65b",
+  "input_representations": [
+    {
+      "asset_id": "asset_6e451135614c28ccf86c714a",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_6e451135614c28ccf86c714a.A_layout.png",
+      "representation": "A_layout",
+      "sha256": "09d33c2db0b15601b2f778885e6290be0755ce16c7c6aab126fa5e0d712dee3a",
+      "stimulus_id": "stim_eco_ed82ad5985adf0287b9a"
+    },
+    {
+      "asset_id": "asset_c7e16ea61e90d876c6fe05b9",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+      "representation": "B_shape",
+      "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b",
+      "stimulus_id": "stim_eco_ed82ad5985adf0287b9a"
+    },
+    {
+      "asset_id": "asset_e3d69a8b57fddd8087ffb0f1",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_e3d69a8b57fddd8087ffb0f1.C_ink.png",
+      "representation": "C_ink",
+      "sha256": "09d33c2db0b15601b2f778885e6290be0755ce16c7c6aab126fa5e0d712dee3a",
+      "stimulus_id": "stim_eco_ed82ad5985adf0287b9a"
+    }
+  ],
+  "measurement_count": 60,
+  "protocol_version": "visual_measurements_v2.0.0",
+  "registry_path": "configs/visual_measurements_v2.yaml",
+  "registry_sha256": "cee1fd77db8ec631b44f57fa0e4f5e59bd9cbb9bd4df4296854ae7eceb515a85",
+  "schema_version": "1.0.0",
+  "software_environment": {
+    "architecture": "arm64",
+    "numpy": "2.0.2",
+    "operating_system": "Darwin",
+    "pillow": "11.3.0",
+    "python": "3.11.15",
+    "python_implementation": "CPython",
+    "scikit_image": "0.24.0",
+    "scipy": "1.14.1"
+  },
+  "software_environment_sha256": "c5aec03cad5608259abc17070c91e135f2a5aed24d5bf6fa4e448a1332d6bd8e",
+  "task01_handoff_path": "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+  "task01_handoff_schema_version": "2.0.0",
+  "task01_handoff_sha256": "acc193134495401b9a026aab0e7a866d7f15202b9b865db0d73d6f689bd1bdab"
+}

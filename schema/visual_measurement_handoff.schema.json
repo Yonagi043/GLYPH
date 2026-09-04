@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH TASK-02 visual measurement handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "handoff_schema_version",
+    "task_id",
+    "producer_version",
+    "git_commit",
+    "created_at",
+    "contract_compatibility",
+    "producer_provenance",
+    "upstream_commits",
+    "readiness",
+    "calibration_status",
+    "contract_versions",
+    "metrics",
+    "input_snapshots",
+    "outputs",
+    "quality_gates",
+    "known_limitations",
+    "joint_analysis_exclusions",
+    "blocked_human_gates",
+    "next_task_entrypoints"
+  ],
+  "properties": {
+    "handoff_schema_version": {"const": "1.1.0"},
+    "task_id": {"const": "TASK-02"},
+    "producer_version": {"const": "visual_measurements_v2.0.1"},
+    "git_commit": {"$ref": "#/$defs/gitCommit"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "contract_compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["previous_handoff", "backward_compatible", "canonical_long_form", "visual_v1_readable", "visual_v1_roundtrip", "notes"],
+      "properties": {
+        "previous_handoff": {"const": "1.0.0"},
+        "backward_compatible": {"const": false},
+        "canonical_long_form": {"const": "1.0.0"},
+        "visual_v1_readable": {"const": true},
+        "visual_v1_roundtrip": {"const": true},
+        "notes": {"type": "string", "minLength": 1}
+      }
+    },
+    "producer_provenance": {"$ref": "#/$defs/producerProvenance"},
+    "upstream_commits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["TASK-01"],
+      "properties": {"TASK-01": {"$ref": "#/$defs/gitCommit"}}
+    },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engineering_ready", "pilot_ready", "research_validated"],
+      "properties": {
+        "engineering_ready": {"const": true},
+        "pilot_ready": {"const": false},
+        "research_validated": {"const": false}
+      }
+    },
+    "calibration_status": {"const": "not_calibrated"},
+    "contract_versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["feature_registry", "long_measurement", "handoff", "expert_gate", "visual_v1"],
+      "properties": {
+        "feature_registry": {"const": "2.0.1"},
+        "long_measurement": {"const": "1.0.0"},
+        "handoff": {"const": "1.1.0"},
+        "expert_gate": {"const": "1.0.0"},
+        "visual_v1": {"const": "1.1.0-compatible"}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stimulus_count", "representation_count", "active_feature_count", "registry_definition_count",
+        "measurement_count", "valid_measurement_count", "missing_measurement_count", "failure_count",
+        "sensitivity_warning_count"
+      ],
+      "properties": {
+        "stimulus_count": {"type": "integer", "minimum": 1},
+        "representation_count": {"type": "integer", "minimum": 1},
+        "active_feature_count": {"type": "integer", "minimum": 1},
+        "registry_definition_count": {"type": "integer", "minimum": 1},
+        "measurement_count": {"type": "integer", "minimum": 1},
+        "valid_measurement_count": {"type": "integer", "minimum": 0},
+        "missing_measurement_count": {"type": "integer", "minimum": 0},
+        "failure_count": {"const": 0},
+        "sensitivity_warning_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "input_snapshots": {
+      "type": "array",
+      "minItems": 6,
+      "items": {"$ref": "#/$defs/artifact"},
+      "allOf": [
+        {"contains": {"type": "object", "required": ["logical_type"], "properties": {"logical_type": {"const": "task01_handoff"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"type": "object", "required": ["logical_type"], "properties": {"logical_type": {"const": "task01_asset_candidates"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"type": "object", "required": ["logical_type"], "properties": {"logical_type": {"const": "task01_stimuli"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"type": "object", "required": ["logical_type"], "properties": {"logical_type": {"const": "feature_registry_config"}}}, "minContains": 1, "maxContains": 1}
+      ]
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 8,
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "quality_gates": {
+      "type": "array",
+      "minItems": 6,
+      "items": {"$ref": "#/$defs/gateStatus"}
+    },
+    "known_limitations": {
+      "type": "array",
+      "minItems": 3,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "joint_analysis_exclusions": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "contains": {"const": "total_score"},
+      "items": {"type": "string", "minLength": 1}
+    },
+    "blocked_human_gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gate_id", "status", "packet_path", "reasons"],
+        "properties": {
+          "gate_id": {"const": "GATE-EXPERT"},
+          "status": {"const": "blocked"},
+          "packet_path": {"$ref": "#/$defs/relativePath"},
+          "reasons": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "next_task_entrypoints": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "status", "path", "notes"],
+        "properties": {
+          "task_id": {"enum": ["TASK-03", "TASK-04", "TASK-05"]},
+          "status": {"enum": ["fixture_only", "metadata_only", "blocked"]},
+          "path": {"$ref": "#/$defs/relativePath"},
+          "notes": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "gitCommit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+    },
+    "producerProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["git_commit", "working_tree_state", "producer_snapshot_matches_commit", "aggregate_sha256", "files"],
+      "properties": {
+        "git_commit": {"$ref": "#/$defs/gitCommit"},
+        "working_tree_state": {"const": "clean"},
+        "producer_snapshot_matches_commit": {"const": true},
+        "aggregate_sha256": {"$ref": "#/$defs/sha256"},
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "path", "sha256"],
+            "properties": {
+              "role": {"enum": ["entrypoint", "dependency_lock", "config", "schema", "producer_source"]},
+              "path": {"$ref": "#/$defs/relativePath"},
+              "sha256": {"$ref": "#/$defs/sha256"}
+            }
+          }
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logical_type", "path", "sha256", "record_count", "rights_or_privacy_level", "schema_version"],
+      "properties": {
+        "logical_type": {"type": "string", "minLength": 1},
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "record_count": {"type": "integer", "minimum": 0},
+        "rights_or_privacy_level": {"enum": ["open_fixture", "metadata_only", "public_code_or_schema"]},
+        "schema_version": {"type": ["string", "null"]}
+      }
+    },
+    "gateStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_id", "status", "evidence"],
+      "properties": {
+        "gate_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["passed", "fixture_only", "needs_review", "blocked"]},
+        "evidence": {"$ref": "#/$defs/relativePath"}
+      }
+    }
+  }
+}

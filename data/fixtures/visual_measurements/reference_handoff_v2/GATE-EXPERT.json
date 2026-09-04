@@ -1,0 +1,67 @@
+{
+  "allowed_now": [
+    "engineering fixture regression",
+    "schema integration",
+    "expert review preparation"
+  ],
+  "decision_required": "Two independent domain reviewers must assess fixture face validity, representation boundaries, and cross-script failure risks.",
+  "decision_template": {
+    "final_status": "pending",
+    "notes": null,
+    "reviewer_decisions": []
+  },
+  "gate_id": "GATE-EXPERT",
+  "materials": [
+    {
+      "logical_type": "feature_registry",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/feature_registry.json",
+      "sha256": "c5341ea8b55d96d870cfa5aa19de1f82f5231706226f7c82707befeda1bf0dbd"
+    },
+    {
+      "logical_type": "long_measurements",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/measurements.jsonl",
+      "sha256": "1e50e12da8d3c41b9391e779d50d7e0a4f1766d884617291a50dcc7b8368483a"
+    },
+    {
+      "logical_type": "quality_report",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/quality_report.json",
+      "sha256": "2fcfac83c1eae10df52e2d74a3f885c8d6c5bcc2e76b7d78f347d4737da72b3b"
+    },
+    {
+      "logical_type": "sensitivity_report",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/sensitivity_report.json",
+      "sha256": "4e98b4d87cfba653b8f52e9189dd9f923ab77eb3bfa366c109f082e9abb60e19"
+    },
+    {
+      "logical_type": "representation_comparison",
+      "path": "data/fixtures/visual_measurements/reference_run_v2/representation_comparison.json",
+      "sha256": "096443a91c9050332a8ae8a40a0f1288b7eef614ab0d2d9e9b0c5153c966756c"
+    },
+    {
+      "logical_type": "cross_script_fixture",
+      "path": "data/fixtures/visual_measurements/cross_script_component_cases.json",
+      "sha256": "2d0b08c7b1be2511de38ab33143e17b5167471c03a6c0cde8e8d7c1c3184fdde"
+    }
+  ],
+  "minimum_reviewers": 2,
+  "prohibited_without_approval": [
+    "claim surface validity",
+    "claim construct validity",
+    "publish calligraphy expertise conclusions",
+    "unlock research_validated"
+  ],
+  "review_questions": [
+    "Do the raw measurements have the claimed visual interpretation for the supplied fixtures?",
+    "Are A_layout, B_shape, and C_ink boundaries represented without information leakage?",
+    "Are small marks, separated strokes, jamo, diacritics, ink breaks, and composite elements retained or explicitly rejected?",
+    "Are construct mappings phrased as proxies without aesthetic direction or causal claims?",
+    "Which features require within-script restrictions, protocol changes, or retirement?"
+  ],
+  "reviewer_requirements": [
+    "At least one reviewer with typography, visual design, or glyph-analysis expertise.",
+    "At least one reviewer with Chinese calligraphy or cross-script writing-system expertise.",
+    "Reviewers record decisions independently before reconciliation."
+  ],
+  "schema_version": "1.0.0",
+  "status": "blocked"
+}
