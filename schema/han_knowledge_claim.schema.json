@@ -12,6 +12,7 @@
     "subject_type",
     "subject_id",
     "relation",
+    "object_type",
     "object_id",
     "object_value",
     "source_id",
@@ -25,10 +26,11 @@
     "extraction_method",
     "verification_status",
     "human_reviewer_id",
+    "human_decision_id",
     "stance"
   ],
   "properties": {
-    "schema_version": { "type": "string", "const": "1.0.0" },
+    "schema_version": { "type": "string", "const": "1.1.0" },
     "claim_id": { "$ref": "shared.schema.json#/$defs/id" },
     "claim_domain": {
       "type": "string",
@@ -44,6 +46,10 @@
     },
     "subject_id": { "$ref": "shared.schema.json#/$defs/id" },
     "relation": { "type": "string", "minLength": 1 },
+    "object_type": {
+      "type": ["string", "null"],
+      "enum": ["style_concept", "glyph_instance", "work", "font_instance", "stimulus_candidate", null]
+    },
     "object_id": {
       "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
     },
@@ -75,6 +81,9 @@
     "human_reviewer_id": {
       "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
     },
+    "human_decision_id": {
+      "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
+    },
     "stance": { "type": "string", "enum": ["supports", "opposes", "qualifies", "not_applicable"] }
   },
   "allOf": [
@@ -88,7 +97,12 @@
     },
     {
       "if": { "properties": { "verification_status": { "const": "human_verified" } }, "required": ["verification_status"] },
-      "then": { "properties": { "human_reviewer_id": { "$ref": "shared.schema.json#/$defs/id" } } }
+      "then": {
+        "properties": {
+          "human_reviewer_id": { "$ref": "shared.schema.json#/$defs/id" },
+          "human_decision_id": { "$ref": "shared.schema.json#/$defs/id" }
+        }
+      }
     },
     {
       "if": { "properties": { "verification_status": { "const": "fixture_only" } }, "required": ["verification_status"] },
@@ -96,7 +110,13 @@
     }
   ],
   "anyOf": [
-    { "required": ["object_id"], "properties": { "object_id": { "$ref": "shared.schema.json#/$defs/id" } } },
+    {
+      "required": ["object_id", "object_type"],
+      "properties": {
+        "object_id": { "$ref": "shared.schema.json#/$defs/id" },
+        "object_type": { "type": "string" }
+      }
+    },
     { "required": ["object_value"], "properties": { "object_value": { "type": "string", "minLength": 1 } } }
   ]
 }

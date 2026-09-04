@@ -21,7 +21,7 @@
     "access_status"
   ],
   "properties": {
-    "schema_version": { "type": "string", "const": "1.0.0" },
+    "schema_version": { "type": "string", "const": "1.1.0" },
     "review_item_id": { "$ref": "shared.schema.json#/$defs/id" },
     "subject_type": { "type": "string", "const": "glyph_instance" },
     "subject_id": { "$ref": "shared.schema.json#/$defs/id" },

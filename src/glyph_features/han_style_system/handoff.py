@@ -12,8 +12,18 @@ from pathlib import Path
 from typing import Any
 
 from glyph_features.asset_system.catalog import canonical_json, normalize_repo_path, sha256_file, validate_record
+from glyph_features.han_style_system.adapters import build_adapter_records, integration_requests
+from glyph_features.han_style_system.claims import validate_claims
+from glyph_features.han_style_system.glyphs import (
+    load_content_sets,
+    validate_character_mappings,
+    validate_glyph_instances,
+)
 from glyph_features.han_style_system.io import read_json, read_jsonl
+from glyph_features.han_style_system.ontology import validate_ontology
 from glyph_features.han_style_system.review import aggregate_reviews, validate_review_records
+from glyph_features.han_style_system.stimuli import build_stimulus_candidates
+from glyph_features.han_style_system.trust import TRUST_ROOT_PATH
 
 
 PRODUCER_SCHEMAS = (
@@ -27,6 +37,7 @@ PRODUCER_SCHEMAS = (
     "schema/han_review_package.schema.json",
     "schema/han_stimulus_candidate.schema.json",
     "schema/han_style_concept.schema.json",
+    "schema/han_style_trust_root.schema.json",
     "schema/shared.schema.json",
 )
 SCHEMA_BY_LOGICAL_TYPE = {
@@ -39,6 +50,18 @@ SCHEMA_BY_LOGICAL_TYPE = {
     "expert_review": "expert_review.schema.json",
     "stimulus_candidate": "han_stimulus_candidate.schema.json",
     "adapter_record": "han_adapter_record.schema.json",
+}
+PROTECTED_LOGICAL_TYPES = {
+    "style_ontology",
+    "character_mapping",
+    "glyph_instance",
+    "knowledge_claim",
+    "review_package_manifest",
+    "review_item",
+    "expert_review",
+    "stimulus_candidate",
+    "adapter_record",
+    "integration_requests",
 }
 
 
@@ -134,14 +157,22 @@ def validate_handoff(
     schema_root: str | Path | None = None,
 ) -> list[str]:
     root = Path(workspace_root).resolve()
-    contracts = Path(schema_root).resolve() if schema_root else root
+    if schema_root is None:
+        contracts = root / "schema"
+    else:
+        supplied_contracts = Path(schema_root).resolve()
+        contracts = (
+            supplied_contracts
+            if (supplied_contracts / "han_handoff_manifest.schema.json").is_file()
+            else supplied_contracts / "schema"
+        )
     manifest_file = Path(manifest_path).resolve()
     errors: list[str] = []
     try:
         manifest = read_json(manifest_file)
     except (OSError, ValueError, json.JSONDecodeError) as error:
         return [f"HAN_HANDOFF_UNREADABLE: {error}"]
-    errors.extend(validate_record(manifest, contracts / "schema/han_handoff_manifest.schema.json"))
+    errors.extend(validate_record(manifest, contracts / "han_handoff_manifest.schema.json"))
     implementation_commit = manifest.get("implementation_commit")
     provenance = manifest.get("producer_provenance")
     if isinstance(provenance, dict):
@@ -181,6 +212,7 @@ def validate_handoff(
     _validate_checksums(root, manifest, errors)
     _validate_gate_truth(root, manifest, errors)
     _validate_research_boundaries(root, manifest, errors)
+    _validate_semantics(root, manifest_file, manifest, contracts, errors)
     if manifest_file.parent.is_relative_to(root):
         for path in sorted(manifest_file.parent.rglob("*")):
             if path.is_file() and _contains_absolute_filesystem_path(path):
@@ -210,6 +242,7 @@ def _reference_paths(root: Path, config: dict[str, Any]) -> dict[str, Path]:
         "task01_sources": _resolve(root, config["task01"]["sources_path"]),
         "task01_assets": _resolve(root, config["task01"]["asset_candidates_path"]),
         "task01_rights": _resolve(root, config["task01"]["rights_evidence_path"]),
+        "trust_root": root / TRUST_ROOT_PATH,
         "protocol": _resolve(root, config["protocol_document_path"]),
     }
 
@@ -225,6 +258,13 @@ def _reference_summary(reference: dict[str, Path], config: dict[str, Any]) -> di
     review_summaries = aggregate_reviews(
         reviews,
         minimum_independent_reviews=int(config["review"]["minimum_independent_reviews"]),
+        minimum_substantive_dimensions=int(
+            config["review"]["minimum_substantive_dimensions_per_review"]
+        ),
+        required_dimensions=tuple(config["review"]["required_dimension_coverage"]),
+        required_role_groups=tuple(
+            frozenset(group) for group in config["review"]["required_role_groups"]
+        ),
     )
     fixture_statuses = {value["fixture_status"] for value in review_summaries.values()}
     formal_statuses = {value["formal_status"] for value in review_summaries.values()}
@@ -270,6 +310,7 @@ def _input_artifacts(root: Path, config_file: Path, reference: dict[str, Path]) 
         (reference["task01_sources"], "task01_source_catalog", "metadata_only", "1.1.0-compatible"),
         (reference["task01_assets"], "task01_fixture_assets", "open_fixture", "1.0.0"),
         (reference["task01_rights"], "task01_rights_evidence", "metadata_only", "2.0.0"),
+        (reference["trust_root"], "han_style_trust_root", "public_code_or_schema", "1.0.0"),
     ]
     return [
         _artifact(root, path.relative_to(root).as_posix(), logical_type, rights, version, True)
@@ -286,12 +327,12 @@ def _implementation_outputs(
         (reference["ontology"], "style_ontology", "open_fixture", "1.0.0"),
         (reference["mappings"], "character_mapping", "open_fixture", "1.0.0"),
         (reference["glyphs"], "glyph_instance", "open_fixture", "1.0.0"),
-        (reference["claims"], "knowledge_claim", "open_fixture", "1.0.0"),
+        (reference["claims"], "knowledge_claim", "open_fixture", config["schema_versions"]["han_knowledge_claim"]),
         (reference["sources"], "source_catalog", "open_fixture", "1.0.0"),
         (reference["review_submissions"], "synthetic_review_submission", "open_fixture", "1.0.0"),
-        (reference["reviews"], "expert_review", "open_fixture", "1.0.0"),
-        (reference["candidates"], "stimulus_candidate", "open_fixture", "1.0.0"),
-        (reference["adapters"], "adapter_record", "open_fixture", "1.0.0"),
+        (reference["reviews"], "expert_review", "open_fixture", config["schema_versions"]["expert_review"]),
+        (reference["candidates"], "stimulus_candidate", "open_fixture", config["schema_versions"]["han_stimulus_candidate"]),
+        (reference["adapters"], "adapter_record", "open_fixture", config["schema_versions"]["han_adapter_record"]),
         (reference["integration_requests"], "integration_requests", "metadata_only", "1.0.0"),
         (reference["protocol"], "protocol_document", "public_code_or_schema", None),
     ]
@@ -307,7 +348,13 @@ def _implementation_outputs(
             "review_template.csv": "review_import_template",
             "index.html": "review_workbench",
         }.get(package_path.name, "review_package_asset")
-        schema_version = "1.0.0" if logical_type in {"review_package_manifest", "review_item"} else None
+        schema_version = (
+            config["schema_versions"]["han_review_package"]
+            if logical_type == "review_package_manifest"
+            else config["schema_versions"]["han_review_item"]
+            if logical_type == "review_item"
+            else None
+        )
         specifications.append((package_path, logical_type, "open_fixture", schema_version))
     return sorted(
         [
@@ -340,6 +387,7 @@ def _producer_records(root: Path, config_file: Path) -> list[dict[str, str]]:
         ("dependency_lock", root / "runtime.lock.json"),
         ("dependency_lock", root / "uv.lock"),
         ("config", config_file),
+        ("config", root / TRUST_ROOT_PATH),
         *(("schema", root / path) for path in PRODUCER_SCHEMAS),
         *(("producer_source", path) for path in sorted((root / "src/glyph_features/han_style_system").glob("*.py"))),
     ]
@@ -373,15 +421,16 @@ def _manifest(
     adapter_path = next(item["path"] for item in outputs if item["logical_type"] == "adapter_record")
     report_path = f"{prefix}/TASK-04_report_zh.md"
     return {
-        "handoff_schema_version": "1.0.0",
+        "handoff_schema_version": "1.1.0",
         "task_id": "TASK-04",
-        "producer_version": "1.0.0",
+        "producer_version": "1.1.0",
         "starting_checkpoint": config["starting_checkpoint"],
         "implementation_commit": commit,
         "producer_provenance": producer,
         "created_at": created_at,
         "readiness": {"engineering_ready": True, "pilot_ready": False, "research_validated": False},
-        "contract_versions": {**config["schema_versions"], "han_handoff_manifest": "1.0.0"},
+        "contract_versions": config["schema_versions"],
+        "contract_compatibility": config["contract_compatibility"],
         "input_snapshots": inputs,
         "outputs": outputs,
         "review_summary": summary["review_summary"],
@@ -462,7 +511,7 @@ def _report(summary: dict[str, Any], starting_checkpoint: str, commit: str, pref
     review = summary["review_summary"]
     return f"""# TASK-04 汉字书体知识与专家在环子系统报告
 
-版本：`1.0.0`
+版本：`1.1.0`
 起始 checkpoint：`{starting_checkpoint}`
 implementation commit：`{commit}`
 
@@ -639,10 +688,10 @@ def _validate_artifact_records(
         errors.append(f"HAN_HANDOFF_RECORD_UNREADABLE path={artifact.get('path')}: {error}")
         return
     for line_number, record in enumerate(records, start=1):
-        for error in validate_record(record, contracts / "schema" / schema_name):
+        for error in validate_record(record, contracts / schema_name):
             errors.append(f"HAN_HANDOFF_RECORD_INVALID path={artifact.get('path')} record={line_number}: {error}")
     if artifact.get("logical_type") == "expert_review":
-        errors.extend(validate_review_records(records, contracts / "schema/expert_review.schema.json"))
+        errors.extend(validate_review_records(records, contracts / "expert_review.schema.json"))
 
 
 def _validate_checksums(root: Path, manifest: dict[str, Any], errors: list[str]) -> None:
@@ -697,16 +746,332 @@ def _validate_research_boundaries(root: Path, manifest: dict[str, Any], errors: 
         path = _safe_workspace_path(root, candidate_artifact.get("path"), errors, "candidate")
         if path and path.is_file():
             candidates = read_jsonl(path)
-            if any(candidate.get("stimulus_id") is not None for candidate in candidates):
+            if any(
+                candidate.get("stimulus_id") is not None
+                and candidate.get("release_status") != "task01_frozen"
+                for candidate in candidates
+            ):
                 errors.append("HAN_HANDOFF_TASK01_STIMULUS_OWNERSHIP_VIOLATION")
-            if any(candidate.get("inference_scope", {}).get("scope") != "instance_level_only" for candidate in candidates):
-                errors.append("HAN_HANDOFF_CATEGORY_INFERENCE_UNSUPPORTED")
-    readiness = manifest.get("readiness")
-    if readiness != {"engineering_ready": True, "pilot_ready": False, "research_validated": False}:
+
+
+def _validate_semantics(
+    root: Path,
+    manifest_file: Path,
+    manifest: dict[str, Any],
+    contracts: Path,
+    errors: list[str],
+) -> None:
+    outputs = [item for item in manifest.get("outputs", []) if isinstance(item, dict)]
+    inputs = [item for item in manifest.get("input_snapshots", []) if isinstance(item, dict)]
+    by_output_type: dict[str, list[dict[str, Any]]] = {}
+    by_input_type: dict[str, list[dict[str, Any]]] = {}
+    for artifact in outputs:
+        by_output_type.setdefault(str(artifact.get("logical_type")), []).append(artifact)
+        if artifact.get("logical_type") in PROTECTED_LOGICAL_TYPES and artifact.get("implementation_bound") is not True:
+            errors.append(
+                f"HAN_HANDOFF_PROTECTED_OUTPUT_NOT_IMPLEMENTATION_BOUND type={artifact.get('logical_type')}"
+            )
+    for artifact in inputs:
+        by_input_type.setdefault(str(artifact.get("logical_type")), []).append(artifact)
+
+    required_outputs = {
+        "style_ontology",
+        "character_mapping",
+        "glyph_instance",
+        "knowledge_claim",
+        "expert_review",
+        "stimulus_candidate",
+        "adapter_record",
+        "integration_requests",
+        "review_package_manifest",
+        "source_catalog",
+    }
+    required_inputs = {
+        "content_set",
+        "han_style_config",
+        "han_style_trust_root",
+        "task01_handoff",
+        "task01_fixture_assets",
+        "task01_rights_evidence",
+        "task01_source_catalog",
+    }
+    for logical_type in sorted(required_outputs):
+        if len(by_output_type.get(logical_type, [])) != 1:
+            errors.append(f"HAN_HANDOFF_OUTPUT_COUNT_INVALID type={logical_type}")
+    for logical_type in sorted(required_inputs):
+        if len(by_input_type.get(logical_type, [])) != 1:
+            errors.append(f"HAN_HANDOFF_INPUT_COUNT_INVALID type={logical_type}")
+    if any(
+        len(by_output_type.get(logical_type, [])) != 1 for logical_type in required_outputs
+    ) or any(len(by_input_type.get(logical_type, [])) != 1 for logical_type in required_inputs):
+        return
+    if by_input_type["han_style_trust_root"][0].get("path") != TRUST_ROOT_PATH:
+        errors.append("HAN_HANDOFF_TRUST_ROOT_PATH_INVALID")
+
+    output_paths = {
+        item.get("path") for item in outputs if isinstance(item.get("path"), str)
+    }
+    try:
+        manifest_relative = manifest_file.relative_to(root).as_posix()
+    except ValueError:
+        manifest_relative = None
+    for entrypoint in manifest.get("next_task_entrypoints", []):
+        if not isinstance(entrypoint, dict):
+            continue
+        path = entrypoint.get("path")
+        if path not in output_paths and path != manifest_relative:
+            errors.append(
+                f"HAN_HANDOFF_ENTRYPOINT_NOT_OUTPUT target={entrypoint.get('target_system')} path={path}"
+            )
+    for gate in manifest.get("quality_gates", []):
+        if isinstance(gate, dict) and gate.get("evidence") not in output_paths:
+            errors.append(f"HAN_HANDOFF_GATE_EVIDENCE_NOT_OUTPUT gate={gate.get('gate_id')}")
+
+    def artifact_path(group: dict[str, list[dict[str, Any]]], logical_type: str) -> Path | None:
+        artifact = group[logical_type][0]
+        return _safe_workspace_path(root, artifact.get("path"), errors, logical_type)
+
+    paths = {
+        logical_type: artifact_path(by_output_type, logical_type)
+        for logical_type in required_outputs
+    }
+    paths.update(
+        {
+            logical_type: artifact_path(by_input_type, logical_type)
+            for logical_type in required_inputs
+        }
+    )
+    if any(path is None or not path.is_file() for path in paths.values()):
+        return
+    try:
+        config = read_json(paths["han_style_config"])
+        ontology = read_jsonl(paths["style_ontology"])
+        mappings = read_jsonl(paths["character_mapping"])
+        glyphs = read_jsonl(paths["glyph_instance"])
+        claims = read_jsonl(paths["knowledge_claim"])
+        sources = [
+            *read_jsonl(paths["source_catalog"]),
+            *read_jsonl(paths["task01_source_catalog"]),
+        ]
+        assets = read_jsonl(paths["task01_fixture_assets"])
+        reviews = read_jsonl(paths["expert_review"])
+        candidates = read_jsonl(paths["stimulus_candidate"])
+        adapters = read_jsonl(paths["adapter_record"])
+        declared_requests = json.loads(paths["integration_requests"].read_text(encoding="utf-8"))
+        rights = read_jsonl(paths["task01_rights_evidence"])
+        review_package_dir = paths["review_package_manifest"].parent
+        source_ids = {record["source_id"] for record in sources}
+        style_ids = {record["style_id"] for record in ontology}
+        mapping_ids = {record["mapping_id"] for record in mappings}
+        glyph_ids = {record["glyph_instance_id"] for record in glyphs}
+        graph_errors = validate_ontology(
+            ontology,
+            contracts / "han_style_concept.schema.json",
+            source_ids,
+        )
+        graph_errors += validate_character_mappings(
+            mappings,
+            contracts / "han_character_mapping.schema.json",
+            load_content_sets(paths["content_set"]),
+            source_ids,
+        )
+        graph_errors += validate_glyph_instances(
+            glyphs,
+            contracts / "han_glyph_instance.schema.json",
+            workspace_root=root,
+            style_ids=style_ids,
+            mapping_ids=mapping_ids,
+            source_ids=source_ids,
+            asset_records=assets,
+            claim_ids={record["claim_id"] for record in claims},
+        )
+        graph_errors += [
+            f"HAN_ASSET_SCHEMA_INVALID record={index}: {message}"
+            for index, asset in enumerate(assets, start=1)
+            for message in validate_record(asset, contracts / "asset_candidate.schema.json")
+        ]
+        graph_errors += validate_claims(
+            claims,
+            contracts / "han_knowledge_claim.schema.json",
+            style_ids=style_ids,
+            glyph_ids=glyph_ids,
+            source_ids=source_ids,
+            work_ids={record["work_id"] for record in glyphs}
+            | {record["work_id"] for record in assets if record.get("work_id")},
+            font_ids={record["font_id"] for record in glyphs if record.get("font_id")}
+            | {
+                record["font_metadata"]["font_id"]
+                for record in assets
+                if isinstance(record.get("font_metadata"), dict)
+                and record["font_metadata"].get("font_id")
+            },
+            stimulus_candidate_ids={record["candidate_id"] for record in candidates},
+        )
+        errors.extend(graph_errors)
+        review_summaries = aggregate_reviews(
+            reviews,
+            minimum_independent_reviews=int(config["review"]["minimum_independent_reviews"]),
+            minimum_substantive_dimensions=int(
+                config["review"]["minimum_substantive_dimensions_per_review"]
+            ),
+            required_dimensions=tuple(config["review"]["required_dimension_coverage"]),
+            required_role_groups=tuple(
+                frozenset(group) for group in config["review"]["required_role_groups"]
+            ),
+        )
+        expected_review_summary = _review_summary(review_summaries)
+        created_at = candidates[0]["created_at"] if candidates else manifest["created_at"]
+        expected_candidates = build_stimulus_candidates(
+            glyphs,
+            mappings,
+            reviews,
+            rights,
+            schema_path=contracts / "han_stimulus_candidate.schema.json",
+            render_profiles=config["stimuli"]["render_profiles"],
+            minimum_independent_reviews=int(config["review"]["minimum_independent_reviews"]),
+            minimum_independent_exemplars=int(
+                config["stimuli"]["minimum_independent_exemplars_for_category"]
+            ),
+            created_at=created_at,
+            review_package_dir=review_package_dir,
+            review_records_path=paths["expert_review"],
+            task01_handoff_path=paths["task01_handoff"],
+            rights_evidence_path=paths["task01_rights_evidence"],
+            workspace_root=root,
+            ontology_records=ontology,
+            source_records=sources,
+            asset_records=assets,
+            claim_records=claims,
+            content_sets_path=paths["content_set"],
+            minimum_substantive_dimensions=int(
+                config["review"]["minimum_substantive_dimensions_per_review"]
+            ),
+            required_dimensions=tuple(config["review"]["required_dimension_coverage"]),
+            required_role_groups=tuple(
+                frozenset(group) for group in config["review"]["required_role_groups"]
+            ),
+        )
+        expected_adapters = build_adapter_records(
+            ontology,
+            expected_candidates,
+            schema_path=contracts / "han_adapter_record.schema.json",
+        )
+    except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError) as error:
+        errors.append(f"HAN_HANDOFF_SEMANTIC_REBUILD_FAILED: {error}")
+        return
+
+    if manifest.get("review_summary") != expected_review_summary:
+        errors.append("HAN_HANDOFF_REVIEW_SUMMARY_MISMATCH")
+    expected_inference = _inference_summary(expected_candidates, config)
+    if manifest.get("inference_readiness") != expected_inference:
+        errors.append("HAN_HANDOFF_INFERENCE_SUMMARY_MISMATCH")
+    if candidates != expected_candidates:
+        errors.append("HAN_HANDOFF_CANDIDATE_SEMANTICS_MISMATCH")
+    if adapters != expected_adapters:
+        errors.append("HAN_HANDOFF_ADAPTER_SEMANTICS_MISMATCH")
+    if declared_requests != integration_requests(expected_adapters):
+        errors.append("HAN_HANDOFF_INTEGRATION_REQUESTS_MISMATCH")
+
+    expected_gate_statuses = _semantic_gate_statuses(expected_candidates, review_summaries)
+    declared_gate_statuses = {
+        gate.get("gate_id"): gate.get("status")
+        for gate in manifest.get("quality_gates", [])
+        if isinstance(gate, dict)
+    }
+    for gate_id, expected_status in expected_gate_statuses.items():
+        if declared_gate_statuses.get(gate_id) != expected_status:
+            errors.append(f"HAN_HANDOFF_GATE_TRUTH_MISMATCH gate={gate_id}")
+
+    expected_readiness = {
+        "engineering_ready": True,
+        "pilot_ready": bool(expected_candidates)
+        and all(candidate["release_status"] == "task01_frozen" for candidate in expected_candidates),
+        "research_validated": False,
+    }
+    if manifest.get("readiness") != expected_readiness:
         errors.append("HAN_HANDOFF_READINESS_UNTRUTHFUL")
-    review_summary = manifest.get("review_summary")
-    if isinstance(review_summary, dict) and review_summary.get("real_review_count") != 0:
-        errors.append("HAN_HANDOFF_REAL_REVIEW_COUNT_UNEXPECTED")
+
+
+def _semantic_gate_statuses(
+    candidates: list[dict[str, Any]],
+    review_summaries: dict[str, dict[str, Any]],
+) -> dict[str, str]:
+    return {
+        "schema_and_hash_validation": "passed",
+        "synthetic_double_review": (
+            "fixture_only"
+            if candidates
+            and all(candidate["data_origin"] == "synthetic_fixture" for candidate in candidates)
+            and all(summary["fixture_status"] == "passed" for summary in review_summaries.values())
+            else "blocked"
+        ),
+        "formal_expert_review": (
+            "passed"
+            if review_summaries and all(summary["formal_status"] == "passed" for summary in review_summaries.values())
+            else "blocked"
+        ),
+        "formal_asset_rights": (
+            "passed"
+            if candidates
+            and all(candidate["rights_summary"]["status"] == "passed" for candidate in candidates)
+            else "blocked"
+        ),
+        "restricted_terms": "blocked",
+        "task01_stimulus_freeze": (
+            "passed"
+            if candidates
+            and all(
+                candidate["task01_freeze"]["status"] == "assigned"
+                and candidate["release_status"] == "task01_frozen"
+                and candidate["stimulus_id"] is not None
+                for candidate in candidates
+            )
+            else "blocked"
+        ),
+        "category_level_inference": (
+            "passed"
+            if candidates
+            and all(candidate["inference_scope"]["scope"] == "category_candidate" for candidate in candidates)
+            else "blocked"
+        ),
+    }
+
+
+def _review_summary(review_summaries: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    fixture_statuses = {summary["fixture_status"] for summary in review_summaries.values()}
+    formal_statuses = {summary["formal_status"] for summary in review_summaries.values()}
+    return {
+        "subject_count": len(review_summaries),
+        "synthetic_review_count": sum(
+            summary["synthetic_review_count"] for summary in review_summaries.values()
+        ),
+        "real_review_count": sum(summary["real_review_count"] for summary in review_summaries.values()),
+        "fixture_status": next(iter(fixture_statuses)) if len(fixture_statuses) == 1 else "conflicted",
+        "formal_status": next(iter(formal_statuses)) if len(formal_statuses) == 1 else "conflicted",
+    }
+
+
+def _inference_summary(candidates: list[dict[str, Any]], config: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "minimum_independent_exemplars_for_category": int(
+            config["stimuli"]["minimum_independent_exemplars_for_category"]
+        ),
+        "formal_pilot_candidate_count": sum(
+            candidate["release_status"] == "eligible_for_task01_freeze" for candidate in candidates
+        ),
+        "task01_assigned_stimulus_count": sum(candidate["stimulus_id"] is not None for candidate in candidates),
+        "instance_level_candidate_count": sum(
+            candidate["inference_scope"]["scope"] == "instance_level_only" for candidate in candidates
+        ),
+        "category_level_candidate_count": sum(
+            candidate["inference_scope"]["scope"] == "category_candidate" for candidate in candidates
+        ),
+        "default_scope": (
+            "category_candidate"
+            if candidates and all(candidate["inference_scope"]["scope"] == "category_candidate" for candidate in candidates)
+            else "instance_level_only"
+        ),
+    }
 
 
 def _safe_workspace_path(

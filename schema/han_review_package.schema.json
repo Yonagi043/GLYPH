@@ -16,13 +16,16 @@
     "rubric_dimensions",
     "blinding",
     "asset_access_level",
+    "asset_copy_policy",
+    "redistribution_status",
+    "access_authorization_id",
     "gate_status",
     "gate_approval_id"
   ],
   "properties": {
-    "schema_version": { "type": "string", "const": "1.0.0" },
+    "schema_version": { "type": "string", "const": "1.1.0" },
     "package_id": { "$ref": "shared.schema.json#/$defs/id" },
-    "package_version": { "type": "string", "const": "1.0.0" },
+    "package_version": { "type": "string", "const": "1.1.0" },
     "created_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" },
     "review_round": { "type": "integer", "minimum": 1 },
     "subject_type": { "type": "string", "const": "glyph_instance" },
@@ -47,12 +50,34 @@
       }
     },
     "asset_access_level": { "type": "string", "enum": ["open_fixture", "research_local_only"] },
+    "asset_copy_policy": { "type": "string", "enum": ["copied_open_fixture", "local_review_package_only"] },
+    "redistribution_status": { "type": "string", "enum": ["fixture_only", "prohibited"] },
+    "access_authorization_id": {
+      "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
+    },
     "gate_status": { "type": "string", "enum": ["blocked", "approved"] },
     "gate_approval_id": {
       "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
     }
   },
   "allOf": [
+    {
+      "if": { "properties": { "asset_access_level": { "const": "research_local_only" } }, "required": ["asset_access_level"] },
+      "then": {
+        "properties": {
+          "asset_copy_policy": { "const": "local_review_package_only" },
+          "redistribution_status": { "const": "prohibited" },
+          "access_authorization_id": { "$ref": "shared.schema.json#/$defs/id" }
+        }
+      },
+      "else": {
+        "properties": {
+          "asset_copy_policy": { "const": "copied_open_fixture" },
+          "redistribution_status": { "const": "fixture_only" },
+          "access_authorization_id": { "type": "null" }
+        }
+      }
+    },
     {
       "if": { "properties": { "gate_status": { "const": "approved" } }, "required": ["gate_status"] },
       "then": { "properties": { "gate_approval_id": { "$ref": "shared.schema.json#/$defs/id" } } },

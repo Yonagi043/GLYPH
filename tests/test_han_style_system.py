@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import copy
 import csv
+import hashlib
 import json
+import tempfile
 from pathlib import Path
 
 import pytest
 
-from glyph_features.asset_system.catalog import validate_record
+from glyph_features.asset_system.catalog import canonical_json, validate_record
+from glyph_features.han_style_system import PROTOCOL_VERSION
 from glyph_features.han_style_system.adapters import build_adapter_records, integration_requests
 from glyph_features.han_style_system.claims import validate_claims
 from glyph_features.han_style_system.cli import (
@@ -21,7 +24,7 @@ from glyph_features.han_style_system.glyphs import (
     validate_character_mappings,
     validate_glyph_instances,
 )
-from glyph_features.han_style_system.handoff import build_handoff_bundle
+from glyph_features.han_style_system.handoff import build_handoff_bundle, validate_handoff
 from glyph_features.han_style_system.ontology import TARGET_STYLE_CODES, validate_ontology
 from glyph_features.han_style_system.review import (
     RUBRIC_DIMENSIONS,
@@ -40,6 +43,13 @@ FIXTURE = ROOT / "data/fixtures/han_style_system"
 
 def read_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+
+
+def write_jsonl(path: Path, records: list[dict]) -> None:
+    path.write_text(
+        "".join(json.dumps(record, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n" for record in records),
+        encoding="utf-8",
+    )
 
 
 def fixture_context() -> dict[str, list[dict]]:
@@ -65,7 +75,7 @@ def synthetic_review_rows(package_dir: Path, decisions: tuple[str, str] = ("pass
         row.update(
             {
                 "reviewer_id": f"reviewer_fixture_{index:02d}",
-                "reviewer_role": "type_or_visual_design",
+                "reviewer_role": "history_or_paleography" if index == 1 else "type_or_visual_design",
                 "review_origin": "synthetic_fixture",
                 "overall_decision": decision,
                 "reason_codes": "FIXTURE_ONLY|INSTANCE_LEVEL_ONLY",
@@ -74,7 +84,7 @@ def synthetic_review_rows(package_dir: Path, decisions: tuple[str, str] = ("pass
             }
         )
         for dimension in RUBRIC_DIMENSIONS:
-            row[dimension] = "not_applicable"
+            row[dimension] = "pass"
         rows.append(row)
     return rows
 
@@ -120,6 +130,12 @@ def ontology_records() -> list[dict]:
         }
         for index, target_code in enumerate(sorted(TARGET_STYLE_CODES), start=1)
     ]
+
+
+def test_protocol_version_matches_config() -> None:
+    config = json.loads((ROOT / "configs/han_style_protocol_v1.yaml").read_text(encoding="utf-8"))
+
+    assert config["protocol_version"] == f"han_style_v{PROTOCOL_VERSION}"
 
 
 def test_ontology_expresses_all_target_styles_without_conflating_classification_levels() -> None:
@@ -239,6 +255,79 @@ def test_cultural_association_cannot_be_encoded_as_historical_fact() -> None:
     assert any(error.startswith("HAN_ASSOCIATION_AS_FACT") for error in errors)
 
 
+def test_claim_graph_rejects_unknown_work_object_and_human_decision() -> None:
+    claim = copy.deepcopy(read_jsonl(FIXTURE / "claims.jsonl")[0])
+    claim.update(
+        {
+            "subject_type": "work",
+            "subject_id": "work_missing_01",
+            "relation": "derived_from_glyph",
+            "object_type": "glyph_instance",
+            "object_id": "glyph_missing_01",
+            "object_value": None,
+            "verification_status": "human_verified",
+            "human_reviewer_id": "reviewer_missing_01",
+            "human_decision_id": "decision_missing_01",
+            "extraction_method": "manual",
+            "evidence_grade": "A",
+        }
+    )
+
+    errors = validate_claims(
+        [claim],
+        ROOT / "schema/han_knowledge_claim.schema.json",
+        style_ids={"style_hs01"},
+        glyph_ids={"glyph_han_fixture_01"},
+        source_ids={"source_han_fixture_protocol"},
+    )
+
+    assert any(error.startswith("HAN_CLAIM_SUBJECT_UNKNOWN") for error in errors)
+    assert any(error.startswith("HAN_CLAIM_OBJECT_UNKNOWN") for error in errors)
+    assert any(error.startswith("HAN_CLAIM_HUMAN_DECISION_UNKNOWN") for error in errors)
+
+
+def test_claim_graph_rejects_caller_supplied_human_decision() -> None:
+    claim = copy.deepcopy(read_jsonl(FIXTURE / "claims.jsonl")[0])
+    claim.update(
+        {
+            "verification_status": "human_verified",
+            "human_reviewer_id": "reviewer_self_asserted_01",
+            "human_decision_id": "decision_self_asserted_01",
+            "extraction_method": "manual",
+            "evidence_grade": "A",
+        }
+    )
+    evidence_sha256 = hashlib.sha256(
+        canonical_json(
+            {
+                "source_id": claim["source_id"],
+                "source_locator": claim["source_locator"],
+                "evidence_span": claim["evidence_span"],
+            }
+        )
+    ).hexdigest()
+
+    errors = validate_claims(
+        [claim],
+        ROOT / "schema/han_knowledge_claim.schema.json",
+        style_ids={"style_hs01"},
+        glyph_ids=set(),
+        source_ids={"source_han_fixture_protocol"},
+        human_decisions={
+            "decision_self_asserted_01": {
+                "decision_id": "decision_self_asserted_01",
+                "claim_id": claim["claim_id"],
+                "reviewer_id": "reviewer_self_asserted_01",
+                "evidence_sha256": evidence_sha256,
+                "decision": "verified",
+            }
+        },
+    )
+
+    assert "HAN_CLAIM_HUMAN_DECISION_SOURCE_UNTRUSTED" in errors
+    assert any(error.startswith("HAN_CLAIM_HUMAN_DECISION_UNKNOWN") for error in errors)
+
+
 def test_review_package_and_synthetic_double_review_remain_fixture_only(tmp_path: Path) -> None:
     context = fixture_context()
     package_dir = tmp_path / "review-package"
@@ -285,6 +374,7 @@ def test_review_package_and_synthetic_double_review_remain_fixture_only(tmp_path
     assert {candidate["stimulus_id"] for candidate in candidates} == {None}
     assert {candidate["inference_scope"]["scope"] for candidate in candidates} == {"instance_level_only"}
     assert all("REAL_EXPERT_REVIEWS_REQUIRED" in candidate["task01_freeze"]["blockers"] for candidate in candidates)
+    assert all("INPUT_GRAPH_UNVERIFIED" in candidate["task01_freeze"]["blockers"] for candidate in candidates)
 
     adapters = build_adapter_records(
         context["ontology"],
@@ -303,6 +393,74 @@ def test_review_package_and_synthetic_double_review_remain_fixture_only(tmp_path
         "TASK-03",
         "WP2",
     }
+
+
+def test_task01_adapter_exposes_ready_freeze_request() -> None:
+    context = fixture_context()
+    candidate = copy.deepcopy(
+        read_jsonl(FIXTURE / "reference_run_v1/candidate_bundle/stimulus_candidates.jsonl")[0]
+    )
+    candidate.update(
+        {
+            "data_origin": "source_record",
+            "candidate_level": "historical_source_specimen",
+            "release_status": "eligible_for_task01_freeze",
+        }
+    )
+    candidate["task01_freeze"] = {
+        "status": "ready_for_request",
+        "blockers": [],
+        "requested_contract": "TASK-01 stimulus freeze",
+    }
+    candidate["review_summary"].update(
+        {"formal_status": "passed", "real_review_count": 2, "formal_policy_blockers": []}
+    )
+    candidate["rights_summary"]["status"] = "passed"
+    candidate["mapping_status"] = "evidence_supported"
+
+    adapters = build_adapter_records(
+        context["ontology"],
+        [candidate],
+        schema_path=ROOT / "schema/han_adapter_record.schema.json",
+    )
+    task01 = next(record for record in adapters if record["target_system"] == "TASK-01")
+    request = next(record for record in integration_requests(adapters) if record["target_system"] == "TASK-01")
+
+    assert task01["status"] == "ready"
+    assert task01["blocking_reasons"] == []
+    assert request["status"] == "ready"
+
+
+def test_task01_adapter_rejects_inconsistent_self_asserted_ready() -> None:
+    context = fixture_context()
+    candidate = copy.deepcopy(
+        read_jsonl(FIXTURE / "reference_run_v1/candidate_bundle/stimulus_candidates.jsonl")[0]
+    )
+    candidate.update(
+        {
+            "data_origin": "source_record",
+            "candidate_level": "historical_source_specimen",
+            "release_status": "eligible_for_task01_freeze",
+        }
+    )
+    candidate["task01_freeze"] = {
+        "status": "ready_for_request",
+        "blockers": [],
+        "requested_contract": "TASK-01 stimulus freeze",
+    }
+
+    adapters = build_adapter_records(
+        context["ontology"],
+        [candidate],
+        schema_path=ROOT / "schema/han_adapter_record.schema.json",
+    )
+    task01 = next(record for record in adapters if record["target_system"] == "TASK-01")
+    request = next(record for record in integration_requests(adapters) if record["target_system"] == "TASK-01")
+
+    assert task01["status"] == "blocked"
+    assert "FORMAL_REVIEW_NOT_PASSED" in task01["blocking_reasons"]
+    assert "FORMAL_RIGHTS_NOT_PASSED" in task01["blocking_reasons"]
+    assert request["status"] == "blocked"
 
 
 def test_review_conflict_is_retained_and_blocks_fixture_status(tmp_path: Path) -> None:
@@ -326,6 +484,21 @@ def test_review_conflict_is_retained_and_blocks_fixture_status(tmp_path: Path) -
     assert summary["fixture_status"] == "conflicted"
     assert summary["decision_counts"] == {"fail": 1, "pass": 1}
     assert len(reviews) == 2
+
+
+def test_same_role_all_na_reviews_cannot_satisfy_formal_policy() -> None:
+    reviews = copy.deepcopy(read_jsonl(FIXTURE / "reference_run_v1/reviews.jsonl"))
+    for review in reviews:
+        review["review_origin"] = "real_expert"
+        review["gate_approval_id"] = "approval_untrusted_01"
+        review["reviewer_role"] = "type_or_visual_design"
+        review["signature_sha256"] = hashlib.sha256(
+            canonical_json({key: value for key, value in review.items() if key != "signature_sha256"})
+        ).hexdigest()
+
+    summary = aggregate_reviews(reviews, minimum_independent_reviews=2)["glyph_han_fixture_01"]
+
+    assert summary["formal_status"] == "blocked"
 
 
 def test_real_expert_review_requires_external_gate_approval(tmp_path: Path) -> None:
@@ -385,6 +558,43 @@ def test_review_package_and_records_detect_tampering(tmp_path: Path) -> None:
         )
 
 
+def test_review_records_cannot_borrow_accepted_file_hash(tmp_path: Path) -> None:
+    context = fixture_context()
+    package_dir = tmp_path / "review-package"
+    build_review_package(
+        context["glyphs"],
+        context["mappings"],
+        context["assets"],
+        workspace_root=ROOT,
+        output_dir=package_dir,
+        created_at="2026-09-04T00:00:00Z",
+        ordering_seed="fixture-seed-v1",
+    )
+    reviews = import_review_rows(
+        package_dir,
+        synthetic_review_rows(package_dir),
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    accepted_file = tmp_path / "accepted-reviews.jsonl"
+    write_jsonl(accepted_file, reviews)
+    substituted = copy.deepcopy(reviews)
+    substituted[0]["notes"] = "Substituted in-memory review with a valid signature."
+    substituted[0]["signature_sha256"] = hashlib.sha256(
+        canonical_json(
+            {key: value for key, value in substituted[0].items() if key != "signature_sha256"}
+        )
+    ).hexdigest()
+
+    errors = validate_review_records(
+        substituted,
+        ROOT / "schema/expert_review.schema.json",
+        package_dir=package_dir,
+        review_records_path=accepted_file,
+    )
+
+    assert "HAN_REVIEW_RECORDS_FILE_MISMATCH" in errors
+
+
 def test_review_package_detects_workbench_tampering(tmp_path: Path) -> None:
     context = fixture_context()
     package_dir = tmp_path / "review-package"
@@ -430,6 +640,59 @@ def test_review_package_rejects_paths_outside_package(tmp_path: Path) -> None:
             package_dir,
             rows,
             schema_path=ROOT / "schema/expert_review.schema.json",
+        )
+
+
+def test_research_local_package_is_restricted_and_unknown_rights_are_rejected(tmp_path: Path) -> None:
+    context = fixture_context()
+    glyph = copy.deepcopy(context["glyphs"][0])
+    glyph.update(
+        {
+            "data_origin": "source_record",
+            "acquisition_type": "historical_source",
+            "rights_tier": "research_local_only",
+            "release_tier": "research_local_only",
+            "identity_status": "evidence_supported",
+            "attribution_status": "evidence_supported",
+            "structure_qc": {"status": "needs_review", "failure_codes": ["GLYPH_STRUCTURE_UNVERIFIED"]},
+            "expert_review_status": "in_review",
+        }
+    )
+    package_dir = tmp_path / "local-review-package"
+    manifest = build_review_package(
+        [glyph],
+        context["mappings"],
+        context["assets"],
+        workspace_root=ROOT,
+        output_dir=package_dir,
+        created_at="2026-09-04T00:00:00Z",
+        ordering_seed="local-fixture-seed-v1",
+        access_level="research_local_only",
+        access_authorization_id="fixture_local_review_authorization_v1",
+        task01_handoff_path=ROOT / "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+        rights_evidence_path=ROOT / "data/fixtures/asset_system/reference_handoff_v1/rights_evidence.jsonl",
+    )
+    assert manifest["asset_access_level"] == "research_local_only"
+    assert manifest["redistribution_status"] == "prohibited"
+    assert manifest["asset_copy_policy"] == "local_review_package_only"
+    assert package_dir.stat().st_mode & 0o077 == 0
+
+    blocked = copy.deepcopy(glyph)
+    blocked["glyph_instance_id"] = "glyph_blocked_rights_01"
+    blocked["rights_tier"] = "blocked_unknown"
+    with pytest.raises(ReviewError, match="REVIEW_ASSET_NOT_AUTHORIZED"):
+        build_review_package(
+            [blocked],
+            context["mappings"],
+            context["assets"],
+            workspace_root=ROOT,
+            output_dir=tmp_path / "blocked-package",
+            created_at="2026-09-04T00:00:00Z",
+            ordering_seed="blocked-fixture-seed-v1",
+            access_level="research_local_only",
+            access_authorization_id="fixture_local_review_authorization_v1",
+            task01_handoff_path=ROOT / "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+            rights_evidence_path=ROOT / "data/fixtures/asset_system/reference_handoff_v1/rights_evidence.jsonl",
         )
 
 
@@ -500,8 +763,187 @@ def test_adjudication_retains_independent_conflicting_reviews(tmp_path: Path) ->
     )
     assert len(reviews) == 3
     assert [review["overall_decision"] for review in reviews[:2]] == ["pass", "fail"]
-    assert reviews[2]["conflict_review_ids"] == [review["review_id"] for review in independent_reviews]
+    assert reviews[2]["conflict_review_ids"] == sorted(
+        review["review_id"] for review in independent_reviews
+    )
     assert validate_review_records(reviews, ROOT / "schema/expert_review.schema.json") == []
+
+
+def test_authorized_adjudication_resolves_conflict_without_overwriting_reviews(tmp_path: Path) -> None:
+    context = fixture_context()
+    package_dir = tmp_path / "review-package"
+    build_review_package(
+        context["glyphs"],
+        context["mappings"],
+        context["assets"],
+        workspace_root=ROOT,
+        output_dir=package_dir,
+        created_at="2026-09-04T00:00:00Z",
+        ordering_seed="fixture-seed-v1",
+    )
+    independent_rows = synthetic_review_rows(package_dir, decisions=("pass", "fail"))
+    independent_rows[0]["reviewer_role"] = "history_or_paleography"
+    independent_rows[1]["reviewer_role"] = "type_or_visual_design"
+    for row in independent_rows:
+        for dimension in RUBRIC_DIMENSIONS:
+            row[dimension] = "pass"
+    independent = import_review_rows(
+        package_dir,
+        independent_rows,
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    adjudication = dict(independent_rows[0])
+    adjudication.update(
+        {
+            "reviewer_id": "reviewer_fixture_adjudicator_01",
+            "round": "2",
+            "review_round_type": "adjudication",
+            "independence_attestation": "false",
+            "prior_review_visibility": "visible_for_adjudication",
+            "overall_decision": "needs_revision",
+            "conflict_review_ids": "|".join(review["review_id"] for review in independent),
+        }
+    )
+
+    reviews = import_review_rows(
+        package_dir,
+        [*independent_rows, adjudication],
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    summary = aggregate_reviews(reviews, minimum_independent_reviews=2)["glyph_han_fixture_01"]
+
+    assert len(reviews) == 3
+    assert summary["fixture_status"] == "needs_revision"
+    assert summary["decision_counts"] == {"fail": 1, "needs_revision": 1, "pass": 1}
+    assert summary["adjudication_review_ids"] == [reviews[2]["review_id"]]
+
+
+def test_authorized_adjudication_supersedes_chain_uses_terminal_decision(tmp_path: Path) -> None:
+    context = fixture_context()
+    package_dir = tmp_path / "review-package"
+    build_review_package(
+        context["glyphs"],
+        context["mappings"],
+        context["assets"],
+        workspace_root=ROOT,
+        output_dir=package_dir,
+        created_at="2026-09-04T00:00:00Z",
+        ordering_seed="fixture-seed-v1",
+    )
+    independent_rows = synthetic_review_rows(package_dir, decisions=("pass", "fail"))
+    independent = import_review_rows(
+        package_dir,
+        independent_rows,
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    conflict_ids = "|".join(review["review_id"] for review in independent)
+    first_adjudication = dict(independent_rows[0])
+    first_adjudication.update(
+        {
+            "reviewer_id": "reviewer_fixture_03",
+            "round": "2",
+            "review_round_type": "adjudication",
+            "prior_review_visibility": "visible_for_adjudication",
+            "overall_decision": "needs_revision",
+            "conflict_review_ids": conflict_ids,
+        }
+    )
+    first_round = import_review_rows(
+        package_dir,
+        [*independent_rows, first_adjudication],
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    second_adjudication = dict(first_adjudication)
+    second_adjudication.update(
+        {
+            "reviewer_id": "reviewer_fixture_adjudicator_01",
+            "reviewer_role": "history_or_paleography",
+            "round": "3",
+            "overall_decision": "pass",
+            "supersedes_review_id": first_round[2]["review_id"],
+        }
+    )
+
+    reviews = import_review_rows(
+        package_dir,
+        [*independent_rows, first_adjudication, second_adjudication],
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    summary = aggregate_reviews(reviews, minimum_independent_reviews=2)["glyph_han_fixture_01"]
+
+    assert summary["fixture_status"] == "passed"
+    assert summary["decision_counts"] == {"fail": 1, "needs_revision": 1, "pass": 2}
+    assert summary["adjudication_review_ids"] == sorted(
+        [reviews[2]["review_id"], reviews[3]["review_id"]]
+    )
+
+
+def test_unauthorized_adjudicator_cannot_resolve_conflict(tmp_path: Path) -> None:
+    context = fixture_context()
+    package_dir = tmp_path / "review-package"
+    build_review_package(
+        context["glyphs"],
+        context["mappings"],
+        context["assets"],
+        workspace_root=ROOT,
+        output_dir=package_dir,
+        created_at="2026-09-04T00:00:00Z",
+        ordering_seed="fixture-seed-v1",
+    )
+    independent_rows = synthetic_review_rows(package_dir, decisions=("pass", "fail"))
+    independent = import_review_rows(
+        package_dir,
+        independent_rows,
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    adjudication = dict(independent_rows[0])
+    adjudication.update(
+        {
+            "reviewer_id": "reviewer_fixture_untrusted_99",
+            "round": "2",
+            "review_round_type": "adjudication",
+            "independence_attestation": "false",
+            "prior_review_visibility": "visible_for_adjudication",
+            "overall_decision": "pass",
+            "conflict_review_ids": "|".join(review["review_id"] for review in independent),
+        }
+    )
+
+    with pytest.raises(ReviewError, match="REVIEW_ADJUDICATOR_UNAUTHORIZED"):
+        import_review_rows(
+            package_dir,
+            [*independent_rows, adjudication],
+            schema_path=ROOT / "schema/expert_review.schema.json",
+        )
+
+
+def test_lineage_units_cannot_be_forged_with_cluster_ids() -> None:
+    from glyph_features.han_style_system.stimuli import derive_lineage_units
+
+    context = fixture_context()
+    shared = []
+    for index in range(3):
+        glyph = copy.deepcopy(context["glyphs"][0])
+        glyph["glyph_instance_id"] = f"glyph_shared_lineage_{index}"
+        glyph["exemplar_cluster_id"] = f"cluster_claimed_independent_{index}"
+        shared.append(glyph)
+    shared_units = derive_lineage_units(shared)
+    assert len(set(shared_units.values())) == 1
+
+    independent = []
+    for index in range(3):
+        glyph = copy.deepcopy(context["glyphs"][0])
+        glyph["glyph_instance_id"] = f"glyph_independent_lineage_{index}"
+        glyph["exemplar_cluster_id"] = f"cluster_independent_{index}"
+        glyph["work_id"] = f"work_independent_{index}"
+        glyph["source_id"] = f"source_independent_{index}"
+        glyph["asset_id"] = f"asset_independent_{index}"
+        glyph["representation_asset_ids"] = {
+            key: f"asset_{key.lower()}_{index}" for key in glyph["representation_asset_ids"]
+        }
+        independent.append(glyph)
+    independent_units = derive_lineage_units(independent)
+    assert len(set(independent_units.values())) == 3
 
 
 def test_review_package_is_no_overwrite(tmp_path: Path) -> None:
@@ -615,6 +1057,8 @@ def test_cli_validates_fixture_and_builds_review_candidate_bundle(tmp_path: Path
             str(FIXTURE / "glyph_instances.jsonl"),
             "--reviews",
             str(reviews_path),
+            "--review-package-dir",
+            str(package_dir),
             "--rights-evidence",
             str(task01_root / "rights_evidence.jsonl"),
             "--output-dir",
@@ -627,7 +1071,86 @@ def test_cli_validates_fixture_and_builds_review_candidate_bundle(tmp_path: Path
     adapters = read_jsonl(candidate_dir / "adapters.jsonl")
     assert len(candidates) == 2
     assert len(adapters) == 14
+    assert all("INPUT_GRAPH_UNVERIFIED" not in candidate["task01_freeze"]["blockers"] for candidate in candidates)
     assert json.loads((candidate_dir / "integration_requests.json").read_text(encoding="utf-8"))
+
+
+def test_cli_rejects_self_asserted_formal_review_and_rights(tmp_path: Path) -> None:
+    context = fixture_context()
+    mappings = copy.deepcopy(context["mappings"])
+    mappings[0]["mapping_status"] = "evidence_supported"
+    mappings[0]["human_review_status"] = "passed"
+    glyphs = copy.deepcopy(context["glyphs"])
+    glyphs[0].update(
+        {
+            "data_origin": "source_record",
+            "acquisition_type": "historical_source",
+            "release_tier": "release_candidate",
+            "rights_tier": "research_local_only",
+            "identity_status": "evidence_supported",
+            "attribution_status": "evidence_supported",
+            "structure_qc": {"status": "passed", "failure_codes": []},
+            "expert_review_status": "passed",
+        }
+    )
+    reviews = copy.deepcopy(read_jsonl(FIXTURE / "reference_run_v1/reviews.jsonl"))
+    for review in reviews:
+        review["review_origin"] = "real_expert"
+        review["gate_approval_id"] = "approval_self_asserted_01"
+        review["reviewer_role"] = "type_or_visual_design"
+        review["signature_sha256"] = hashlib.sha256(
+            canonical_json({key: value for key, value in review.items() if key != "signature_sha256"})
+        ).hexdigest()
+    rights = copy.deepcopy(
+        next(record for record in context["rights"] if record["source_id"] == glyphs[0]["source_id"])
+    )
+    rights.update(
+        {
+            "rights_evidence_id": "rights_self_asserted_01",
+            "basis": "explicit_license",
+            "license_status": "research_only",
+            "rights_tier": "research_local_only",
+            "permitted_uses": ["research_stimulus_local"],
+            "redistribution_allowed": False,
+            "decision_status": "passed",
+        }
+    )
+    mappings_path = tmp_path / "mappings.jsonl"
+    glyphs_path = tmp_path / "glyphs.jsonl"
+    reviews_path = tmp_path / "reviews.jsonl"
+    rights_path = tmp_path / "rights.jsonl"
+    write_jsonl(mappings_path, mappings)
+    write_jsonl(glyphs_path, glyphs)
+    write_jsonl(reviews_path, reviews)
+    write_jsonl(rights_path, [rights])
+    output_dir = tmp_path / "candidate-bundle"
+
+    exit_code = han_cli(
+        [
+            "build-stimulus-candidates",
+            "--ontology",
+            str(FIXTURE / "ontology.jsonl"),
+            "--mappings",
+            str(mappings_path),
+            "--glyphs",
+            str(glyphs_path),
+            "--reviews",
+            str(reviews_path),
+            "--rights-evidence",
+            str(rights_path),
+            "--output-dir",
+            str(output_dir),
+            "--created-at",
+            "2026-09-04T00:00:00Z",
+        ]
+    )
+    candidates = read_jsonl(output_dir / "stimulus_candidates.jsonl") if output_dir.exists() else []
+
+    assert exit_code != EXIT_OK or not any(
+        candidate["release_status"] == "eligible_for_task01_freeze"
+        or candidate["task01_freeze"]["status"] == "ready_for_request"
+        for candidate in candidates
+    )
 
 
 def test_cli_claim_import_preserves_valid_rows_on_partial_failure(tmp_path: Path) -> None:
@@ -760,3 +1283,253 @@ def test_handoff_dry_run_reports_fixture_boundaries(tmp_path: Path) -> None:
         "category_level_candidate_count": 0,
         "default_scope": "instance_level_only",
     }
+
+
+def test_handoff_dry_run_uses_configured_review_policy(tmp_path: Path) -> None:
+    config = json.loads((ROOT / "configs/han_style_protocol_v1.yaml").read_text(encoding="utf-8"))
+    config["review"]["minimum_substantive_dimensions_per_review"] = 9
+    config_path = tmp_path / "han_style_protocol.json"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+
+    summary = build_handoff_bundle(
+        ROOT,
+        tmp_path / "unused",
+        config_path,
+        implementation_commit="af3820836a6ffa92c63016b0e308f624f9b42db0",
+        created_at="2026-09-04T07:00:00Z",
+        dry_run=True,
+    )
+
+    assert summary["review_summary"]["fixture_status"] == "blocked"
+
+
+def test_handoff_global_gates_require_nonempty_all_candidate_pass() -> None:
+    from glyph_features.han_style_system.handoff import _semantic_gate_statuses
+
+    passed = {
+        "data_origin": "source_record",
+        "rights_summary": {"status": "passed"},
+        "task01_freeze": {"status": "assigned"},
+        "release_status": "task01_frozen",
+        "stimulus_id": "stim_gate_01",
+        "inference_scope": {"scope": "category_candidate"},
+    }
+    blocked = copy.deepcopy(passed)
+    blocked.update(
+        {
+            "rights_summary": {"status": "blocked"},
+            "task01_freeze": {"status": "blocked"},
+            "release_status": "blocked",
+            "stimulus_id": None,
+            "inference_scope": {"scope": "instance_level_only"},
+        }
+    )
+    reviews = {"glyph_01": {"fixture_status": "passed", "formal_status": "passed"}}
+
+    mixed = _semantic_gate_statuses([passed, blocked], reviews)
+    empty = _semantic_gate_statuses([], {})
+
+    assert mixed["formal_asset_rights"] == "blocked"
+    assert mixed["task01_stimulus_freeze"] == "blocked"
+    assert mixed["category_level_inference"] == "blocked"
+    assert empty["formal_expert_review"] == "blocked"
+    assert empty["formal_asset_rights"] == "blocked"
+    assert empty["task01_stimulus_freeze"] == "blocked"
+    assert empty["category_level_inference"] == "blocked"
+
+
+def test_validate_handoff_accepts_direct_schema_directory() -> None:
+    exit_code = han_cli(
+        [
+            "validate-handoff",
+            str(FIXTURE / "reference_handoff_v1/handoff_manifest.json"),
+            "--workspace-root",
+            str(ROOT),
+            "--schema-root",
+            str(ROOT / "schema"),
+        ]
+    )
+
+    assert exit_code == EXIT_OK
+
+
+def test_strict_handoff_recomputes_review_and_gate_truth(tmp_path: Path) -> None:
+    manifest = json.loads(
+        (FIXTURE / "reference_handoff_v1/handoff_manifest.json").read_text(encoding="utf-8")
+    )
+    manifest["review_summary"]["synthetic_review_count"] = 999
+    next(
+        gate for gate in manifest["quality_gates"] if gate["gate_id"] == "formal_expert_review"
+    )["status"] = "passed"
+    tampered = tmp_path / "handoff_manifest.json"
+    tampered.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    errors = validate_handoff(tampered, ROOT)
+
+    assert "HAN_HANDOFF_REVIEW_SUMMARY_MISMATCH" in errors
+    assert "HAN_HANDOFF_GATE_TRUTH_MISMATCH gate=formal_expert_review" in errors
+
+
+@pytest.mark.parametrize("forge_claim_graph", [False, True])
+def test_strict_handoff_rejects_self_consistent_forged_candidate_bundle(
+    forge_claim_graph: bool,
+) -> None:
+    def record_count(path: Path) -> int:
+        if path.suffix == ".jsonl":
+            return len(read_jsonl(path))
+        if path.suffix == ".csv":
+            with path.open(encoding="utf-8", newline="") as handle:
+                return len(list(csv.DictReader(handle)))
+        if path.name.endswith("checksums.sha256"):
+            return len([line for line in path.read_text(encoding="utf-8").splitlines() if line])
+        value = json.loads(path.read_text(encoding="utf-8"))
+        return len(value) if isinstance(value, list) else 1
+
+    def artifact(path: Path, logical_type: str) -> dict:
+        return {
+            "logical_type": logical_type,
+            "path": path.relative_to(ROOT).as_posix(),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "record_count": record_count(path),
+            "rights_or_privacy_level": "metadata_only",
+            "schema_version": None,
+            "implementation_bound": True,
+        }
+
+    with tempfile.TemporaryDirectory(prefix=".han-handoff-attack-", dir=ROOT) as temporary:
+        attack_root = Path(temporary)
+        candidates = copy.deepcopy(
+            read_jsonl(FIXTURE / "reference_run_v1/candidate_bundle/stimulus_candidates.jsonl")
+        )
+        for index, candidate in enumerate(candidates, start=1):
+            candidate["data_origin"] = "source_record"
+            candidate["review_summary"].update(
+                {
+                    "real_review_count": 2,
+                    "formal_status": "passed",
+                    "formal_policy_blockers": [],
+                }
+            )
+            candidate["rights_summary"]["status"] = "passed"
+            candidate["task01_freeze"] = {
+                "status": "assigned",
+                "blockers": [],
+                "requested_contract": "TASK-01 stimulus freeze",
+            }
+            candidate["release_status"] = "task01_frozen"
+            candidate["stimulus_id"] = f"stim_attack_{index:02d}"
+        candidate_path = attack_root / "stimulus_candidates.jsonl"
+        write_jsonl(candidate_path, candidates)
+        adapters = build_adapter_records(
+            read_jsonl(FIXTURE / "ontology.jsonl"),
+            candidates,
+            schema_path=str(ROOT / "schema/han_adapter_record.schema.json"),
+        )
+        adapter_path = attack_root / "adapters.jsonl"
+        write_jsonl(adapter_path, adapters)
+        request_path = attack_root / "integration_requests.json"
+        request_path.write_text(
+            json.dumps(integration_requests(adapters), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        claim_path = FIXTURE / "claims.jsonl"
+        if forge_claim_graph:
+            claims = copy.deepcopy(read_jsonl(claim_path))
+            claims[0].update(
+                {
+                    "subject_type": "work",
+                    "subject_id": "work_self_asserted_01",
+                    "relation": "derived_from_glyph",
+                    "object_type": "glyph_instance",
+                    "object_id": "glyph_self_asserted_01",
+                    "object_value": None,
+                }
+            )
+            claim_path = attack_root / "claims.jsonl"
+            write_jsonl(claim_path, claims)
+
+        output_specs = [
+            (FIXTURE / "ontology.jsonl", "style_ontology"),
+            (FIXTURE / "character_mappings.jsonl", "character_mapping"),
+            (FIXTURE / "glyph_instances.jsonl", "glyph_instance"),
+            (claim_path, "knowledge_claim"),
+            (FIXTURE / "sources.jsonl", "source_catalog"),
+            (FIXTURE / "reference_run_v1/reviews.jsonl", "expert_review"),
+            (FIXTURE / "reference_run_v1/review_package/package_manifest.json", "review_package_manifest"),
+            (candidate_path, "stimulus_candidate"),
+            (adapter_path, "adapter_record"),
+            (request_path, "integration_requests"),
+        ]
+        outputs = [artifact(path, logical_type) for path, logical_type in output_specs]
+        checksum_path = attack_root / "checksums.sha256"
+        checksum_path.write_text(
+            "".join(f"{item['sha256']}  {item['path']}\n" for item in outputs),
+            encoding="utf-8",
+        )
+        outputs.append(artifact(checksum_path, "checksums"))
+        input_specs = [
+            (ROOT / "data/fixtures/content_sets.csv", "content_set"),
+            (ROOT / "configs/han_style_protocol_v1.yaml", "han_style_config"),
+            (ROOT / "configs/han_style_trust_root_v1.json", "han_style_trust_root"),
+            (ROOT / "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json", "task01_handoff"),
+            (ROOT / "data/fixtures/asset_system/reference_handoff_v1/fixture/asset_candidates.jsonl", "task01_fixture_assets"),
+            (ROOT / "data/fixtures/asset_system/reference_handoff_v1/rights_evidence.jsonl", "task01_rights_evidence"),
+            (ROOT / "data/fixtures/asset_system/reference_handoff_v1/sources.jsonl", "task01_source_catalog"),
+        ]
+        manifest = {
+            "readiness": {
+                "engineering_ready": True,
+                "pilot_ready": True,
+                "research_validated": False,
+            },
+            "input_snapshots": [artifact(path, logical_type) for path, logical_type in input_specs],
+            "outputs": outputs,
+            "review_summary": {
+                "subject_count": 1,
+                "synthetic_review_count": 2,
+                "real_review_count": 2,
+                "fixture_status": "passed",
+                "formal_status": "passed",
+            },
+            "inference_readiness": {
+                "minimum_independent_exemplars_for_category": 3,
+                "formal_pilot_candidate_count": 0,
+                "task01_assigned_stimulus_count": 2,
+                "instance_level_candidate_count": 2,
+                "category_level_candidate_count": 0,
+                "default_scope": "instance_level_only",
+            },
+            "quality_gates": [
+                {"gate_id": "schema_and_hash_validation", "status": "passed", "evidence": outputs[0]["path"]},
+                {"gate_id": "synthetic_double_review", "status": "fixture_only", "evidence": candidate_path.relative_to(ROOT).as_posix()},
+                {"gate_id": "formal_expert_review", "status": "passed", "evidence": candidate_path.relative_to(ROOT).as_posix()},
+                {"gate_id": "formal_asset_rights", "status": "passed", "evidence": candidate_path.relative_to(ROOT).as_posix()},
+                {"gate_id": "restricted_terms", "status": "blocked", "evidence": candidate_path.relative_to(ROOT).as_posix()},
+                {"gate_id": "task01_stimulus_freeze", "status": "passed", "evidence": candidate_path.relative_to(ROOT).as_posix()},
+                {"gate_id": "category_level_inference", "status": "blocked", "evidence": candidate_path.relative_to(ROOT).as_posix()},
+            ],
+            "blocked_human_gates": [],
+            "next_task_entrypoints": [],
+        }
+        manifest_path = attack_root / "handoff_manifest.json"
+        manifest_path.write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+        errors = validate_handoff(manifest_path, ROOT)
+
+        assert not any(error.startswith("HAN_HANDOFF_HASH_MISMATCH") for error in errors)
+        assert "HAN_HANDOFF_CHECKSUM_SET_MISMATCH" not in errors
+        if forge_claim_graph:
+            assert any(error.startswith("HAN_CLAIM_SUBJECT_UNKNOWN") for error in errors)
+            assert any(error.startswith("HAN_CLAIM_OBJECT_UNKNOWN") for error in errors)
+            assert any(error.startswith("HAN_HANDOFF_SEMANTIC_REBUILD_FAILED") for error in errors)
+        else:
+            assert "HAN_HANDOFF_CANDIDATE_SEMANTICS_MISMATCH" in errors
+            assert "HAN_HANDOFF_ADAPTER_SEMANTICS_MISMATCH" in errors
+            assert "HAN_HANDOFF_INTEGRATION_REQUESTS_MISMATCH" in errors
+            assert "HAN_HANDOFF_REVIEW_SUMMARY_MISMATCH" in errors
+            assert "HAN_HANDOFF_GATE_TRUTH_MISMATCH gate=formal_asset_rights" in errors
+            assert "HAN_HANDOFF_GATE_TRUTH_MISMATCH gate=task01_stimulus_freeze" in errors
+            assert "HAN_HANDOFF_READINESS_UNTRUTHFUL" in errors

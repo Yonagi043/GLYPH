@@ -13,6 +13,7 @@
     "created_at",
     "readiness",
     "contract_versions",
+    "contract_compatibility",
     "input_snapshots",
     "outputs",
     "review_summary",
@@ -23,9 +24,9 @@
     "next_task_entrypoints"
   ],
   "properties": {
-    "handoff_schema_version": { "type": "string", "const": "1.0.0" },
+    "handoff_schema_version": { "type": "string", "const": "1.1.0" },
     "task_id": { "type": "string", "const": "TASK-04" },
-    "producer_version": { "type": "string", "const": "1.0.0" },
+    "producer_version": { "type": "string", "const": "1.1.0" },
     "starting_checkpoint": { "$ref": "#/$defs/gitCommit" },
     "implementation_commit": { "$ref": "#/$defs/gitCommit" },
     "producer_provenance": { "$ref": "#/$defs/producerProvenance" },
@@ -43,6 +44,16 @@
     "contract_versions": {
       "type": "object",
       "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "contract_compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["previous_version", "backward_compatible", "reason"],
+      "properties": {
+        "previous_version": { "type": "string", "const": "1.0.0" },
+        "backward_compatible": { "type": "boolean", "const": false },
+        "reason": { "type": "string", "minLength": 1 }
+      }
     },
     "input_snapshots": {
       "type": "array",

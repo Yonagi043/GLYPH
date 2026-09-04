@@ -59,6 +59,8 @@ def build_parser() -> argparse.ArgumentParser:
     claims.add_argument("--input", type=Path, required=True)
     claims.add_argument("--ontology", type=Path, required=True)
     claims.add_argument("--glyphs", type=Path, required=True)
+    claims.add_argument("--assets", type=Path)
+    claims.add_argument("--candidates", type=Path)
     claims.add_argument("--sources", type=Path, action="append", required=True)
     claims.add_argument("--output", type=Path, required=True)
 
@@ -80,6 +82,10 @@ def build_parser() -> argparse.ArgumentParser:
     package.add_argument("--output-dir", type=Path, required=True)
     package.add_argument("--created-at", required=True)
     package.add_argument("--ordering-seed", required=True)
+    package.add_argument("--access-level", choices=["open_fixture", "research_local_only"], default="open_fixture")
+    package.add_argument("--access-authorization-id")
+    package.add_argument("--task01-handoff", type=Path)
+    package.add_argument("--rights-evidence", type=Path)
 
     reviews = subcommands.add_parser("import-reviews")
     _common(reviews)
@@ -95,6 +101,12 @@ def build_parser() -> argparse.ArgumentParser:
     candidates.add_argument("--glyphs", type=Path, required=True)
     candidates.add_argument("--reviews", type=Path, required=True)
     candidates.add_argument("--rights-evidence", type=Path, required=True)
+    candidates.add_argument("--sources", type=Path, action="append", default=[])
+    candidates.add_argument("--assets", type=Path)
+    candidates.add_argument("--claims", type=Path)
+    candidates.add_argument("--content-sets", type=Path)
+    candidates.add_argument("--review-package-dir", type=Path)
+    candidates.add_argument("--task01-handoff", type=Path)
     candidates.add_argument("--output-dir", type=Path, required=True)
     candidates.add_argument("--created-at", required=True)
 
@@ -161,12 +173,24 @@ def _dispatch(args: argparse.Namespace) -> tuple[dict[str, Any], list[dict[str, 
         ontology = read_jsonl(args.ontology)
         glyphs = read_jsonl(args.glyphs)
         sources = _records_from_paths(args.sources)
+        assets = read_jsonl(args.assets) if args.assets else []
+        candidates = read_jsonl(args.candidates) if args.candidates else []
         records, failures = import_claim_rows(
             read_csv(args.input),
             schema_root / "han_knowledge_claim.schema.json",
             style_ids={record["style_id"] for record in ontology},
             glyph_ids={record["glyph_instance_id"] for record in glyphs},
             source_ids={record["source_id"] for record in sources},
+            work_ids={record["work_id"] for record in glyphs}
+            | {record["work_id"] for record in assets if record.get("work_id")},
+            font_ids={record["font_id"] for record in glyphs if record.get("font_id")}
+            | {
+                record["font_metadata"]["font_id"]
+                for record in assets
+                if isinstance(record.get("font_metadata"), dict)
+                and record["font_metadata"].get("font_id")
+            },
+            stimulus_candidate_ids={record["candidate_id"] for record in candidates},
         )
         if not args.dry_run and records:
             write_jsonl(args.output, records)
@@ -196,6 +220,8 @@ def _dispatch(args: argparse.Namespace) -> tuple[dict[str, Any], list[dict[str, 
             style_ids=style_ids,
             glyph_ids=glyph_ids,
             source_ids=source_ids,
+            work_ids={record["work_id"] for record in glyphs},
+            font_ids={record["font_id"] for record in glyphs if record.get("font_id")},
         )
         errors += validate_glyph_instances(
             glyphs,
@@ -220,6 +246,10 @@ def _dispatch(args: argparse.Namespace) -> tuple[dict[str, Any], list[dict[str, 
                     output_dir=Path(temporary) / "package",
                     created_at=args.created_at,
                     ordering_seed=args.ordering_seed,
+                    access_level=args.access_level,
+                    access_authorization_id=args.access_authorization_id,
+                    task01_handoff_path=args.task01_handoff,
+                    rights_evidence_path=args.rights_evidence,
                 )
         else:
             manifest = build_review_package(
@@ -230,6 +260,10 @@ def _dispatch(args: argparse.Namespace) -> tuple[dict[str, Any], list[dict[str, 
                 output_dir=output_dir,
                 created_at=args.created_at,
                 ordering_seed=args.ordering_seed,
+                access_level=args.access_level,
+                access_authorization_id=args.access_authorization_id,
+                task01_handoff_path=args.task01_handoff,
+                rights_evidence_path=args.rights_evidence,
             )
         return {"command": args.command, "package_id": manifest["package_id"], "item_count": manifest["item_count"], "dry_run": args.dry_run}, []
     if args.command == "import-reviews":
@@ -243,23 +277,97 @@ def _dispatch(args: argparse.Namespace) -> tuple[dict[str, Any], list[dict[str, 
             write_reviews(args.output, reviews)
         return {"command": args.command, "review_count": len(reviews), "dry_run": args.dry_run}, []
     if args.command == "build-stimulus-candidates":
+        fixture_root = _resolve(root, config["reference_fixture_root"])
+        run_root = _resolve(root, config["reference_run_root"])
         ontology = read_jsonl(args.ontology)
         mappings = read_jsonl(args.mappings)
         glyphs = read_jsonl(args.glyphs)
         reviews = read_jsonl(args.reviews)
-        review_errors = validate_review_records(reviews, schema_root / "expert_review.schema.json")
-        if review_errors:
-            return {"command": args.command, "candidate_count": 0}, _error_failures(review_errors)
+        source_paths = args.sources or [
+            fixture_root / "sources.jsonl",
+            _resolve(root, config["task01"]["sources_path"]),
+        ]
+        sources = _records_from_paths(source_paths)
+        assets_path = args.assets or _resolve(root, config["task01"]["asset_candidates_path"])
+        claims_path = args.claims or fixture_root / "claims.jsonl"
+        content_sets_path = args.content_sets or _resolve(root, config["content_sets_path"])
+        review_package_dir = args.review_package_dir or run_root / "review_package"
+        task01_handoff_path = args.task01_handoff or _resolve(root, config["task01"]["handoff_path"])
+        assets = read_jsonl(assets_path)
+        claims = read_jsonl(claims_path)
+        source_ids = {record["source_id"] for record in sources}
+        style_ids = {record["style_id"] for record in ontology}
+        mapping_ids = {record["mapping_id"] for record in mappings}
+        glyph_ids = {record["glyph_instance_id"] for record in glyphs}
+        input_errors = validate_ontology(
+            ontology,
+            schema_root / "han_style_concept.schema.json",
+            source_ids,
+        )
+        input_errors += validate_character_mappings(
+            mappings,
+            schema_root / "han_character_mapping.schema.json",
+            load_content_sets(content_sets_path),
+            source_ids,
+        )
+        input_errors += validate_claims(
+            claims,
+            schema_root / "han_knowledge_claim.schema.json",
+            style_ids=style_ids,
+            glyph_ids=glyph_ids,
+            source_ids=source_ids,
+            work_ids={record["work_id"] for record in glyphs},
+            font_ids={record["font_id"] for record in glyphs if record.get("font_id")},
+        )
+        input_errors += validate_glyph_instances(
+            glyphs,
+            schema_root / "han_glyph_instance.schema.json",
+            workspace_root=root,
+            style_ids=style_ids,
+            mapping_ids=mapping_ids,
+            source_ids=source_ids,
+            asset_records=assets,
+            claim_ids={record["claim_id"] for record in claims},
+        )
+        input_errors += [
+            f"HAN_ASSET_SCHEMA_INVALID record={index}: {error}"
+            for index, asset in enumerate(assets, start=1)
+            for error in validate_record(asset, schema_root / "asset_candidate.schema.json")
+        ]
+        input_errors += validate_review_records(
+            reviews,
+            schema_root / "expert_review.schema.json",
+            package_dir=review_package_dir,
+            review_records_path=args.reviews,
+        )
+        if input_errors:
+            return {"command": args.command, "candidate_count": 0}, _error_failures(input_errors)
+        rights = read_jsonl(args.rights_evidence)
         candidates = build_stimulus_candidates(
             glyphs,
             mappings,
             reviews,
-            read_jsonl(args.rights_evidence),
+            rights,
             schema_path=schema_root / "han_stimulus_candidate.schema.json",
             render_profiles=config["stimuli"]["render_profiles"],
             minimum_independent_reviews=int(config["review"]["minimum_independent_reviews"]),
             minimum_independent_exemplars=int(config["stimuli"]["minimum_independent_exemplars_for_category"]),
             created_at=args.created_at,
+            review_package_dir=review_package_dir,
+            review_records_path=args.reviews,
+            task01_handoff_path=task01_handoff_path,
+            rights_evidence_path=args.rights_evidence,
+            workspace_root=root,
+            ontology_records=ontology,
+            source_records=sources,
+            asset_records=assets,
+            claim_records=claims,
+            content_sets_path=content_sets_path,
+            minimum_substantive_dimensions=int(config["review"]["minimum_substantive_dimensions_per_review"]),
+            required_dimensions=tuple(config["review"]["required_dimension_coverage"]),
+            required_role_groups=tuple(
+                frozenset(group) for group in config["review"]["required_role_groups"]
+            ),
         )
         adapters = build_adapter_records(
             ontology,
@@ -289,8 +397,9 @@ def _dispatch(args: argparse.Namespace) -> tuple[dict[str, Any], list[dict[str, 
     raise ValueError(f"unsupported command: {args.command}")
 
 
-def _resolve(root: Path, path: Path) -> Path:
-    return path if path.is_absolute() else root / path
+def _resolve(root: Path, path: str | Path) -> Path:
+    value = Path(path)
+    return value if value.is_absolute() else root / value
 
 
 def _records_from_paths(paths: list[Path]) -> list[dict[str, Any]]:

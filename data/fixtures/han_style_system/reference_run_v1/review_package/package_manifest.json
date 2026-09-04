@@ -1,5 +1,7 @@
 {
+  "access_authorization_id": null,
   "asset_access_level": "open_fixture",
+  "asset_copy_policy": "copied_open_fixture",
   "blinding": {
     "prior_reviews_hidden": true,
     "reviewer_answers_separate": true,
@@ -13,11 +15,12 @@
     "byte_size": 1059,
     "mime_type": "application/x-ndjson",
     "path": "items.jsonl",
-    "sha256": "1023ddf27bed82c942767d917cfee7266125c5ceeaa5cc172a9c661e59dd40f6"
+    "sha256": "73f3cb32f03f51ded14566a11163fa8ec0e15e53e13a25ae60c92dee985145e5"
   },
-  "package_content_sha256": "33be59c5d6f4098b82a75497e29d5f10f0332cefbf5aebae915460e69fe7e57d",
-  "package_id": "review_package_17144d3382f103ce1d3704d9",
-  "package_version": "1.0.0",
+  "package_content_sha256": "92182d34cf7dd214b74672e85ff1d2404839bcc3e2c5e47933d5628867816635",
+  "package_id": "review_package_48d4737b1405a943b06e2d0c",
+  "package_version": "1.1.0",
+  "redistribution_status": "fixture_only",
   "review_round": 1,
   "rubric_dimensions": [
     "character_identity",
@@ -29,6 +32,6 @@
     "experimental_suitability",
     "inference_scope"
   ],
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "subject_type": "glyph_instance"
 }

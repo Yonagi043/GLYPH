@@ -19,7 +19,7 @@
     "payload"
   ],
   "properties": {
-    "schema_version": { "type": "string", "const": "1.0.0" },
+    "schema_version": { "type": "string", "const": "1.1.0" },
     "adapter_id": { "$ref": "shared.schema.json#/$defs/id" },
     "source_task": { "type": "string", "const": "TASK-04" },
     "target_system": { "type": "string", "enum": ["TASK-01", "TASK-02", "TASK-03", "WP2"] },

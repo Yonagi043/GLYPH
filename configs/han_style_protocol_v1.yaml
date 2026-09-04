@@ -1,15 +1,23 @@
 {
-  "protocol_version": "han_style_v1.0.0",
+  "protocol_version": "han_style_v1.1.0",
   "starting_checkpoint": "af3820836a6ffa92c63016b0e308f624f9b42db0",
   "schema_versions": {
     "han_style_concept": "1.0.0",
     "han_character_mapping": "1.0.0",
     "han_glyph_instance": "1.0.0",
-    "han_knowledge_claim": "1.0.0",
-    "expert_review": "1.0.0",
-    "han_stimulus_candidate": "1.0.0",
-    "han_adapter_record": "1.0.0",
-    "han_handoff_manifest": "1.0.0"
+    "han_knowledge_claim": "1.1.0",
+    "expert_review": "1.1.0",
+    "han_review_item": "1.1.0",
+    "han_review_package": "1.1.0",
+    "han_stimulus_candidate": "1.1.0",
+    "han_adapter_record": "1.1.0",
+    "han_handoff_manifest": "1.1.0",
+    "han_style_trust_root": "1.0.0"
+  },
+  "contract_compatibility": {
+    "previous_version": "1.0.0",
+    "backward_compatible": false,
+    "reason": "1.1.0 requires repository-pinned review and rights provenance, explicit lineage units, claim decision bindings, and semantic handoff recomputation."
   },
   "reference_fixture_root": "data/fixtures/han_style_system",
   "reference_run_root": "data/fixtures/han_style_system/reference_run_v1",
@@ -28,6 +36,22 @@
   },
   "review": {
     "minimum_independent_reviews": 2,
+    "minimum_substantive_dimensions_per_review": 2,
+    "required_dimension_coverage": [
+      "character_identity",
+      "style_or_font_attribution",
+      "structure",
+      "stroke_logic",
+      "historical_fidelity",
+      "source_fidelity",
+      "experimental_suitability",
+      "inference_scope"
+    ],
+    "required_role_groups": [
+      ["history_or_paleography"],
+      ["calligraphy_or_seal_practice", "type_or_visual_design"]
+    ],
+    "adjudication_policy": "single_authorized_terminal_decision",
     "rubric_dimensions": [
       "character_identity",
       "style_or_font_attribution",
@@ -38,7 +62,9 @@
       "experimental_suitability",
       "inference_scope"
     ],
-    "real_review_gate": "GATE-EXPERT"
+    "real_review_gate": "GATE-EXPERT",
+    "trust_root_path": "configs/han_style_trust_root_v1.json",
+    "trust_root_sha256": "e662bc3fc8ee3ac5c1d8aa9d167fdb123d4890f7a024ba9150961242153f60f8"
   },
   "stimuli": {
     "render_profiles": ["bbox_height_matched", "ink_area_matched"],

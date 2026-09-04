@@ -1,6 +1,7 @@
 """Written-contract adapters for TASK-01/02/03 and WP2."""
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from glyph_features.asset_system.catalog import stable_id, validate_record
@@ -15,8 +16,37 @@ def build_adapter_records(
     *,
     schema_path: str,
 ) -> list[dict[str, Any]]:
+    contracts = Path(schema_path).resolve().parent
+    input_errors = [
+        f"ontology record={index}: {message}"
+        for index, style in enumerate(ontology, start=1)
+        for message in validate_record(style, contracts / "han_style_concept.schema.json")
+    ]
+    input_errors += [
+        f"candidate record={index}: {message}"
+        for index, candidate in enumerate(candidates, start=1)
+        for message in validate_record(candidate, contracts / "han_stimulus_candidate.schema.json")
+    ]
+    style_ids = {style.get("style_id") for style in ontology}
+    candidate_ids = [candidate.get("candidate_id") for candidate in candidates]
+    input_errors += [
+        f"candidate record={index}: unknown style_id={candidate.get('style_id')}"
+        for index, candidate in enumerate(candidates, start=1)
+        if candidate.get("style_id") not in style_ids
+    ]
+    if len(candidate_ids) != len(set(candidate_ids)):
+        input_errors.append("duplicate candidate_id")
+    if input_errors:
+        raise ValueError("HAN_ADAPTER_INPUT_INVALID: " + "; ".join(input_errors))
     records: list[dict[str, Any]] = []
     for candidate in candidates:
+        task01_blockers = _task01_readiness_blockers(candidate)
+        task01_ready = not task01_blockers
+        task01_status = "ready" if task01_ready else (
+            "fixture_only" if candidate["release_status"] == "fixture_only" else "blocked"
+        )
+        if task01_status == "blocked" and not task01_blockers:
+            task01_blockers = ["TASK01_FREEZE_NOT_READY"]
         common = {
             "style_id": candidate["style_id"],
             "candidate_id": candidate["candidate_id"],
@@ -29,8 +59,8 @@ def build_adapter_records(
                     "TASK-01",
                     "asset_candidate-1.0.0/ecological_stimulus-2.0.0",
                     common,
-                    "fixture_only" if candidate["release_status"] == "fixture_only" else "blocked",
-                    candidate["task01_freeze"]["blockers"],
+                    task01_status,
+                    task01_blockers,
                     ["TASK-01 remains the sole owner of formal stimulus_id assignment."],
                     {
                         "requested_render_profile": candidate["render_profile"],
@@ -127,18 +157,45 @@ def build_adapter_records(
 
 
 def integration_requests(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    requests: dict[str, set[str]] = {}
+    requests: dict[str, dict[str, Any]] = {}
     for record in records:
+        request = requests.setdefault(
+            record["target_system"],
+            {"statuses": set(), "blocking_reasons": set(), "candidate_ids": set()},
+        )
+        request["statuses"].add(record["status"])
+        if record.get("candidate_id") is not None:
+            request["candidate_ids"].add(record["candidate_id"])
         for reason in record["blocking_reasons"]:
-            requests.setdefault(record["target_system"], set()).add(reason)
-    return [
-        {
+            request["blocking_reasons"].add(reason)
+    result: list[dict[str, Any]] = []
+    for target, request in sorted(requests.items()):
+        statuses = request["statuses"]
+        status = "ready" if statuses == {"ready"} else (
+            "fixture_only" if statuses <= {"fixture_only", "ready"} else "blocked"
+        )
+        result.append({
             "target_system": target,
-            "status": "blocked",
-            "blocking_reasons": sorted(reasons),
-        }
-        for target, reasons in sorted(requests.items())
-    ]
+            "status": status,
+            "blocking_reasons": [] if status == "ready" else sorted(request["blocking_reasons"]),
+            "candidate_ids": sorted(request["candidate_ids"]),
+        })
+    return result
+
+
+def _task01_readiness_blockers(candidate: dict[str, Any]) -> list[str]:
+    blockers = set(candidate["task01_freeze"]["blockers"])
+    required = {
+        "CANDIDATE_NOT_SOURCE_RECORD": candidate["data_origin"] != "source_record",
+        "FORMAL_REVIEW_NOT_PASSED": candidate["review_summary"]["formal_status"] != "passed",
+        "FORMAL_RIGHTS_NOT_PASSED": candidate["rights_summary"]["status"] != "passed",
+        "MAPPING_NOT_EVIDENCE_SUPPORTED": candidate["mapping_status"] != "evidence_supported",
+        "CANDIDATE_NOT_FREEZE_ELIGIBLE": candidate["release_status"] != "eligible_for_task01_freeze",
+        "TASK01_FREEZE_STATUS_NOT_READY": candidate["task01_freeze"]["status"] != "ready_for_request",
+        "TASK01_STIMULUS_ID_ALREADY_ASSIGNED": candidate["stimulus_id"] is not None,
+    }
+    blockers.update(reason for reason, applies in required.items() if applies)
+    return sorted(blockers)
 
 
 def _adapter(
@@ -157,7 +214,7 @@ def _adapter(
         "payload_key": payload.get("normalization_profile") or payload.get("canonical_label") or "default",
     }
     return {
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "adapter_id": stable_id("han_adapter", identity),
         "source_task": "TASK-04",
         "target_system": target_system,

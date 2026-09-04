@@ -15,6 +15,7 @@
     "work_ids",
     "font_ids",
     "exemplar_cluster_ids",
+    "lineage_unit_ids",
     "render_profile",
     "representation_asset_ids",
     "label_conditions",
@@ -28,7 +29,7 @@
     "created_at"
   ],
   "properties": {
-    "schema_version": { "type": "string", "const": "1.0.0" },
+    "schema_version": { "type": "string", "const": "1.1.0" },
     "candidate_id": { "$ref": "shared.schema.json#/$defs/id" },
     "data_origin": { "type": "string", "enum": ["source_record", "synthetic_fixture"] },
     "candidate_level": {
@@ -60,6 +61,12 @@
       "items": { "$ref": "shared.schema.json#/$defs/id" },
       "uniqueItems": true
     },
+    "lineage_unit_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "shared.schema.json#/$defs/id" },
+      "uniqueItems": true
+    },
     "render_profile": { "type": "string", "enum": ["bbox_height_matched", "ink_area_matched"] },
     "representation_asset_ids": {
       "type": "object",
@@ -80,25 +87,31 @@
     "review_summary": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["package_ids", "synthetic_review_count", "real_review_count", "fixture_status", "formal_status", "decision_counts"],
+      "required": ["package_ids", "synthetic_review_count", "real_review_count", "fixture_status", "formal_status", "decision_counts", "fixture_policy_blockers", "formal_policy_blockers", "adjudication_review_ids"],
       "properties": {
         "package_ids": { "type": "array", "items": { "$ref": "shared.schema.json#/$defs/id" }, "uniqueItems": true },
         "synthetic_review_count": { "type": "integer", "minimum": 0 },
         "real_review_count": { "type": "integer", "minimum": 0 },
         "fixture_status": { "type": "string", "enum": ["passed", "blocked", "conflicted", "needs_revision", "failed"] },
         "formal_status": { "type": "string", "enum": ["passed", "blocked", "conflicted", "needs_revision", "failed"] },
-        "decision_counts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } }
+        "decision_counts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+        "fixture_policy_blockers": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "formal_policy_blockers": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "adjudication_review_ids": { "type": "array", "items": { "$ref": "shared.schema.json#/$defs/id" }, "uniqueItems": true }
       }
     },
     "rights_summary": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "rights_tier", "rights_evidence_ids", "permitted_uses"],
+      "required": ["status", "rights_tier", "rights_evidence_ids", "permitted_uses", "trust_source", "task01_handoff_sha256", "rights_output_sha256"],
       "properties": {
         "status": { "type": "string", "enum": ["passed", "fixture_only", "blocked"] },
         "rights_tier": { "type": "string", "enum": ["open", "research_local_only", "metadata_only", "blocked_unknown"] },
         "rights_evidence_ids": { "type": "array", "items": { "$ref": "shared.schema.json#/$defs/id" }, "uniqueItems": true },
-        "permitted_uses": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+        "permitted_uses": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "trust_source": { "type": "string", "enum": ["task01_handoff", "standalone_untrusted"] },
+        "task01_handoff_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "rights_output_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
       }
     },
     "mapping_status": { "type": "string", "enum": ["protocol_defined", "evidence_supported", "pending", "unmapped"] },

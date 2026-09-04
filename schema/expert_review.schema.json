@@ -10,6 +10,7 @@
     "package_id",
     "package_version",
     "source_package_sha256",
+    "review_item_id",
     "subject_type",
     "subject_id",
     "reviewer_id",
@@ -30,11 +31,12 @@
     "signature_sha256"
   ],
   "properties": {
-    "schema_version": { "type": "string", "const": "1.0.0" },
+    "schema_version": { "type": "string", "const": "1.1.0" },
     "review_id": { "$ref": "shared.schema.json#/$defs/id" },
     "package_id": { "$ref": "shared.schema.json#/$defs/id" },
-    "package_version": { "type": "string", "const": "1.0.0" },
+    "package_version": { "type": "string", "const": "1.1.0" },
     "source_package_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "review_item_id": { "$ref": "shared.schema.json#/$defs/id" },
     "subject_type": { "type": "string", "enum": ["style_concept", "glyph_instance", "knowledge_claim", "stimulus_candidate"] },
     "subject_id": { "$ref": "shared.schema.json#/$defs/id" },
     "reviewer_id": { "type": "string", "pattern": "^reviewer_[A-Za-z0-9_-]{2,63}$" },
