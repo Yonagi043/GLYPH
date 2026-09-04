@@ -1,0 +1,10 @@
+{
+  "requests": [
+    {
+      "reason": "Registers glyph-experiment and packages the experiment_system static browser assets; downstream integration must preserve these shared entrypoints.",
+      "status": "included_in_implementation",
+      "target": "pyproject.toml"
+    }
+  ],
+  "schema_version": "1.0.0"
+}

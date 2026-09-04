@@ -1,0 +1,29 @@
+{
+  "assignment_id": "assignment_6763e6291aa5d22e632b98e5",
+  "attention_response": "circle",
+  "data_origin": "synthetic",
+  "displayed_asset_sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b",
+  "ended_at": "2026-09-04T00:00:02Z",
+  "event_id": "event_reference_001",
+  "expected_asset_sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b",
+  "focus_loss_count": 0,
+  "load_status": "loaded",
+  "participant_id": "synp_reference_001",
+  "preload_ms": 12,
+  "presentation_id": "presentation_6a3cd2657dc666015fa5c344",
+  "request_id": "request_reference_001",
+  "response_ms": 1800,
+  "schema_version": "1.0.0",
+  "started_at": "2026-09-04T00:00:00Z",
+  "stimulus_id": "stim_task03_latin_01",
+  "study_id": "study_cross_cultural_v1",
+  "trial_index": 1,
+  "viewport": {
+    "css_height": 800,
+    "css_width": 1280,
+    "device_pixel_ratio": 2,
+    "stimulus_css_height": 512,
+    "stimulus_css_width": 512
+  },
+  "zoom_anomaly": false
+}

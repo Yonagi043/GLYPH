@@ -1,0 +1,15 @@
+{
+  "blockers": [
+    "Recruitment, compensation, quotas, stopping rules and model-based sample size are not approved."
+  ],
+  "gate_id": "GATE-PARTICIPANTS",
+  "prohibited_actions": [
+    "real recruitment",
+    "real response collection",
+    "formal analysis",
+    "public release"
+  ],
+  "required_decision": "Explicit human approval with versioned local evidence; never auto-unlock.",
+  "schema_version": "1.0.0",
+  "status": "blocked"
+}

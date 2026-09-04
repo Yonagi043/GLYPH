@@ -14,12 +14,14 @@ glyph-social = "glyph_features.social_system.cli:main"
 glyph-assets = "glyph_features.asset_system.cli:main"
 glyph-vision = "glyph_features.vision_system.cli:main"
 glyph-vision-legacy = "glyph_features.vision_system.legacy_mvp:main"
+glyph-experiment = "glyph_features.experiment_system.cli:main"
 [tool.setuptools.packages.find]
 where = ["src", "."]
 include = ["glyph_features*", "tools*"]
 
 [tool.setuptools.package-data]
 "glyph_features.social_system" = ["static/*"]
+"glyph_features.experiment_system" = ["static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

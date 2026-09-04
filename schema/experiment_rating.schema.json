@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH experiment item rating record",
+  "description": "One versioned questionnaire item response for one participant and presentation. Direct identifiers are not permitted.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "rating_id",
+    "study_id",
+    "questionnaire_version",
+    "assignment_id",
+    "block_id",
+    "presentation_id",
+    "stimulus_id",
+    "participant_id",
+    "data_origin",
+    "respondent_language_bcp47",
+    "native_scripts",
+    "item_id",
+    "construct",
+    "rating_scale",
+    "response",
+    "displayed_asset_sha256",
+    "trial_index",
+    "response_time_ms",
+    "attention_check",
+    "quality",
+    "collected_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "2.0.0" },
+    "rating_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "study_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "questionnaire_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "assignment_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "block_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "presentation_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "stimulus_id": { "$ref": "shared.schema.json#/$defs/stimulusId" },
+    "participant_id": { "type": "string" },
+    "data_origin": { "type": "string", "enum": ["synthetic", "real"] },
+    "respondent_language_bcp47": { "type": "string", "enum": ["zh-Hans", "en", "ja", "ko"] },
+    "native_scripts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "shared.schema.json#/$defs/writingSystem" }
+    },
+    "item_id": { "type": "string", "pattern": "^item_[a-z0-9_]{2,63}$" },
+    "construct": {
+      "type": "string",
+      "enum": ["aesthetic", "premium", "modern", "trustworthy", "visual_clarity", "recognition", "unfamiliarity", "brand_fit", "attention"]
+    },
+    "rating_scale": { "type": "string", "enum": ["likert_1_7", "likert_1_5", "continuous_0_100"] },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "missing_reason"],
+      "properties": {
+        "value": { "type": ["number", "null"] },
+        "missing_reason": {
+          "type": ["string", "null"],
+          "enum": ["not_applicable", "skipped", "refused", "technical_failure", null]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "value": { "type": "null" } }, "required": ["value"] },
+          "then": { "properties": { "missing_reason": { "type": "string" } } },
+          "else": { "properties": { "missing_reason": { "type": "null" } } }
+        }
+      ]
+    },
+    "displayed_asset_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "trial_index": { "type": "integer", "minimum": 1 },
+    "response_time_ms": { "type": "integer", "minimum": 0 },
+    "attention_check": { "type": ["boolean", "null"] },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_version", "exclude_from_analysis", "reason_codes"],
+      "properties": {
+        "rule_version": { "const": "1.0.0" },
+        "exclude_from_analysis": { "type": "boolean" },
+        "reason_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["CONSENT_MISSING", "INELIGIBLE", "INCOMPLETE", "ATTENTION_FAILED", "TOO_FAST", "STRAIGHTLINING", "VIEWPORT_UNUSABLE", "ASSET_FAILURE", "LANGUAGE_NOT_UNDERSTOOD", "BACKGROUND_MISSING"]
+          }
+        }
+      }
+    },
+    "collected_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "data_origin": { "const": "synthetic" } }, "required": ["data_origin"] },
+      "then": { "properties": { "participant_id": { "pattern": "^synp_[a-z0-9_-]{4,63}$" } } },
+      "else": { "properties": { "participant_id": { "pattern": "^p_[A-Za-z0-9_-]{2,63}$" } } }
+    },
+    {
+      "if": { "properties": { "rating_scale": { "const": "likert_1_7" } }, "required": ["rating_scale"] },
+      "then": { "properties": { "response": { "properties": { "value": { "type": ["integer", "null"], "minimum": 1, "maximum": 7 } } } } }
+    },
+    {
+      "if": { "properties": { "rating_scale": { "const": "likert_1_5" } }, "required": ["rating_scale"] },
+      "then": { "properties": { "response": { "properties": { "value": { "type": ["integer", "null"], "minimum": 1, "maximum": 5 } } } } }
+    },
+    {
+      "if": { "properties": { "rating_scale": { "const": "continuous_0_100" } }, "required": ["rating_scale"] },
+      "then": { "properties": { "response": { "properties": { "value": { "type": ["number", "null"], "minimum": 0, "maximum": 100 } } } } }
+    }
+  ]
+}

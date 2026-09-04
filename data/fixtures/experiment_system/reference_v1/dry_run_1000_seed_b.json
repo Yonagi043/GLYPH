@@ -1,0 +1,16 @@
+{
+  "assignment_count": 1000,
+  "duplicate_response_count": 0,
+  "errors": [],
+  "formal_analysis_allowed": false,
+  "lost_trial_count": 0,
+  "max_group_stimulus_exposure_spread": 0,
+  "max_stimulus_position_spread": 1,
+  "release_allowed": false,
+  "simulated_response_count": 8000,
+  "summary_sha256": "412c9a1e393c7100f04537a1fea05ffe58d8cafb9771b5b38093120053f616d6",
+  "synthetic_participant_count": 1000,
+  "trial_count": 8000,
+  "unique_presentation_count": 8000,
+  "valid": true
+}

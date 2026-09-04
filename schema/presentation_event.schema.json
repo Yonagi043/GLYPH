@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH stimulus presentation event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "event_id", "request_id", "study_id", "assignment_id", "presentation_id", "participant_id", "data_origin", "stimulus_id", "expected_asset_sha256", "displayed_asset_sha256", "load_status", "trial_index", "started_at", "ended_at", "preload_ms", "response_ms", "viewport", "focus_loss_count", "zoom_anomaly", "attention_response"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "event_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "request_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "study_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "assignment_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "presentation_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "participant_id": { "type": "string" },
+    "data_origin": { "type": "string", "enum": ["synthetic", "real"] },
+    "stimulus_id": { "$ref": "shared.schema.json#/$defs/stimulusId" },
+    "expected_asset_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "displayed_asset_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "load_status": { "type": "string", "enum": ["loaded", "load_failed", "hash_mismatch"] },
+    "trial_index": { "type": "integer", "minimum": 1 },
+    "started_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" },
+    "ended_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" },
+    "preload_ms": { "type": "integer", "minimum": 0 },
+    "response_ms": { "type": "integer", "minimum": 0 },
+    "viewport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["css_width", "css_height", "stimulus_css_width", "stimulus_css_height", "device_pixel_ratio"],
+      "properties": {
+        "css_width": { "type": "integer", "minimum": 1 },
+        "css_height": { "type": "integer", "minimum": 1 },
+        "stimulus_css_width": { "type": "integer", "minimum": 1 },
+        "stimulus_css_height": { "type": "integer", "minimum": 1 },
+        "device_pixel_ratio": { "type": "number", "exclusiveMinimum": 0, "maximum": 8 }
+      }
+    },
+    "focus_loss_count": { "type": "integer", "minimum": 0 },
+    "zoom_anomaly": { "type": "boolean" },
+    "attention_response": { "type": "string", "enum": ["circle", "square", "triangle"] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "data_origin": { "const": "synthetic" } }, "required": ["data_origin"] },
+      "then": { "properties": { "participant_id": { "pattern": "^synp_[a-z0-9_-]{4,63}$" } } },
+      "else": { "properties": { "participant_id": { "pattern": "^p_[A-Za-z0-9_-]{2,63}$" } } }
+    }
+  ]
+}

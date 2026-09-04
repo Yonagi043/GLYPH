@@ -1,0 +1,60 @@
+{
+  "artifacts": [
+    {
+      "path": "study_protocol.json",
+      "record_count": 1,
+      "schema": "study_protocol.schema.json",
+      "sha256": "c44a9aa6df5665f6c16808a8e02ef308b09a67d40e368ac7b6262af0cd50be9b"
+    },
+    {
+      "path": "questionnaire_definition.json",
+      "record_count": 1,
+      "schema": "questionnaire_definition.schema.json",
+      "sha256": "8ac285e5e361230f29b45b45ec758a05529e2a8299691982e56dce2413539ba4"
+    },
+    {
+      "path": "participant_profile.json",
+      "record_count": 1,
+      "schema": "participant_profile.schema.json",
+      "sha256": "f0a375e01d6bb32b3604d1368d5f30c38ff1bc50e61bb40054e450133a67f5a5"
+    },
+    {
+      "path": "consent_receipt.json",
+      "record_count": 1,
+      "schema": "consent_receipt.schema.json",
+      "sha256": "29ec328ddd6f0121bb9cbe43ee8eb82cf27276a0361f9d91a8a34194c618e159"
+    },
+    {
+      "path": "stimulus_catalog.json",
+      "record_count": 1,
+      "schema": "experiment_stimulus_catalog.schema.json",
+      "sha256": "2e1ad6e42cb2c1e8c29586ef933e80f975e40042b7443368d754f8096bcaec4f"
+    },
+    {
+      "path": "assignment.json",
+      "record_count": 1,
+      "schema": "experiment_assignment.schema.json",
+      "sha256": "ae10f7949204f23567c8a8389e276b70d4b2cf9c052920dcaa1420f839b9d069"
+    },
+    {
+      "path": "presentation_event.json",
+      "record_count": 1,
+      "schema": "presentation_event.schema.json",
+      "sha256": "0918989701185798ed49b36236ed45f812a0f0c83f6a4844d5d065e15194aea6"
+    },
+    {
+      "path": "quality_decision.json",
+      "record_count": 1,
+      "schema": "quality_decision.schema.json",
+      "sha256": "09a23d12c766e93058f83eca405e1168a64225c937e13953fbdd98a8ba982be6"
+    },
+    {
+      "path": "ratings.jsonl",
+      "record_count": 7,
+      "schema": "experiment_rating.schema.json",
+      "sha256": "2ee86f4596b86f7090a21a5c1539d85383eac7f2208b68df7b896cecba2c4e6a"
+    }
+  ],
+  "data_origin": "synthetic",
+  "schema_version": "1.0.0"
+}

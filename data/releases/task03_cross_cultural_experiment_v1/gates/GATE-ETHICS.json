@@ -1,0 +1,15 @@
+{
+  "blockers": [
+    "No ethics approval or approved data-management, withdrawal, retention and deletion procedure."
+  ],
+  "gate_id": "GATE-ETHICS",
+  "prohibited_actions": [
+    "real recruitment",
+    "real response collection",
+    "formal analysis",
+    "public release"
+  ],
+  "required_decision": "Explicit human approval with versioned local evidence; never auto-unlock.",
+  "schema_version": "1.0.0",
+  "status": "blocked"
+}

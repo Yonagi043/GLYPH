@@ -1,0 +1,18 @@
+{
+  "data_origin": "synthetic",
+  "decided_at": "2026-09-04T00:00:00Z",
+  "decision_basis": "preregistered_rules_not_outcome_values",
+  "decision_id": "quality_28b83460d545004c696d8007",
+  "exclude_from_analysis": true,
+  "participant_id": "synp_reference_001",
+  "previous_decision_id": null,
+  "reason_codes": [
+    "INCOMPLETE"
+  ],
+  "rule_version": "1.0.0",
+  "schema_version": "1.0.0",
+  "source_presentation_ids": [
+    "presentation_da070bef55e877f52c6eab8b"
+  ],
+  "study_id": "study_cross_cultural_v1"
+}

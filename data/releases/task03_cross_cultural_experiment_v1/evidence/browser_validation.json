@@ -1,0 +1,223 @@
+{
+  "schema_version": "1.0.0",
+  "created_at": "2026-09-04T08:26:39Z",
+  "implementation_commit": "2048fa9866eb8cedc58b7399958331eae5f4325e",
+  "passed": true,
+  "scope": "synthetic_engineering_only",
+  "service": {
+    "host": "127.0.0.1",
+    "port": 8023,
+    "study_id": "study_cross_cultural_v1",
+    "synthetic_only": true,
+    "real_collection_locked": true,
+    "human_gates": {
+      "GATE-ETHICS": "blocked",
+      "GATE-PARTICIPANTS": "blocked",
+      "GATE-TRANSLATION": "blocked"
+    },
+    "fresh_database_counts": {
+      "profiles": 0,
+      "consents": 0,
+      "assignments": 0,
+      "presentations": 0,
+      "ratings": 0,
+      "quality_decisions": 0
+    }
+  },
+  "checks": {
+    "complete_profile_and_consent": {
+      "status": "passed",
+      "questionnaire_language": "en",
+      "mother_tongue_count": 2,
+      "native_scripts": [
+        "latin",
+        "han"
+      ],
+      "script_proficiency_rows": 4,
+      "training_fields": 3,
+      "region_category": "north_america",
+      "cross_cultural_exposure": "high",
+      "age_band": "25_34",
+      "education_level": "postgraduate",
+      "consent_status": "consented",
+      "consent_schema_version": "1.1.0"
+    },
+    "practice_isolation": {
+      "status": "passed",
+      "participant_id_absent_before_practice_submission": true,
+      "practice_asset_natural_width": 512,
+      "practice_asset_natural_height": 512,
+      "formal_presentations_before_first_trial_submission": 0,
+      "formal_ratings_before_first_trial_submission": 0
+    },
+    "complete_eight_trial_flow": {
+      "status": "passed",
+      "submission_http_status": 200,
+      "required_ratings_per_presentation": 7,
+      "final_counts": {
+        "profiles": 1,
+        "consents": 1,
+        "assignments": 1,
+        "presentations": 8,
+        "ratings": 56,
+        "quality_decisions": 8
+      },
+      "completion_heading": "Synthetic flow complete",
+      "resume_next_trial": 9
+    },
+    "mid_session_resume": {
+      "status": "passed",
+      "resume_after_presentations": 3,
+      "resume_next_trial": 4,
+      "participant_id_stable": true,
+      "profile_and_consent_restored": true,
+      "questionnaire_language_restored": true,
+      "questionnaire_language_locked": true,
+      "latest_quality_source_count": 3,
+      "latest_quality_reason_codes": [
+        "INCOMPLETE"
+      ],
+      "completed_state_persisted_after_reload": true
+    },
+    "four_language_interface": {
+      "status": "passed",
+      "languages": [
+        "zh-Hans",
+        "en",
+        "ja",
+        "ko"
+      ],
+      "localized_headings_nonempty": true,
+      "localized_gate_copy_nonempty": true,
+      "html_lang_updated": true,
+      "horizontal_overflow_px_each": 0,
+      "translation_draft_notice_visible": true
+    },
+    "server_authoritative_quality": {
+      "status": "passed",
+      "decision_nodes": 8,
+      "final_source_presentation_count": 8,
+      "final_exclude_from_analysis": false,
+      "final_reason_codes": [],
+      "final_previous_decision_id_present": true
+    },
+    "deidentified_bundle": {
+      "status": "passed",
+      "purpose": "engineering_fixture",
+      "read_gate": "passed",
+      "manifest_hashes_and_counts_verified": true,
+      "record_counts": {
+        "profiles": 1,
+        "consents": 1,
+        "assignments": 1,
+        "presentations": 8,
+        "ratings": 56,
+        "quality_decisions": 8
+      }
+    },
+    "synthetic_use_gate": {
+      "status": "passed",
+      "formal_analysis_exit_code": 2,
+      "release_exit_code": 2,
+      "blocked_code": "SYNTHETIC_FORMAL_EXPORT_FORBIDDEN",
+      "blocked_outputs_absent": true
+    },
+    "blind_metadata": {
+      "status": "passed",
+      "trial_api_keys": [
+        "asset_url",
+        "expected_asset_sha256",
+        "presentation_id",
+        "stimulus_id",
+        "trial_index"
+      ],
+      "forbidden_trial_fields_absent": [
+        "asset_path",
+        "writing_system",
+        "work_id",
+        "source_stimulus_id",
+        "award",
+        "filename"
+      ]
+    },
+    "desktop": {
+      "status": "passed",
+      "css_viewport": {
+        "width": 922,
+        "height": 640
+      },
+      "device_pixel_ratio": 1.25,
+      "horizontal_overflow_px": 0,
+      "required_rating_rows": 7
+    },
+    "mobile": {
+      "status": "passed",
+      "css_viewport": {
+        "width": 384,
+        "height": 720
+      },
+      "device_pixel_ratio": 1.25,
+      "horizontal_overflow_px": 0,
+      "clipped_text_elements": 0,
+      "undersized_visible_controls": 0,
+      "visible_control_count_on_setup": 36,
+      "trial_heading_count_overlap": false,
+      "rating_scale_columns": 4,
+      "mobile_submission_advanced_from_trial": 4,
+      "mobile_submission_advanced_to_trial": 5
+    },
+    "rendered_asset": {
+      "status": "passed",
+      "http_status": 200,
+      "natural_width": 512,
+      "natural_height": 512,
+      "sampled_distinct_rgba_colors": 152,
+      "browser_sha256_verified_before_display": true,
+      "independent_browser_sha256_recheck": true
+    },
+    "console_and_network_errors": {
+      "status": "passed",
+      "application_console_error_count": 0,
+      "application_http_4xx_5xx_count": 0
+    },
+    "keyboard_accessibility": {
+      "status": "passed",
+      "enter_advanced_intro_to_setup": true,
+      "unlabeled_native_controls": 0,
+      "minimum_visible_target_px": 44,
+      "completed_state_restored_after_accessibility_check": true
+    }
+  },
+  "screenshots": [
+    {
+      "path": "desktop_intro.png",
+      "pixel_width": 1152,
+      "pixel_height": 800,
+      "sha256": "6260be9f6e3215b5328d5133f849f366b43feb911c19264dadc8dd6bc084c9dc"
+    },
+    {
+      "path": "desktop_trial.png",
+      "pixel_width": 1152,
+      "pixel_height": 800,
+      "sha256": "e82df646b229d498a78dfddce9210c185c3ee36bff1396ddf4dd061287e6f7cc"
+    },
+    {
+      "path": "mobile_trial.png",
+      "pixel_width": 480,
+      "pixel_height": 900,
+      "effective_css_viewport": "384x720",
+      "sha256": "122684b33c41639537821c7e6746268c367a5d95e7380aacd9d4885bd8ca0cb8"
+    }
+  ],
+  "limitations": [
+    "Browser-origin timing and focus telemetry has no anti-tamper challenge and is not evidence of real-participant measurement integrity; this remains a pilot blocker.",
+    "Participant session resume has no authorization mechanism; this remains a pilot blocker.",
+    "The integrated browser maps physical screenshot pixels to CSS pixels at devicePixelRatio 1.25; both dimensions are recorded explicitly.",
+    "All human, formal-stimulus, translation, participant, and experiment-runtime gates remain blocked."
+  ],
+  "readiness": {
+    "engineering_ready": true,
+    "pilot_ready": false,
+    "research_validated": false
+  }
+}

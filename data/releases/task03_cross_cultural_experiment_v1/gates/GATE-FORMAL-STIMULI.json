@@ -1,0 +1,15 @@
+{
+  "blockers": [
+    "TASK-01 formal stimulus entrypoint is blocked; only an open engineering fixture is allowed."
+  ],
+  "gate_id": "GATE-FORMAL-STIMULI",
+  "prohibited_actions": [
+    "real recruitment",
+    "real response collection",
+    "formal analysis",
+    "public release"
+  ],
+  "required_decision": "Explicit human approval with versioned local evidence; never auto-unlock.",
+  "schema_version": "1.0.0",
+  "status": "blocked"
+}
