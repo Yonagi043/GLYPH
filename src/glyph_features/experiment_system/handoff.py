@@ -442,10 +442,17 @@ def _read_records(path: Path) -> list[dict[str, Any]]:
 
 def _contains_absolute_path(path: Path) -> bool:
     payload = path.read_bytes()
+    try:
+        payload.decode("utf-8")
+    except UnicodeDecodeError:
+        payload = b"\n".join(re.findall(rb"[\x20-\x7e]{8,}", payload))
     unix = re.compile(
-        rb"(?<![:/#A-Za-z0-9._-])/(?!/)(?!(?:api|static)(?:/|[\s\"']))[^\x00-\x20\"'<>]+"
+        rb"(?<![:/#A-Za-z0-9._-])/(?!/)(?!(?:api|static)/)"
+        rb"[A-Za-z0-9._~%+@=,-]+(?:/[A-Za-z0-9._~%+@=,-]+)+"
     )
-    file_uri = re.compile(rb"file:///(?!/)[^\s\"']+")
+    file_uri = re.compile(
+        rb"file:///(?!/)[A-Za-z0-9._~%+@=,-]+(?:/[A-Za-z0-9._~%+@=,-]+)+"
+    )
     windows = re.compile(rb"(?<![A-Za-z0-9])[A-Za-z]:[\\/][^\s\"']+")
     return bool(unix.search(payload) or file_uri.search(payload) or windows.search(payload))
 

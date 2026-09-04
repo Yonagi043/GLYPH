@@ -719,6 +719,7 @@ def test_cli_builds_schema_valid_reference_bundle_without_overwrite(tmp_path: Pa
         ("https://json-schema.org/draft/2020-12/schema", False),
         ("#/$defs/artifact", False),
         ("GET /api/status and /static/app.js", False),
+        ("desktop/mobile and 桌面/移动", False),
     ],
 )
 def test_handoff_absolute_path_scan_is_portable(tmp_path: Path, payload: str, expected: bool) -> None:
