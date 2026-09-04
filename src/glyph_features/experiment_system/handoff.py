@@ -325,9 +325,6 @@ def _validate_producer(manifest: dict[str, Any], root: Path, errors: list[str]) 
         blob_hash = hashlib.sha256(_git_blob(root, commit, path)).hexdigest()
         if blob_hash != item["sha256"]:
             errors.append(f"producer commit hash mismatch: {path}")
-        current = root / normalize_repo_path(path)
-        if not current.is_file() or _sha256_file(current) != item["sha256"]:
-            errors.append(f"producer working tree drift: {path}")
         normalized.append({"role": item["role"], "path": path, "sha256": item["sha256"]})
     if canonical_sha256(normalized) != provenance["aggregate_sha256"]:
         errors.append("producer aggregate hash mismatch")

@@ -189,7 +189,7 @@ def validate_handoff(
     contracts = Path(schema_root).resolve() if schema_root else root
     inputs = Path(input_root).resolve() if input_root else root
     errors = validate_record(manifest, contracts / "schema/handoff_manifest.schema.json")
-    _validate_producer_provenance(manifest, inputs, errors)
+    _validate_producer_provenance(manifest, manifest_file, inputs, errors)
     for artifact in manifest.get("input_snapshots", []):
         if not isinstance(artifact, dict) or not {"path", "sha256", "record_count"} <= artifact.keys():
             continue
@@ -621,6 +621,104 @@ def _producer_file_records(root: Path, config_file: Path) -> list[dict[str, str]
     )
 
 
+def _producer_file_records_at_commit(
+    root: Path,
+    config_file: Path,
+    commit: str,
+) -> list[dict[str, str]]:
+    try:
+        config_path = config_file.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError as error:
+        raise ValueError("producer config must be inside the workspace") from error
+    source_root = "src/glyph_features/asset_system"
+    result = subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", commit, "--", source_root],
+        cwd=root,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise ValueError("unable to enumerate producer files at snapshot commit")
+    source_paths = sorted(
+        path
+        for path in result.stdout.splitlines()
+        if Path(path).parent.as_posix() == source_root and Path(path).suffix == ".py"
+    )
+    specifications = [
+        ("entrypoint", "pyproject.toml"),
+        ("dependency_lock", "runtime.lock.json"),
+        ("config", config_path),
+        *(("schema", path) for path in PRODUCER_SCHEMA_FILES),
+        *(("producer_source", path) for path in source_paths),
+    ]
+    records: list[dict[str, str]] = []
+    for role, path in specifications:
+        blob = subprocess.run(
+            ["git", "show", f"{commit}:{path}"],
+            cwd=root,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if blob.returncode != 0:
+            raise ValueError(f"producer file unavailable at snapshot commit: {path}")
+        records.append(
+            {
+                "role": role,
+                "path": path,
+                "sha256": hashlib.sha256(blob.stdout).hexdigest(),
+            }
+        )
+    return sorted(records, key=lambda item: item["path"])
+
+
+def _historical_producer_file_records(
+    root: Path,
+    manifest_file: Path,
+    config_file: Path,
+    base_commit: str | None,
+) -> list[dict[str, str]] | None:
+    try:
+        manifest_path = manifest_file.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return None
+    history = subprocess.run(
+        ["git", "log", "--format=%H", "HEAD", "--", manifest_path],
+        cwd=root,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    if history.returncode != 0:
+        return None
+    manifest_sha256 = sha256_file(manifest_file)
+    for commit in history.stdout.splitlines():
+        if base_commit:
+            ancestry = subprocess.run(
+                ["git", "merge-base", "--is-ancestor", base_commit, commit],
+                cwd=root,
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            if ancestry.returncode != 0:
+                continue
+        blob = subprocess.run(
+            ["git", "show", f"{commit}:{manifest_path}"],
+            cwd=root,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if blob.returncode != 0 or hashlib.sha256(blob.stdout).hexdigest() != manifest_sha256:
+            continue
+        return _producer_file_records_at_commit(root, config_file, commit)
+    return None
+
+
 def _producer_aggregate(records: list[dict[str, str]]) -> str:
     normalized = sorted(
         ({"role": item["role"], "path": item["path"], "sha256": item["sha256"]} for item in records),
@@ -674,7 +772,12 @@ def _producer_provenance(root: Path, config_file: Path, base_commit: str) -> dic
     }
 
 
-def _validate_producer_provenance(manifest: dict[str, Any], input_root: Path, errors: list[str]) -> None:
+def _validate_producer_provenance(
+    manifest: dict[str, Any],
+    manifest_file: Path,
+    input_root: Path,
+    errors: list[str],
+) -> None:
     provenance = manifest.get("producer_provenance")
     if not isinstance(provenance, dict):
         return
@@ -694,7 +797,13 @@ def _validate_producer_provenance(manifest: dict[str, Any], input_root: Path, er
         return
     try:
         config_path = input_root / normalize_repo_path(config_artifact["path"])
-        expected = _producer_file_records(input_root, config_path)
+        historical = _historical_producer_file_records(
+            input_root,
+            manifest_file,
+            config_path,
+            provenance.get("base_commit"),
+        )
+        expected = historical or _producer_file_records(input_root, config_path)
     except (KeyError, ValueError) as error:
         errors.append(f"producer snapshot expected-file error: {error}")
         return
@@ -710,15 +819,15 @@ def _validate_producer_provenance(manifest: dict[str, Any], input_root: Path, er
     for item in files:
         if not isinstance(item, dict) or not {"role", "path", "sha256"} <= item.keys():
             continue
-        path = _artifact_path(input_root, item["path"], errors, "producer")
-        if path is None or not path.is_file():
-            errors.append(f"missing producer file: {item['path']}")
-            continue
         if expected_roles.get(item["path"]) != item["role"]:
             errors.append(
                 f"producer role mismatch: {item['path']}: {item['role']} != {expected_roles.get(item['path'])}"
             )
-        if sha256_file(path) != item["sha256"]:
+        expected_hash = next(
+            (record["sha256"] for record in expected if record["path"] == item["path"]),
+            None,
+        )
+        if expected_hash != item["sha256"]:
             errors.append(f"producer hash mismatch: {item['path']}")
         declared_records.append({"role": item["role"], "path": item["path"], "sha256": item["sha256"]})
     if len(declared_records) == len(files) and _producer_aggregate(declared_records) != provenance.get("aggregate_sha256"):

@@ -349,6 +349,40 @@ def _producer_records(root: Path) -> list[dict[str, str]]:
     )
 
 
+def _producer_records_at_commit(root: Path, git_commit: str) -> list[dict[str, str]]:
+    source_root = "src/glyph_features/vision_system"
+    result = _git(
+        root,
+        ["ls-tree", "-r", "--name-only", git_commit, "--", source_root],
+        check=False,
+    )
+    if result.returncode != 0:
+        raise VisionSystemError("PRODUCER_SNAPSHOT_UNAVAILABLE", git_commit)
+    source_paths = sorted(
+        path
+        for path in result.stdout.decode("utf-8").splitlines()
+        if PurePosixPath(path).parent.as_posix() == source_root
+        and PurePosixPath(path).suffix == ".py"
+    )
+    specifications = [
+        *PRODUCER_STATIC_FILES,
+        *(("producer_source", path) for path in source_paths),
+    ]
+    records: list[dict[str, str]] = []
+    for role, path in specifications:
+        blob = _git_blob(root, git_commit, path)
+        if blob is None:
+            raise VisionSystemError("PRODUCER_FILE_MISSING", path)
+        records.append(
+            {
+                "role": role,
+                "path": path,
+                "sha256": hashlib.sha256(blob).hexdigest(),
+            }
+        )
+    return sorted(records, key=lambda item: item["path"])
+
+
 def _producer_provenance(root: Path, git_commit: str) -> dict[str, Any]:
     if not re.fullmatch(r"[a-f0-9]{40}", git_commit):
         raise VisionSystemError("GIT_COMMIT_INVALID", git_commit)
@@ -376,8 +410,15 @@ def _validate_provenance(manifest: dict[str, Any], root: Path, errors: list[str]
     records = provenance.get("files")
     if not isinstance(records, list):
         return
+    producer_commit = provenance.get("git_commit")
     try:
-        expected = _producer_records(root)
+        expected = (
+            _producer_records_at_commit(root, producer_commit)
+            if isinstance(producer_commit, str)
+            and re.fullmatch(r"[a-f0-9]{40}", producer_commit)
+            and _git(root, ["cat-file", "-e", f"{producer_commit}^{{commit}}"], check=False).returncode == 0
+            else _producer_records(root)
+        )
     except VisionSystemError as error:
         errors.append(str(error))
         return
@@ -389,7 +430,7 @@ def _validate_provenance(manifest: dict[str, Any], root: Path, errors: list[str]
     if len(declared) == len(records) and _aggregate_sha256(declared) != provenance.get("aggregate_sha256"):
         errors.append("producer aggregate hash mismatch")
     git_commit = manifest.get("git_commit")
-    if git_commit != provenance.get("git_commit"):
+    if git_commit != producer_commit:
         errors.append("manifest git_commit does not match producer provenance")
     if isinstance(git_commit, str) and re.fullmatch(r"[a-f0-9]{40}", git_commit):
         if _git(root, ["cat-file", "-e", f"{git_commit}^{{commit}}"], check=False).returncode != 0:
