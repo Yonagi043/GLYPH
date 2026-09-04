@@ -25,16 +25,18 @@
     "next_task_entrypoints"
   ],
   "properties": {
-    "handoff_schema_version": {"const": "1.0.0"},
+    "handoff_schema_version": {"const": "1.1.0"},
     "task_id": {"const": "TASK-02"},
-    "producer_version": {"const": "visual_measurements_v2.0.0"},
+    "producer_version": {"const": "visual_measurements_v2.0.1"},
     "git_commit": {"$ref": "#/$defs/gitCommit"},
     "created_at": {"type": "string", "format": "date-time"},
     "contract_compatibility": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["canonical_long_form", "visual_v1_readable", "visual_v1_roundtrip", "notes"],
+      "required": ["previous_handoff", "backward_compatible", "canonical_long_form", "visual_v1_readable", "visual_v1_roundtrip", "notes"],
       "properties": {
+        "previous_handoff": {"const": "1.0.0"},
+        "backward_compatible": {"const": false},
         "canonical_long_form": {"const": "1.0.0"},
         "visual_v1_readable": {"const": true},
         "visual_v1_roundtrip": {"const": true},
@@ -64,9 +66,9 @@
       "additionalProperties": false,
       "required": ["feature_registry", "long_measurement", "handoff", "expert_gate", "visual_v1"],
       "properties": {
-        "feature_registry": {"const": "2.0.0"},
+        "feature_registry": {"const": "2.0.1"},
         "long_measurement": {"const": "1.0.0"},
-        "handoff": {"const": "1.0.0"},
+        "handoff": {"const": "1.1.0"},
         "expert_gate": {"const": "1.0.0"},
         "visual_v1": {"const": "1.1.0-compatible"}
       }
@@ -93,8 +95,14 @@
     },
     "input_snapshots": {
       "type": "array",
-      "minItems": 2,
-      "items": {"$ref": "#/$defs/artifact"}
+      "minItems": 6,
+      "items": {"$ref": "#/$defs/artifact"},
+      "allOf": [
+        {"contains": {"type": "object", "required": ["logical_type"], "properties": {"logical_type": {"const": "task01_handoff"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"type": "object", "required": ["logical_type"], "properties": {"logical_type": {"const": "task01_asset_candidates"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"type": "object", "required": ["logical_type"], "properties": {"logical_type": {"const": "task01_stimuli"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"type": "object", "required": ["logical_type"], "properties": {"logical_type": {"const": "feature_registry_config"}}}, "minContains": 1, "maxContains": 1}
+      ]
     },
     "outputs": {
       "type": "array",

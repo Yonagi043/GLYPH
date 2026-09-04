@@ -11,8 +11,15 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from .definitions import load_registry
-from .extract import VisionSystemError, _load_grayscale, _safe_repo_file, measure_array, sha256_file
+from .definitions import canonical_sha256, load_registry
+from .extract import (
+    VisionSystemError,
+    _load_grayscale,
+    _read_task01_snapshot,
+    _safe_repo_file,
+    measure_array,
+    sha256_file,
+)
 
 
 def qc_run(run_dir: str | Path, workspace_root: str | Path, schema_root: str | Path) -> dict[str, Any]:
@@ -36,7 +43,47 @@ def qc_run(run_dir: str | Path, workspace_root: str | Path, schema_root: str | P
     records = _read_jsonl(run / "measurements.jsonl")
     failures = _read_jsonl(run / "failures.jsonl")
     errors: list[dict[str, str]] = []
+    task01_path = _safe_repo_file(root, manifest["task01_handoff_path"])
+    try:
+        _, _, _, actual_task01_lineage = _read_task01_snapshot(root, task01_path)
+    except VisionSystemError as error:
+        errors.append({"code": "TASK01_LINEAGE_INVALID", "detail": str(error)})
+        actual_task01_lineage = None
+    actual_contract_sha256 = sha256_file(task01_path)
+    if actual_contract_sha256 != manifest.get("task01_handoff_sha256"):
+        errors.append({
+            "code": "TASK01_CONTRACT_HASH_MISMATCH",
+            "detail": manifest["task01_handoff_path"],
+        })
+    run_task01_lineage = manifest.get("task01_lineage")
+    if actual_task01_lineage is not None:
+        for key in ("handoff", "asset_candidates", "stimuli"):
+            if not isinstance(run_task01_lineage, dict) or run_task01_lineage.get(key) != actual_task01_lineage[key]:
+                errors.append({
+                    "code": "TASK01_LINEAGE_MISMATCH",
+                    "detail": f"run manifest task01_lineage.{key} does not match actual files",
+                })
+    source_contract_mismatches = sum(
+        record.get("source_contract_sha256") != actual_contract_sha256
+        for record in records
+    )
+    if source_contract_mismatches:
+        errors.append({
+            "code": "MEASUREMENT_SOURCE_CONTRACT_MISMATCH",
+            "detail": f"{source_contract_mismatches} records do not match the actual TASK-01 handoff",
+        })
     manifest_config_sha256 = manifest.get("algorithm_config_sha256")
+    resolved_config = manifest.get("resolved_algorithm_config")
+    if not isinstance(resolved_config, dict) or resolved_config != registry.payload["algorithm_defaults"]:
+        errors.append({
+            "code": "ALGORITHM_CONFIG_RESOLUTION_MISMATCH",
+            "detail": "run manifest resolved config does not match the validated registry",
+        })
+    elif canonical_sha256(resolved_config) != manifest_config_sha256:
+        errors.append({
+            "code": "ALGORITHM_CONFIG_RESOLUTION_MISMATCH",
+            "detail": "run manifest resolved config does not reproduce algorithm_config_sha256",
+        })
     if manifest_config_sha256 != registry.payload["algorithm_config_sha256"]:
         errors.append({
             "code": "ALGORITHM_CONFIG_HASH_MISMATCH",
@@ -130,7 +177,19 @@ def qc_run(run_dir: str | Path, workspace_root: str | Path, schema_root: str | P
     report = {
         "schema_version": "1.0.0",
         "extraction_run_id": manifest["extraction_run_id"],
-        "input_integrity": {"status": "passed" if not any(error["code"].endswith("HASH_MISMATCH") for error in errors) else "failed"},
+        "input_integrity": {
+            "status": "failed"
+            if any(
+                error["code"].endswith("HASH_MISMATCH")
+                or error["code"] in {
+                    "TASK01_LINEAGE_INVALID",
+                    "TASK01_LINEAGE_MISMATCH",
+                    "MEASUREMENT_SOURCE_CONTRACT_MISMATCH",
+                }
+                for error in errors
+            )
+            else "passed"
+        },
         "schema_validation": {"status": "passed" if not any("SCHEMA" in error["code"] for error in errors) else "failed"},
         "computational_stability": {
             "status": "passed" if not stability_mismatches else "failed",

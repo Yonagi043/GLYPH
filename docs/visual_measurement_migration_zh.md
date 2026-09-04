@@ -5,7 +5,7 @@
 | 来源 | 读取 | 写回 | Canonical 状态 |
 |---|---|---|---|
 | visual features v1.1 宽表 | 支持严格读取 | 支持确定性语义往返 | 历史兼容，不改写原运行 |
-| visual measurements v2 长表 | 支持 | 支持 long export | 当前 canonical 原始测量 |
+| visual measurements v2.0.1 长表 | 支持 | 支持 long export | 当前 canonical 原始测量 |
 | 李婕 CV MVP 原始图片 | 通过根项目 shim 重跑 | 输出原始/诊断量 | 仅 diagnostic，禁止联合分析 |
 | 李婕 MVP `total_score`/十项规则分 | 可作为历史文件保留 | 不迁移为测量值 | deprecated、uncalibrated |
 
@@ -16,6 +16,12 @@
 `glyph_features.vision_system.compat.long_to_v1_wide` 只接受带完整 `legacy_v1_context` 的迁移记录。普通 A/B/C v2 长表不能投影成 v1 宽表，因为 v1 的 glyph box、序列和 normalization 语义无法从 v2 像素记录补造。
 
 参考运行 `data/processed/visual_features_v1/runs/render_551362ca0ff22f33/` 的 280 行可往返为 4,760 条记录并恢复原表语义。原目录保持只读。
+
+### 2.1 v2.0.0 到 v2.0.1
+
+v2.0.1 不改变 20 个 active 特征、8 个 deprecated v1 定义、canonical long measurement schema `1.0.0` 或默认算法参数。它修复 v2.0.0 对非 threshold 配置只哈希而未执行的实现缺陷。使用默认配置的旧测量可读取，但自定义 `component_connectivity`、`hole_connectivity`、`skeleton_algorithm`、`symmetry_alignment` 或 `tonal_bins` 的 v2.0.0 run 不能声明配置已被执行，必须在 v2.0.1 下重新提取。
+
+TASK-02 handoff 从 `1.0.0` 升级为不向后兼容的 `1.1.0`：新包必须包含 TASK-01 handoff、asset candidates、stimuli 和 measured/supporting representations 的快照，并通过 accepted checkpoint 与逐 measurement 来源复验。旧 `1.0.0` handoff 不能通过降低 schema 继续发布，应从保留 TASK-01 来源的 v2.0.1 run 重新生成。
 
 ## 3. 李婕 CV MVP
 

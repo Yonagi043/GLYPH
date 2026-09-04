@@ -13,7 +13,8 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from .extract import VisionSystemError, sha256_file
+from .definitions import canonical_sha256
+from .extract import VisionSystemError, _git_blob, _read_task01_snapshot, sha256_file
 from .qc import verify_checksums
 
 
@@ -59,21 +60,35 @@ def build_handoff_bundle(
         raise VisionSystemError("UNCALIBRATED_SCORE_PRESENT", "reference measurements contain a score field")
     provenance = _producer_provenance(root, git_commit)
 
-    input_paths = [
-        ("task01_handoff", run_manifest["task01_handoff_path"], "metadata_only", run_manifest["task01_handoff_schema_version"]),
-        ("feature_registry_config", run_manifest["registry_path"], "public_code_or_schema", registry["registry_version"]),
+    task01_lineage = run_manifest.get("task01_lineage")
+    if not isinstance(task01_lineage, dict):
+        raise VisionSystemError("RUN_LINEAGE_MISSING", "run_manifest.task01_lineage")
+    inputs = [
+        _lineage_artifact(root, "task01_handoff", task01_lineage.get("handoff"), "metadata_only"),
+        _lineage_artifact(root, "task01_asset_candidates", task01_lineage.get("asset_candidates"), "open_fixture"),
+        _lineage_artifact(root, "task01_stimuli", task01_lineage.get("stimuli"), "open_fixture"),
+        _artifact(
+            root,
+            "feature_registry_config",
+            run_manifest["registry_path"],
+            "public_code_or_schema",
+            registry["registry_version"],
+        ),
         *(
-            ("fixture_representation", item["path"], "open_fixture", "1.0.0")
+            _artifact(root, "fixture_representation", item["path"], "open_fixture", "1.0.0")
             for item in run_manifest["input_representations"]
         ),
+        *(
+            _artifact(root, "fixture_supporting_representation", item["path"], "open_fixture", "1.0.0")
+            for item in run_manifest.get("supporting_representations", [])
+        ),
     ]
-    inputs = [_artifact(root, logical_type, path, rights, schema_version) for logical_type, path, rights, schema_version in input_paths]
     run_relative = _relative_path(root, run)
     output_specs = [
-        ("feature_registry", f"{run_relative}/feature_registry.json", "public_code_or_schema", "2.0.0"),
+        ("feature_registry", f"{run_relative}/feature_registry.json", "public_code_or_schema", registry["registry_version"]),
         ("long_measurements", f"{run_relative}/measurements.jsonl", "open_fixture", "1.0.0"),
         ("extraction_failures", f"{run_relative}/failures.jsonl", "open_fixture", "1.0.0"),
-        ("run_manifest", f"{run_relative}/run_manifest.json", "metadata_only", "1.0.0"),
+        ("run_manifest", f"{run_relative}/run_manifest.json", "metadata_only", "1.1.0"),
         ("quality_report", f"{run_relative}/quality_report.json", "metadata_only", "1.0.0"),
         ("quality_report_markdown", f"{run_relative}/quality_report.md", "metadata_only", None),
         ("sensitivity_report", f"{run_relative}/sensitivity_report.json", "metadata_only", "1.0.0"),
@@ -189,6 +204,7 @@ def validate_handoff(
         errors.append("artifact paths are not unique")
     _validate_provenance(manifest, root, errors)
     _validate_semantics(manifest, root, errors)
+    _validate_task01_lineage(manifest, root, errors)
     _validate_bundle_checksums(manifest_file.parent, errors)
     return errors
 
@@ -218,16 +234,18 @@ def _handoff_manifest(
     measurement_path = f"{run_relative}/measurements.jsonl"
     registry_path = f"{run_relative}/feature_registry.json"
     return {
-        "handoff_schema_version": "1.0.0",
+        "handoff_schema_version": "1.1.0",
         "task_id": "TASK-02",
-        "producer_version": "visual_measurements_v2.0.0",
+        "producer_version": "visual_measurements_v2.0.1",
         "git_commit": git_commit,
         "created_at": created_at,
         "contract_compatibility": {
+            "previous_handoff": "1.0.0",
+            "backward_compatible": False,
             "canonical_long_form": "1.0.0",
             "visual_v1_readable": True,
             "visual_v1_roundtrip": True,
-            "notes": "The v1.1 wide table remains readable and round-trippable; ordinary v2 A/B/C records cannot fabricate v1 sequence metadata.",
+            "notes": "Handoff 1.1.0 requires TASK-01 candidate/stimulus snapshots and cross-artifact lineage validation; 1.0.0 bundles must be regenerated. Visual v1.1 tables remain readable and round-trippable.",
         },
         "producer_provenance": provenance,
         "upstream_commits": {"TASK-01": run_manifest["accepted_task01_commit"]},
@@ -236,7 +254,7 @@ def _handoff_manifest(
         "contract_versions": {
             "feature_registry": registry["registry_version"],
             "long_measurement": "1.0.0",
-            "handoff": "1.0.0",
+            "handoff": "1.1.0",
             "expert_gate": "1.0.0",
             "visual_v1": "1.1.0-compatible",
         },
@@ -408,6 +426,395 @@ def _validate_semantics(manifest: dict[str, Any], root: Path, errors: list[str])
             errors.extend(f"reference checksum: {error}" for error in verify_checksums(checksum_path.parent))
 
 
+def _validate_task01_lineage(manifest: dict[str, Any], root: Path, errors: list[str]) -> None:
+    task01_input = _single_artifact(manifest, "input_snapshots", "task01_handoff", errors)
+    registry_input = _single_artifact(manifest, "input_snapshots", "feature_registry_config", errors)
+    registry_output = _single_artifact(manifest, "outputs", "feature_registry", errors)
+    run_output = _single_artifact(manifest, "outputs", "run_manifest", errors)
+    measurement_output = _single_artifact(manifest, "outputs", "long_measurements", errors)
+    if not task01_input or not registry_input or not registry_output or not run_output or not measurement_output:
+        return
+    task01_path = _resolve_artifact(root, task01_input.get("path"), errors, "input_snapshots")
+    registry_config_path = _resolve_artifact(root, registry_input.get("path"), errors, "input_snapshots")
+    registry_snapshot_path = _resolve_artifact(root, registry_output.get("path"), errors, "outputs")
+    run_path = _resolve_artifact(root, run_output.get("path"), errors, "outputs")
+    measurement_path = _resolve_artifact(root, measurement_output.get("path"), errors, "outputs")
+    if not all(
+        path is not None and path.is_file()
+        for path in (task01_path, registry_config_path, registry_snapshot_path, run_path, measurement_path)
+    ):
+        return
+    try:
+        task01, candidates, stimuli, actual_lineage = _read_task01_snapshot(root, task01_path)
+        registry_config = _read_json(registry_config_path)
+        registry_snapshot = _read_json(registry_snapshot_path)
+        run = _read_json(run_path)
+        measurements = _read_jsonl(measurement_path)
+    except (OSError, KeyError, json.JSONDecodeError, VisionSystemError) as error:
+        errors.append(f"TASK-01 lineage parse failed: {error}")
+        return
+
+    if registry_snapshot != registry_config:
+        errors.append("lineage mismatch: feature_registry output does not equal feature_registry_config input")
+    _compare_lineage_field(
+        "run_manifest.registry_sha256",
+        run.get("registry_sha256"),
+        registry_input.get("sha256"),
+        errors,
+    )
+    resolved_config = run.get("resolved_algorithm_config")
+    _compare_lineage_field(
+        "run_manifest.resolved_algorithm_config",
+        resolved_config,
+        registry_config.get("algorithm_defaults"),
+        errors,
+    )
+    resolved_sha256 = canonical_sha256(resolved_config) if isinstance(resolved_config, dict) else None
+    _compare_lineage_field(
+        "run_manifest.algorithm_config_sha256(resolved)",
+        run.get("algorithm_config_sha256"),
+        resolved_sha256,
+        errors,
+    )
+    _compare_lineage_field(
+        "feature_registry.algorithm_config_sha256",
+        registry_config.get("algorithm_config_sha256"),
+        resolved_sha256,
+        errors,
+    )
+
+    if task01.get("task_id") != "TASK-01":
+        errors.append(f"lineage mismatch: task01_handoff.task_id: {task01.get('task_id')!r} != 'TASK-01'")
+    actual_contract_sha256 = actual_lineage["handoff"]["sha256"]
+    _compare_lineage_field(
+        "run_manifest.task01_handoff_path",
+        run.get("task01_handoff_path"),
+        actual_lineage["handoff"]["path"],
+        errors,
+    )
+    _compare_lineage_field(
+        "run_manifest.task01_handoff_sha256",
+        run.get("task01_handoff_sha256"),
+        actual_contract_sha256,
+        errors,
+    )
+    upstream_commit = manifest.get("upstream_commits", {}).get("TASK-01")
+    _compare_lineage_field("run_manifest.accepted_task01_commit", run.get("accepted_task01_commit"), upstream_commit, errors)
+    if isinstance(upstream_commit, str):
+        checkpoint_blob = _git_blob(root, upstream_commit, actual_lineage["handoff"]["path"])
+        checkpoint_sha256 = hashlib.sha256(checkpoint_blob).hexdigest() if checkpoint_blob is not None else None
+        _compare_lineage_field(
+            "task01_handoff.accepted_checkpoint_sha256",
+            actual_contract_sha256,
+            checkpoint_sha256,
+            errors,
+        )
+    run_lineage = run.get("task01_lineage")
+    if not isinstance(run_lineage, dict):
+        errors.append("lineage mismatch: run_manifest.task01_lineage is missing")
+    else:
+        _compare_lineage_field(
+            "run_manifest.task01_lineage.accepted_commit",
+            run_lineage.get("accepted_commit"),
+            upstream_commit,
+            errors,
+        )
+        for key in ("handoff", "asset_candidates", "stimuli"):
+            declared = run_lineage.get(key)
+            if not isinstance(declared, dict):
+                errors.append(f"lineage mismatch: run_manifest.task01_lineage.{key} is missing")
+                continue
+            for field in ("path", "sha256", "record_count", "schema_version"):
+                _compare_lineage_field(
+                    f"run_manifest.task01_lineage.{key}.{field}",
+                    declared.get(field),
+                    actual_lineage[key].get(field),
+                    errors,
+                )
+
+    for key, logical_type in (
+        ("handoff", "task01_handoff"),
+        ("asset_candidates", "task01_asset_candidates"),
+        ("stimuli", "task01_stimuli"),
+    ):
+        snapshot = _single_artifact(manifest, "input_snapshots", logical_type, errors)
+        if snapshot:
+            for field in ("path", "sha256", "record_count", "schema_version"):
+                _compare_lineage_field(
+                    f"input_snapshots[{logical_type}].{field}",
+                    snapshot.get(field),
+                    actual_lineage[key].get(field),
+                    errors,
+                )
+
+    candidate_by_id = {
+        record.get("asset_id"): record
+        for record in candidates
+        if isinstance(record, dict) and isinstance(record.get("asset_id"), str)
+    }
+    stimulus_by_id = {
+        record.get("stimulus_id"): record
+        for record in stimuli
+        if isinstance(record, dict) and isinstance(record.get("stimulus_id"), str)
+    }
+    task01_representations = {
+        item.get("path"): item
+        for item in task01.get("outputs", [])
+        if isinstance(item, dict) and item.get("logical_type") == "fixture_representation"
+    }
+    task02_representations = {
+        item.get("path"): item
+        for item in manifest.get("input_snapshots", [])
+        if isinstance(item, dict) and item.get("logical_type") in {
+            "fixture_representation", "fixture_supporting_representation"
+        }
+    }
+    measured_sources = run.get("input_representations")
+    supporting_sources = run.get("supporting_representations")
+    if not isinstance(measured_sources, list):
+        errors.append("lineage mismatch: run_manifest.input_representations is not an array")
+        measured_sources = []
+    if not isinstance(supporting_sources, list):
+        errors.append("lineage mismatch: run_manifest.supporting_representations is not an array")
+        supporting_sources = []
+    for category, sources in (
+        ("input_representations", measured_sources),
+        ("supporting_representations", supporting_sources),
+    ):
+        for index, source in enumerate(sources):
+            if not isinstance(source, dict):
+                errors.append(f"lineage mismatch: run_manifest.{category}[{index}] is not an object")
+                continue
+            _validate_run_source(
+                source,
+                f"run_manifest.{category}[{index}]",
+                root,
+                stimulus_by_id,
+                candidate_by_id,
+                task01_representations,
+                task02_representations,
+                errors,
+            )
+
+    expected_measured = {
+        (stimulus["stimulus_id"], representation)
+        for stimulus in stimuli
+        for representation in ("A_layout", "B_shape", "C_ink")
+        if stimulus.get("representations", {}).get(representation) is not None
+    }
+    actual_measured = {
+        (source.get("stimulus_id"), source.get("representation"))
+        for source in measured_sources
+        if isinstance(source, dict)
+    }
+    if actual_measured != expected_measured:
+        errors.append(
+            f"lineage mismatch: run_manifest.input_representations keys: "
+            f"{sorted(actual_measured, key=str)} != {sorted(expected_measured, key=str)}"
+        )
+    expected_supporting = {
+        (stimulus["stimulus_id"], "B_shape_mask")
+        for stimulus in stimuli
+        if stimulus.get("representations", {}).get("B_shape_mask") is not None
+    }
+    actual_supporting = {
+        (source.get("stimulus_id"), source.get("representation"))
+        for source in supporting_sources
+        if isinstance(source, dict)
+    }
+    if actual_supporting != expected_supporting:
+        errors.append(
+            f"lineage mismatch: run_manifest.supporting_representations keys: "
+            f"{sorted(actual_supporting, key=str)} != {sorted(expected_supporting, key=str)}"
+        )
+
+    for index, record in enumerate(measurements):
+        if not isinstance(record, dict):
+            continue
+        _compare_lineage_field(
+            f"measurements[{index}].source_contract_sha256",
+            record.get("source_contract_sha256"),
+            actual_contract_sha256,
+            errors,
+        )
+        _compare_lineage_field(
+            f"measurements[{index}].extraction_run_id",
+            record.get("extraction_run_id"),
+            run.get("extraction_run_id"),
+            errors,
+        )
+        _compare_lineage_field(
+            f"measurements[{index}].algorithm_config_sha256",
+            record.get("algorithm_config_sha256"),
+            run.get("algorithm_config_sha256"),
+            errors,
+        )
+        stimulus = stimulus_by_id.get(record.get("stimulus_id"))
+        reference = (
+            stimulus.get("representations", {}).get(record.get("representation"))
+            if isinstance(stimulus, dict)
+            else None
+        )
+        if not isinstance(reference, dict):
+            errors.append(f"lineage mismatch: measurements[{index}].stimulus_id/representation")
+            continue
+        _compare_lineage_field(
+            f"measurements[{index}].asset_id",
+            record.get("asset_id"),
+            reference.get("asset_id"),
+            errors,
+        )
+        _compare_lineage_field(
+            f"measurements[{index}].input_sha256",
+            record.get("input_sha256"),
+            reference.get("asset_ref", {}).get("sha256"),
+            errors,
+        )
+
+
+def _validate_run_source(
+    source: dict[str, Any],
+    field_path: str,
+    root: Path,
+    stimulus_by_id: dict[str, dict[str, Any]],
+    candidate_by_id: dict[str, dict[str, Any]],
+    task01_representations: dict[str, dict[str, Any]],
+    task02_representations: dict[str, dict[str, Any]],
+    errors: list[str],
+) -> None:
+    stimulus = stimulus_by_id.get(source.get("stimulus_id"))
+    if not isinstance(stimulus, dict):
+        errors.append(f"lineage mismatch: {field_path}.stimulus_id: {source.get('stimulus_id')!r} is absent")
+        return
+    reference = stimulus.get("representations", {}).get(source.get("representation"))
+    if not isinstance(reference, dict):
+        errors.append(f"lineage mismatch: {field_path}.representation: {source.get('representation')!r} is absent")
+        return
+    candidate = candidate_by_id.get(reference.get("asset_id"))
+    if not isinstance(candidate, dict):
+        errors.append(f"lineage mismatch: {field_path}.asset_id: upstream candidate is absent")
+        return
+    expected = {
+        "stimulus_id": stimulus["stimulus_id"],
+        "stimulus_record_sha256": canonical_sha256(stimulus),
+        "stimulus_qc_status": stimulus.get("qc", {}).get("status"),
+        "stimulus_rights_tier": stimulus.get("rights_tier"),
+        "asset_id": reference.get("asset_id"),
+        "asset_candidate_record_sha256": canonical_sha256(candidate),
+        "asset_qc_status": candidate.get("automated_qc", {}).get("status"),
+        "asset_curation_status": candidate.get("curation_status"),
+        "asset_rights_tier": candidate.get("rights_tier"),
+        "representation": source.get("representation"),
+        "asset_role": reference.get("asset_role"),
+        "transform_config_sha256": reference.get("transform_config_sha256"),
+        "path": reference.get("asset_ref", {}).get("path"),
+        "sha256": reference.get("asset_ref", {}).get("sha256"),
+    }
+    for field, expected_value in expected.items():
+        _compare_lineage_field(f"{field_path}.{field}", source.get(field), expected_value, errors)
+    _compare_lineage_field(
+        f"task01.asset_candidates[{candidate.get('asset_id')}].asset_role",
+        candidate.get("asset_role"),
+        reference.get("asset_role"),
+        errors,
+    )
+    _compare_lineage_field(
+        f"task01.asset_candidates[{candidate.get('asset_id')}].asset_ref",
+        candidate.get("asset_ref"),
+        reference.get("asset_ref"),
+        errors,
+    )
+    _compare_lineage_field(
+        f"task01.asset_candidates[{candidate.get('asset_id')}].transform.config_sha256",
+        candidate.get("transform", {}).get("config_sha256"),
+        reference.get("transform_config_sha256"),
+        errors,
+    )
+    parent = candidate_by_id.get(stimulus.get("original_asset_id"))
+    if not isinstance(parent, dict):
+        errors.append(f"lineage mismatch: task01.stimuli[{stimulus['stimulus_id']}].original_asset_id is absent")
+    else:
+        _compare_lineage_field(
+            f"task01.asset_candidates[{candidate.get('asset_id')}].parent_asset_id",
+            candidate.get("parent_asset_id"),
+            parent.get("asset_id"),
+            errors,
+        )
+        _compare_lineage_field(
+            f"task01.asset_candidates[{candidate.get('asset_id')}].transform.parent_sha256",
+            candidate.get("transform", {}).get("parent_sha256"),
+            parent.get("asset_ref", {}).get("sha256"),
+            errors,
+        )
+        for field in ("source_id", "work_id"):
+            _compare_lineage_field(
+                f"task01.asset_candidates[{candidate.get('asset_id')}].{field}",
+                candidate.get(field),
+                parent.get(field),
+                errors,
+            )
+    if candidate.get("target_geometry") is None:
+        errors.append(f"lineage mismatch: task01.asset_candidates[{candidate.get('asset_id')}].target_geometry is missing")
+    for field, expected_value in (
+        ("automated_qc.status", "passed"),
+        ("curation_status", "passed"),
+        ("rights_tier", "open"),
+        ("review.decision", "passed"),
+    ):
+        value: Any = candidate
+        for part in field.split("."):
+            value = value.get(part) if isinstance(value, dict) else None
+        _compare_lineage_field(f"task01.asset_candidates[{candidate.get('asset_id')}].{field}", value, expected_value, errors)
+    _compare_lineage_field(
+        f"task01.stimuli[{stimulus['stimulus_id']}].qc.status",
+        stimulus.get("qc", {}).get("status"),
+        "passed",
+        errors,
+    )
+    _compare_lineage_field(
+        f"task01.stimuli[{stimulus['stimulus_id']}].rights_tier",
+        stimulus.get("rights_tier"),
+        "open",
+        errors,
+    )
+    relative = reference.get("asset_ref", {}).get("path")
+    if isinstance(relative, str):
+        actual_path = _resolve_artifact(root, relative, errors, field_path)
+        if actual_path is not None and actual_path.is_file():
+            _compare_lineage_field(f"{field_path}.sha256(actual)", sha256_file(actual_path), expected["sha256"], errors)
+        for label, artifacts in (
+            ("TASK-01 outputs", task01_representations),
+            ("TASK-02 input_snapshots", task02_representations),
+        ):
+            artifact = artifacts.get(relative)
+            if not isinstance(artifact, dict):
+                errors.append(f"lineage mismatch: {field_path}.path is absent from {label}: {relative}")
+            else:
+                _compare_lineage_field(f"{label}[{relative}].sha256", artifact.get("sha256"), expected["sha256"], errors)
+
+
+def _single_artifact(
+    manifest: dict[str, Any],
+    category: str,
+    logical_type: str,
+    errors: list[str],
+) -> dict[str, Any] | None:
+    matches = [
+        item
+        for item in manifest.get(category, [])
+        if isinstance(item, dict) and item.get("logical_type") == logical_type
+    ]
+    if len(matches) != 1:
+        errors.append(f"lineage mismatch: {category} requires exactly one {logical_type}, found {len(matches)}")
+        return None
+    return matches[0]
+
+
+def _compare_lineage_field(path: str, actual: Any, expected: Any, errors: list[str]) -> None:
+    if actual != expected:
+        errors.append(f"lineage mismatch: {path}: {actual!r} != {expected!r}")
+
+
 def _validate_measurements(path: Path, schema_root: Path, errors: list[str]) -> None:
     schema = _read_json(schema_root / "visual_measurement.schema.json")
     validator = Draft202012Validator(schema, format_checker=FormatChecker())
@@ -426,6 +833,21 @@ def _validate_measurements(path: Path, schema_root: Path, errors: list[str]) -> 
 def _artifact(root: Path, logical_type: str, relative: str, rights: str, schema_version: str | None) -> dict[str, Any]:
     path = _resolve_required(root, relative)
     return _artifact_from_file(logical_type, relative, path, rights, schema_version)
+
+
+def _lineage_artifact(
+    root: Path,
+    logical_type: str,
+    declared: Any,
+    rights: str,
+) -> dict[str, Any]:
+    if not isinstance(declared, dict):
+        raise VisionSystemError("RUN_LINEAGE_MISSING", f"task01_lineage.{logical_type}")
+    artifact = _artifact(root, logical_type, declared["path"], rights, declared.get("schema_version"))
+    for field in ("sha256", "record_count"):
+        if artifact[field] != declared.get(field):
+            raise VisionSystemError("RUN_LINEAGE_MISMATCH", f"{logical_type}.{field}")
+    return artifact
 
 
 def _artifact_from_file(logical_type: str, relative: str, path: Path, rights: str, schema_version: str | None) -> dict[str, Any]:

@@ -1,6 +1,6 @@
 {
-  "protocol_version": "visual_measurements_v2.0.0",
-  "registry_version": "2.0.0",
+  "protocol_version": "visual_measurements_v2.0.1",
+  "registry_version": "2.0.1",
   "measurement_schema_version": "1.0.0",
   "accepted_task01_commit": "af3820836a6ffa92c63016b0e308f624f9b42db0",
   "algorithm_defaults": {

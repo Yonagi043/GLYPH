@@ -16,8 +16,8 @@
     "features"
   ],
   "properties": {
-    "protocol_version": {"const": "visual_measurements_v2.0.0"},
-    "registry_version": {"const": "2.0.0"},
+    "protocol_version": {"const": "visual_measurements_v2.0.1"},
+    "registry_version": {"const": "2.0.1"},
     "measurement_schema_version": {"const": "1.0.0"},
     "accepted_task01_commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
     "algorithm_defaults": {
@@ -28,9 +28,9 @@
         "binary_threshold": {"type": "integer", "minimum": 1, "maximum": 254},
         "component_connectivity": {"enum": [4, 8]},
         "hole_connectivity": {"enum": [4, 8]},
-        "skeleton_algorithm": {"type": "string", "minLength": 1},
+        "skeleton_algorithm": {"const": "skimage.morphology.skeletonize"},
         "symmetry_alignment": {"const": "representation_canvas"},
-        "tonal_bins": {"type": "integer", "minimum": 2}
+        "tonal_bins": {"type": "integer", "minimum": 2, "maximum": 256}
       }
     },
     "algorithm_config_sha256": {"$ref": "#/$defs/sha256"},

@@ -1,6 +1,6 @@
 # GLYPH 可解释视觉测量协议 v2
 
-版本：`visual_measurements_v2.0.0`
+版本：`visual_measurements_v2.0.1`
 
 ## 1. 系统边界
 
@@ -26,6 +26,12 @@
 Canonical 长表由 `schema/visual_measurement.schema.json` 验证。`valid` 必须有有限数值且 `missing_code=null`；`missing` 必须有 `value=null` 和机器可读缺失码。JSON 写入禁止 `NaN` 与 `Infinity`。
 
 `C5_qi_movement_proxy` 只接收方向、连续、粗细和连通等低层代理。它不是被直接观测的“气韵”，也没有独立分数。
+
+### 2.1 可执行算法配置
+
+`algorithm_defaults` 是运行契约，不只是哈希材料。`binary_threshold` 控制前景判定；`component_connectivity` 与 `hole_connectivity` 分别控制 SciPy 二维连通域结构；`skeleton_algorithm` 分派到记录版本的 scikit-image 实现；`symmetry_alignment` 选择明确的对齐协议；`tonal_bins` 控制 NumPy 灰度量化与熵计算。当前唯一支持的骨架与对齐枚举分别为 `skimage.morphology.skeletonize` 和 `representation_canvas`，其他值以 `ALGORITHM_CONFIG_UNSUPPORTED` 失败，不静默回退。
+
+run manifest 同时记录完整 `resolved_algorithm_config`、其 canonical SHA-256、各成熟库实现与版本。QC 从完整对象复算哈希，并与 registry 逐值比较。
 
 ## 3. 表示边界
 
@@ -67,11 +73,17 @@ uv run --frozen glyph-vision qc \
 
 输出目录不可覆盖。任一意外样本失败返回 1，同时保留已完成记录与 `failures.jsonl`；契约/操作错误返回 2；覆盖请求返回 3。
 
+### 4.1 TASK-01 来源链
+
+run manifest 冻结 TASK-01 handoff、fixture candidates 与 stimuli 三个实际快照。每个测量输入另记录 upstream stimulus/candidate 记录摘要、表示与 asset role、transform config、QC、curation、rights 和实际文件 SHA；`B_shape_mask` 作为支撑表示独立记录，不作为 canonical measurement representation。
+
+TASK-02 handoff `1.1.0` validator 从实际 TASK-01 文件重建这些关系，并机械比较 TASK-01 handoff SHA、accepted checkpoint blob、handoff input snapshot、run manifest、每条 measurement 的 `source_contract_sha256`/`input_sha256`，以及 stimulus/asset/representation 归属。逐文件重算普通 checksum 不能替代跨工件同源。
+
 ## 5. QC 与效度
 
 QC 分开报告：
 
-- **输入与配置完整性**：TASK-01 handoff、资产、registry、算法配置和输出 SHA-256；
+- **输入与配置完整性**：TASK-01 handoff/candidates/stimuli、accepted checkpoint、资产、registry、完整算法配置和输出 SHA-256；
 - **计算稳定性**：相同输入和配置重复计算是否一致；
 - **表示/阈值敏感性**：变化超过冻结阈值时标记 `needs_review`，不改写原值；
 - **表面效度**：等待两名独立视觉或字体领域审核者，`GATE-EXPERT` blocked；

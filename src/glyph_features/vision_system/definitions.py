@@ -10,6 +10,16 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 
+SUPPORTED_SKELETON_ALGORITHM = "skimage.morphology.skeletonize"
+SUPPORTED_SYMMETRY_ALIGNMENT = "representation_canvas"
+
+
+class RegistryError(ValueError):
+    def __init__(self, code: str, message: str):
+        super().__init__(f"{code}: {message}")
+        self.code = code
+
+
 def canonical_sha256(value: Any) -> str:
     payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
@@ -57,6 +67,20 @@ class FeatureRegistry:
 def load_registry(config_path: str | Path, schema_root: str | Path) -> FeatureRegistry:
     path = Path(config_path)
     payload = json.loads(path.read_text(encoding="utf-8"), parse_constant=_reject_nonfinite)
+    defaults = payload.get("algorithm_defaults")
+    supported_enums = {
+        "component_connectivity": (4, 8),
+        "hole_connectivity": (4, 8),
+        "skeleton_algorithm": (SUPPORTED_SKELETON_ALGORITHM,),
+        "symmetry_alignment": (SUPPORTED_SYMMETRY_ALIGNMENT,),
+    }
+    if isinstance(defaults, dict):
+        for field, supported in supported_enums.items():
+            if field in defaults and defaults[field] not in supported:
+                raise RegistryError(
+                    "ALGORITHM_CONFIG_UNSUPPORTED",
+                    f"unsupported {field}: {defaults[field]!r}",
+                )
     schema_path = Path(schema_root) / "visual_feature_definition.schema.json"
     schema = json.loads(schema_path.read_text(encoding="utf-8"), parse_constant=_reject_nonfinite)
     errors = sorted(Draft202012Validator(schema).iter_errors(payload), key=lambda error: list(error.path))

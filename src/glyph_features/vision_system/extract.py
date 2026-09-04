@@ -22,7 +22,13 @@ from skimage.morphology import skeletonize
 
 from glyph_features.asset_system.export import validate_handoff
 
-from .definitions import FeatureRegistry, canonical_sha256, load_registry
+from .definitions import (
+    SUPPORTED_SKELETON_ALGORITHM,
+    SUPPORTED_SYMMETRY_ALIGNMENT,
+    FeatureRegistry,
+    canonical_sha256,
+    load_registry,
+)
 
 
 RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$")
@@ -73,7 +79,7 @@ def extract_handoff(
         raise FileExistsError(f"run output already exists: {output}")
 
     registry = load_registry(registry_file, schema_directory)
-    handoff, candidates, stimuli = _load_task01_inputs(
+    handoff, candidates, stimuli, task01_lineage = _load_task01_inputs(
         root,
         handoff_file,
         allow_fixture,
@@ -87,6 +93,7 @@ def extract_handoff(
     records: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
     input_records: list[dict[str, Any]] = []
+    supporting_records: list[dict[str, Any]] = []
 
     for stimulus in stimuli:
         for representation in ("A_layout", "B_shape", "C_ink"):
@@ -96,7 +103,24 @@ def extract_handoff(
                 continue
             try:
                 candidate = candidate_by_id[reference["asset_id"]]
+                parent = candidate_by_id[stimulus["original_asset_id"]]
+                _validate_candidate_lineage(reference, candidate, parent, stimulus)
                 image_path = _validated_asset_path(root, reference, candidate)
+                if representation == "B_shape":
+                    mask_reference = stimulus["representations"].get("B_shape_mask")
+                    if mask_reference is None:
+                        raise VisionSystemError("B_SHAPE_MASK_MISSING", stimulus["stimulus_id"])
+                    mask_candidate = candidate_by_id[mask_reference["asset_id"]]
+                    _validate_candidate_lineage(mask_reference, mask_candidate, parent, stimulus)
+                    _validated_asset_path(root, mask_reference, mask_candidate)
+                    supporting_records.append(
+                        _input_lineage_record(
+                            stimulus,
+                            mask_reference,
+                            mask_candidate,
+                            representation="B_shape_mask",
+                        )
+                    )
                 array = _load_grayscale(image_path)
                 metrics = measure_array(array, representation, registry)
                 feature_record_id = _stable_id(
@@ -130,13 +154,7 @@ def extract_handoff(
                         raise VisionSystemError("MEASUREMENT_SCHEMA_INVALID", detail)
                     records.append(record)
                 input_records.append(
-                    {
-                        "stimulus_id": stimulus["stimulus_id"],
-                        "asset_id": reference["asset_id"],
-                        "representation": representation,
-                        "path": reference["asset_ref"]["path"],
-                        "sha256": reference["asset_ref"]["sha256"],
-                    }
+                    _input_lineage_record(stimulus, reference, candidate, representation=representation)
                 )
             except Exception as error:
                 failures.append(
@@ -150,8 +168,12 @@ def extract_handoff(
 
     records.sort(key=lambda item: (item["stimulus_id"], item["asset_id"], item["representation"], item["feature_code"]))
     input_records.sort(key=lambda item: (item["stimulus_id"], item["representation"]))
+    supporting_records = sorted(
+        {record["asset_id"]: record for record in supporting_records}.values(),
+        key=lambda item: (item["stimulus_id"], item["representation"]),
+    )
     run_manifest = {
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "extraction_run_id": extraction_run_id,
         "protocol_version": registry.payload["protocol_version"],
         "created_at": computed_at,
@@ -159,14 +181,21 @@ def extract_handoff(
         "task01_handoff_sha256": source_handoff_sha256,
         "task01_handoff_schema_version": handoff["handoff_schema_version"],
         "accepted_task01_commit": registry.payload["accepted_task01_commit"],
+        "task01_lineage": {
+            "accepted_commit": registry.payload["accepted_task01_commit"],
+            **task01_lineage,
+        },
         "registry_path": registry_file.relative_to(root).as_posix(),
         "registry_sha256": sha256_file(registry_file),
+        "resolved_algorithm_config": dict(registry.payload["algorithm_defaults"]),
         "algorithm_config_sha256": registry.payload["algorithm_config_sha256"],
+        "algorithm_implementations": _algorithm_implementations(registry),
         "implementation_sha256": sha256_file(__file__),
         "software_environment": software,
         "software_environment_sha256": software_environment_sha256,
         "fixture_only": all(stimulus["release_status"] == "fixture_only" for stimulus in stimuli),
         "input_representations": input_records,
+        "supporting_representations": supporting_records,
         "measurement_count": len(records),
         "failure_count": len(failures),
         "canonical_output": "measurements.jsonl",
@@ -196,11 +225,18 @@ def measure_array(
     image = np.asarray(array, dtype=np.uint8)
     if image.ndim != 2 or image.size == 0:
         raise VisionSystemError("IMAGE_SHAPE_INVALID", str(image.shape))
-    threshold = int(binary_threshold or registry.payload["algorithm_defaults"]["binary_threshold"])
+    defaults = registry.payload["algorithm_defaults"]
+    threshold = int(defaults["binary_threshold"] if binary_threshold is None else binary_threshold)
     foreground = image < threshold
-    computed = _binary_metrics(foreground)
+    computed = _binary_metrics(
+        foreground,
+        component_connectivity=int(defaults["component_connectivity"]),
+        hole_connectivity=int(defaults["hole_connectivity"]),
+        skeleton_algorithm=str(defaults["skeleton_algorithm"]),
+        symmetry_alignment=str(defaults["symmetry_alignment"]),
+    )
     if representation == "C_ink":
-        computed.update(_tonal_metrics(image))
+        computed.update(_tonal_metrics(image, bins=int(defaults["tonal_bins"])))
     result: dict[str, Metric] = {}
     for definition in registry.definitions:
         code = definition["feature_code"]
@@ -211,7 +247,24 @@ def measure_array(
     return result
 
 
-def _binary_metrics(foreground: np.ndarray) -> dict[str, Metric]:
+def _binary_metrics(
+    foreground: np.ndarray,
+    *,
+    component_connectivity: int,
+    hole_connectivity: int,
+    skeleton_algorithm: str,
+    symmetry_alignment: str,
+) -> dict[str, Metric]:
+    if skeleton_algorithm != SUPPORTED_SKELETON_ALGORITHM:
+        raise VisionSystemError(
+            "ALGORITHM_CONFIG_UNSUPPORTED",
+            f"unsupported skeleton_algorithm: {skeleton_algorithm!r}",
+        )
+    if symmetry_alignment != SUPPORTED_SYMMETRY_ALIGNMENT:
+        raise VisionSystemError(
+            "ALGORITHM_CONFIG_UNSUPPORTED",
+            f"unsupported symmetry_alignment: {symmetry_alignment!r}",
+        )
     height, width = foreground.shape
     canvas_pixels = int(foreground.size)
     ys, xs = np.nonzero(foreground)
@@ -223,7 +276,7 @@ def _binary_metrics(foreground: np.ndarray) -> dict[str, Metric]:
     bbox_height = y1 - y0
     area = int(foreground.sum())
     local = foreground[y0:y1, x0:x1]
-    labels, component_count = ndimage.label(local, structure=np.ones((3, 3), dtype=np.uint8))
+    labels, component_count = ndimage.label(local, structure=_connectivity_structure(component_connectivity))
     component_areas = [float(value) for value in ndimage.sum(local, labels, range(1, component_count + 1))]
     component_centers = [
         (float(center[1] + x0), float(center[0] + y0))
@@ -231,7 +284,7 @@ def _binary_metrics(foreground: np.ndarray) -> dict[str, Metric]:
     ]
     inner_labels, inner_count = ndimage.label(
         ~local,
-        structure=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]], dtype=np.uint8),
+        structure=_connectivity_structure(hole_connectivity),
     )
     edge_labels = set(
         np.concatenate((inner_labels[0], inner_labels[-1], inner_labels[:, 0], inner_labels[:, -1])).tolist()
@@ -290,7 +343,7 @@ def _binary_metrics(foreground: np.ndarray) -> dict[str, Metric]:
     return metrics
 
 
-def _tonal_metrics(image: np.ndarray) -> dict[str, Metric]:
+def _tonal_metrics(image: np.ndarray, *, bins: int) -> dict[str, Metric]:
     foreground = image < 254
     values = image[foreground]
     if values.size == 0:
@@ -298,14 +351,14 @@ def _tonal_metrics(image: np.ndarray) -> dict[str, Metric]:
             code: Metric(None, missing_code="EMPTY_FOREGROUND")
             for code in ("gray_mean_ink", "gray_entropy_ink", "local_contrast_ink", "edge_spread_ink")
         }
-    quantized = np.floor(values.astype(float) * 32.0 / 256.0).astype(int)
+    quantized = np.floor(values.astype(float) * bins / 256.0).astype(int)
     if np.unique(quantized).size < 3:
         return {
             code: Metric(None, missing_code="INSUFFICIENT_TONAL_RANGE")
             for code in ("gray_mean_ink", "gray_entropy_ink", "local_contrast_ink", "edge_spread_ink")
         }
     darkness = 1.0 - values.astype(float) / 255.0
-    counts = np.bincount(quantized, minlength=32).astype(float)
+    counts = np.bincount(quantized, minlength=bins).astype(float)
     probability = counts[counts > 0] / counts.sum()
     normalized = image.astype(float) / 255.0
     gradient_x = ndimage.sobel(normalized, axis=1, mode="nearest")
@@ -319,6 +372,17 @@ def _tonal_metrics(image: np.ndarray) -> dict[str, Metric]:
         "local_contrast_ink": Metric(float(np.std(values.astype(float) / 255.0, ddof=0))),
         "edge_spread_ink": Metric(edge_value, edge_value * 255.0, 255.0),
     }
+
+
+def _connectivity_structure(connectivity: int) -> np.ndarray:
+    if connectivity == 4:
+        return ndimage.generate_binary_structure(2, 1)
+    if connectivity == 8:
+        return ndimage.generate_binary_structure(2, 2)
+    raise VisionSystemError(
+        "ALGORITHM_CONFIG_UNSUPPORTED",
+        f"unsupported connectivity: {connectivity!r}",
+    )
 
 
 def _coefficient_of_variation(values: list[float], minimum_count: int) -> Metric:
@@ -389,11 +453,11 @@ def _load_task01_inputs(
     handoff_file: Path,
     allow_fixture: bool,
     accepted_commit: str,
-) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
+) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
     errors = _validate_task01_at_checkpoint(handoff_file, root, accepted_commit)
     if errors:
         raise VisionSystemError("TASK01_HANDOFF_INVALID", "; ".join(errors[:20]))
-    handoff = json.loads(handoff_file.read_text(encoding="utf-8"))
+    handoff, candidates, stimuli, lineage = _read_task01_snapshot(root, handoff_file)
     if handoff.get("task_id") != "TASK-01" or handoff.get("handoff_schema_version") != "2.0.0":
         raise VisionSystemError("TASK01_HANDOFF_INCOMPATIBLE", "TASK-01 handoff 2.0.0 is required")
     if not handoff.get("readiness", {}).get("engineering_ready"):
@@ -405,15 +469,8 @@ def _load_task01_inputs(
         raise VisionSystemError("FIXTURE_OPT_IN_REQUIRED", "pass allow_fixture=True for the accepted synthetic input")
     if entrypoint.get("status") not in {"fixture_only", "passed"}:
         raise VisionSystemError("TASK01_ENTRYPOINT_BLOCKED", str(entrypoint.get("status")))
-    candidates_path = _safe_repo_file(root, entrypoint["path"])
-    stimulus_artifact = next((item for item in handoff["outputs"] if item.get("logical_type") == "fixture_stimuli"), None)
-    if not stimulus_artifact:
-        raise VisionSystemError("TASK01_STIMULUS_MISSING", "fixture_stimuli output is absent")
-    stimuli_path = _safe_repo_file(root, stimulus_artifact["path"])
-    candidates = _read_jsonl(candidates_path)
-    stimuli = _read_jsonl(stimuli_path)
     if not stimuli:
-        raise VisionSystemError("TASK01_STIMULUS_EMPTY", str(stimuli_path.relative_to(root)))
+        raise VisionSystemError("TASK01_STIMULUS_EMPTY", lineage["stimuli"]["path"])
     for stimulus in stimuli:
         if stimulus.get("qc", {}).get("status") != "passed":
             raise VisionSystemError("TASK01_STIMULUS_QC_NOT_PASSED", stimulus.get("stimulus_id", "unknown"))
@@ -421,7 +478,70 @@ def _load_task01_inputs(
             raise VisionSystemError("TASK01_RIGHTS_NOT_OPEN", stimulus.get("stimulus_id", "unknown"))
         if stimulus.get("release_status") == "fixture_only" and not allow_fixture:
             raise VisionSystemError("FIXTURE_OPT_IN_REQUIRED", stimulus.get("stimulus_id", "unknown"))
-    return handoff, candidates, stimuli
+    return handoff, candidates, stimuli, lineage
+
+
+def _read_task01_snapshot(
+    root: Path,
+    handoff_file: Path,
+) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    if not handoff_file.is_relative_to(root) or not handoff_file.is_file():
+        raise VisionSystemError("UNSAFE_PATH", str(handoff_file))
+    handoff = json.loads(handoff_file.read_text(encoding="utf-8"))
+    entrypoint = next(
+        (item for item in handoff.get("next_task_entrypoints", []) if item.get("task_id") == "TASK-02"),
+        None,
+    )
+    if not entrypoint:
+        raise VisionSystemError("TASK01_ENTRYPOINT_MISSING", "TASK-02 entrypoint is absent")
+    candidate_artifact = next(
+        (
+            item
+            for item in handoff.get("outputs", [])
+            if item.get("logical_type") == "fixture_asset_candidates" and item.get("path") == entrypoint.get("path")
+        ),
+        None,
+    )
+    if not candidate_artifact:
+        raise VisionSystemError("TASK01_CANDIDATES_MISSING", "TASK-02 entrypoint is not a declared candidate output")
+    stimulus_artifact = next(
+        (item for item in handoff.get("outputs", []) if item.get("logical_type") == "fixture_stimuli"),
+        None,
+    )
+    if not stimulus_artifact:
+        raise VisionSystemError("TASK01_STIMULUS_MISSING", "fixture_stimuli output is absent")
+    candidates, candidate_snapshot = _read_declared_task01_jsonl(root, candidate_artifact)
+    stimuli, stimulus_snapshot = _read_declared_task01_jsonl(root, stimulus_artifact)
+    lineage = {
+        "handoff": {
+            "path": handoff_file.relative_to(root).as_posix(),
+            "sha256": sha256_file(handoff_file),
+            "record_count": 1,
+            "schema_version": handoff.get("handoff_schema_version"),
+        },
+        "asset_candidates": candidate_snapshot,
+        "stimuli": stimulus_snapshot,
+    }
+    return handoff, candidates, stimuli, lineage
+
+
+def _read_declared_task01_jsonl(
+    root: Path,
+    artifact: dict[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    path = _safe_repo_file(root, artifact["path"])
+    actual_sha256 = sha256_file(path)
+    if actual_sha256 != artifact.get("sha256"):
+        raise VisionSystemError("TASK01_ARTIFACT_HASH_MISMATCH", artifact["path"])
+    records = _read_jsonl(path)
+    if len(records) != artifact.get("record_count"):
+        raise VisionSystemError("TASK01_ARTIFACT_COUNT_MISMATCH", artifact["path"])
+    return records, {
+        "path": artifact["path"],
+        "sha256": actual_sha256,
+        "record_count": len(records),
+        "schema_version": artifact.get("schema_version"),
+    }
 
 
 def _validate_task01_at_checkpoint(handoff_file: Path, root: Path, accepted_commit: str) -> list[str]:
@@ -476,6 +596,67 @@ def _validated_asset_path(root: Path, reference: dict[str, Any], candidate: dict
     if sha256_file(path) != reference["asset_ref"]["sha256"]:
         raise VisionSystemError("ASSET_HASH_MISMATCH", reference["asset_id"])
     return path
+
+
+def _validate_candidate_lineage(
+    reference: dict[str, Any],
+    candidate: dict[str, Any],
+    parent: dict[str, Any],
+    stimulus: dict[str, Any],
+) -> None:
+    asset_id = reference["asset_id"]
+    if candidate.get("parent_asset_id") != stimulus.get("original_asset_id"):
+        raise VisionSystemError("ASSET_PARENT_MISMATCH", asset_id)
+    transform = candidate.get("transform")
+    if not isinstance(transform, dict):
+        raise VisionSystemError("ASSET_TRANSFORM_MISSING", asset_id)
+    if transform.get("parent_sha256") != parent.get("asset_ref", {}).get("sha256"):
+        raise VisionSystemError("ASSET_PARENT_HASH_MISMATCH", asset_id)
+    if transform.get("config_sha256") != reference.get("transform_config_sha256"):
+        raise VisionSystemError("ASSET_TRANSFORM_CONFIG_MISMATCH", asset_id)
+    if candidate.get("rights_tier") != "open" or candidate.get("rights_tier") != stimulus.get("rights_tier"):
+        raise VisionSystemError("ASSET_RIGHTS_MISMATCH", asset_id)
+    if candidate.get("review", {}).get("decision") != "passed" or candidate.get("target_geometry") is None:
+        raise VisionSystemError("ASSET_REVIEW_NOT_PASSED", asset_id)
+    for field in ("source_id", "work_id"):
+        if candidate.get(field) != parent.get(field):
+            raise VisionSystemError("ASSET_PARENT_METADATA_MISMATCH", f"{asset_id}: {field}")
+
+
+def _input_lineage_record(
+    stimulus: dict[str, Any],
+    reference: dict[str, Any],
+    candidate: dict[str, Any],
+    *,
+    representation: str,
+) -> dict[str, Any]:
+    return {
+        "stimulus_id": stimulus["stimulus_id"],
+        "stimulus_record_sha256": canonical_sha256(stimulus),
+        "stimulus_qc_status": stimulus["qc"]["status"],
+        "stimulus_rights_tier": stimulus["rights_tier"],
+        "asset_id": reference["asset_id"],
+        "asset_candidate_record_sha256": canonical_sha256(candidate),
+        "asset_qc_status": candidate["automated_qc"]["status"],
+        "asset_curation_status": candidate["curation_status"],
+        "asset_rights_tier": candidate["rights_tier"],
+        "representation": representation,
+        "asset_role": reference["asset_role"],
+        "transform_config_sha256": reference["transform_config_sha256"],
+        "path": reference["asset_ref"]["path"],
+        "sha256": reference["asset_ref"]["sha256"],
+    }
+
+
+def _algorithm_implementations(registry: FeatureRegistry) -> dict[str, dict[str, str]]:
+    defaults = registry.payload["algorithm_defaults"]
+    return {
+        "component_labeling": {"implementation": "scipy.ndimage.label", "version": version("scipy")},
+        "hole_labeling": {"implementation": "scipy.ndimage.label", "version": version("scipy")},
+        "skeleton": {"implementation": defaults["skeleton_algorithm"], "version": version("scikit-image")},
+        "symmetry": {"implementation": "numpy.flip", "version": np.__version__},
+        "tonal_histogram": {"implementation": "numpy.bincount", "version": np.__version__},
+    }
 
 
 def _safe_repo_file(root: Path, value: str) -> Path:

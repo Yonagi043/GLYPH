@@ -11,8 +11,14 @@ import pytest
 
 from glyph_features.vision_system.cli import main as vision_main
 from glyph_features.vision_system.compat import long_to_v1_wide, v1_wide_to_long
-from glyph_features.vision_system.definitions import load_registry
-from glyph_features.vision_system.extract import VisionSystemError, _safe_repo_file, extract_handoff, measure_array
+from glyph_features.vision_system.definitions import canonical_sha256, load_registry
+from glyph_features.vision_system.extract import (
+    VisionSystemError,
+    _safe_repo_file,
+    extract_handoff,
+    measure_array,
+    sha256_file,
+)
 from glyph_features.vision_system.handoff import build_handoff_bundle, validate_handoff
 from glyph_features.vision_system.qc import qc_run, verify_checksums
 
@@ -25,10 +31,22 @@ def registry():
     return load_registry(ROOT / "configs/visual_measurements_v2.yaml", ROOT / "schema")
 
 
+def _registry_with_algorithm_defaults(tmp_path, **overrides):
+    payload = json.loads((ROOT / "configs/visual_measurements_v2.yaml").read_text(encoding="utf-8"))
+    payload["algorithm_defaults"].update(overrides)
+    config_sha256 = canonical_sha256(payload["algorithm_defaults"])
+    payload["algorithm_config_sha256"] = config_sha256
+    for definition in payload["features"]:
+        definition["algorithm"]["default_config_sha256"] = config_sha256
+    path = tmp_path / f"registry-{config_sha256[:12]}.json"
+    path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    return load_registry(path, ROOT / "schema")
+
+
 def test_registry_maps_eight_dimensions_to_ten_constructs_without_scores():
     registry = load_registry(ROOT / "configs/visual_measurements_v2.yaml", ROOT / "schema")
 
-    assert registry.version == "2.0.0"
+    assert registry.version == "2.0.1"
     assert registry.dimension_codes == {
         "geometry",
         "density",
@@ -72,7 +90,66 @@ def test_registry_maps_eight_dimensions_to_ten_constructs_without_scores():
     assert all("score" not in code for code in registry.feature_codes)
 
 
-def test_task01_fixture_extracts_schema_valid_long_records_without_scores(tmp_path):
+def test_algorithm_threshold_connectivity_and_holes_drive_measurements(tmp_path):
+    low_threshold = _registry_with_algorithm_defaults(tmp_path, binary_threshold=100)
+    high_threshold = _registry_with_algorithm_defaults(tmp_path, binary_threshold=200)
+    threshold_case = np.full((5, 5), 255, dtype=np.uint8)
+    threshold_case[2, 1:4] = 150
+    assert measure_array(threshold_case, "B_shape", low_threshold)["ink_coverage_ratio"].value is None
+    assert measure_array(threshold_case, "B_shape", high_threshold)["ink_coverage_ratio"].value == pytest.approx(3 / 25)
+
+    diagonal = np.full((4, 4), 255, dtype=np.uint8)
+    diagonal[1, 1] = 0
+    diagonal[2, 2] = 0
+    four_components = _registry_with_algorithm_defaults(tmp_path, component_connectivity=4)
+    eight_components = _registry_with_algorithm_defaults(tmp_path, component_connectivity=8)
+    assert measure_array(diagonal, "B_shape", four_components)["connected_component_count"].value == 2
+    assert measure_array(diagonal, "B_shape", eight_components)["connected_component_count"].value == 1
+
+    diagonal_vent = np.full((5, 5), 255, dtype=np.uint8)
+    diagonal_vent[1:4, 1:4] = 0
+    diagonal_vent[1, 1] = 255
+    diagonal_vent[2, 2] = 255
+    four_holes = _registry_with_algorithm_defaults(tmp_path, hole_connectivity=4)
+    eight_holes = _registry_with_algorithm_defaults(tmp_path, hole_connectivity=8)
+    assert measure_array(diagonal_vent, "B_shape", four_holes)["closure_count"].value == 1
+    assert measure_array(diagonal_vent, "B_shape", eight_holes)["closure_count"].value == 0
+
+
+def test_algorithm_skeleton_symmetry_and_tonal_bins_are_executable(tmp_path, registry):
+    line = np.full((7, 9), 255, dtype=np.uint8)
+    line[3, 2:7] = 0
+    assert measure_array(line, "B_shape", registry)["skeleton_endpoint_count"].value == 2
+
+    asymmetric = np.full((4, 6), 255, dtype=np.uint8)
+    asymmetric[1:3, 1] = 0
+    asymmetric[2, 2] = 0
+    expected_differences = np.count_nonzero((asymmetric < 128) != np.fliplr(asymmetric < 128))
+    expected_similarity = 1.0 - expected_differences / asymmetric.size
+    assert measure_array(asymmetric, "B_shape", registry)["symmetry_horizontal"].value == pytest.approx(expected_similarity)
+
+    tonal = np.asarray([[0, 16, 64, 80], [128, 144, 192, 208]], dtype=np.uint8)
+    four_bins = _registry_with_algorithm_defaults(tmp_path, tonal_bins=4)
+    thirty_two_bins = _registry_with_algorithm_defaults(tmp_path, tonal_bins=32)
+    assert measure_array(tonal, "C_ink", four_bins)["gray_entropy_ink"].value == pytest.approx(2.0)
+    assert measure_array(tonal, "C_ink", thirty_two_bins)["gray_entropy_ink"].value == pytest.approx(3.0)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("component_connectivity", 6),
+        ("hole_connectivity", 6),
+        ("skeleton_algorithm", "unknown.skeletonizer"),
+        ("symmetry_alignment", "foreground_bbox"),
+    ],
+)
+def test_unsupported_algorithm_enum_has_stable_code(tmp_path, field, value):
+    with pytest.raises(ValueError, match=rf"ALGORITHM_CONFIG_UNSUPPORTED.*{field}"):
+        _registry_with_algorithm_defaults(tmp_path, **{field: value})
+
+
+def test_task01_fixture_extracts_schema_valid_long_records_without_scores(tmp_path, registry):
     output = tmp_path / "extract_fixture_contract"
     summary = extract_handoff(
         workspace_root=ROOT,
@@ -86,11 +163,24 @@ def test_task01_fixture_extracts_schema_valid_long_records_without_scores(tmp_pa
     )
 
     records = [json.loads(line) for line in (output / "measurements.jsonl").read_text().splitlines()]
+    manifest = json.loads((output / "run_manifest.json").read_text(encoding="utf-8"))
     assert summary["failure_count"] == 0
     assert summary["measurement_count"] == len(records)
     assert {record["representation"] for record in records} == {"A_layout", "B_shape", "C_ink"}
     assert {record["measurement_status"] for record in records} <= {"valid", "missing"}
     assert all(record["input_sha256"] and record["algorithm_config_sha256"] for record in records)
+    assert canonical_sha256(manifest["resolved_algorithm_config"]) == manifest["algorithm_config_sha256"]
+    assert manifest["resolved_algorithm_config"] == registry.payload["algorithm_defaults"]
+    assert manifest["task01_lineage"]["handoff"]["sha256"] == manifest["task01_handoff_sha256"]
+    assert {record["source_contract_sha256"] for record in records} == {manifest["task01_handoff_sha256"]}
+    assert {item["representation"] for item in manifest["supporting_representations"]} == {"B_shape_mask"}
+    assert {
+        manifest["task01_lineage"][key]["path"]
+        for key in ("asset_candidates", "stimuli")
+    } == {
+        "data/fixtures/asset_system/reference_handoff_v1/fixture/asset_candidates.jsonl",
+        "data/fixtures/asset_system/reference_handoff_v1/fixture/stimuli.jsonl",
+    }
     assert all(
         record["value"] is None or math.isfinite(record["value"])
         for record in records
@@ -279,6 +369,8 @@ def test_task01_handoff_tamper_and_path_escape_are_rejected(tmp_path):
         ("input", "INPUT_HASH_MISMATCH"),
         ("registry", "REGISTRY_HASH_MISMATCH"),
         ("config", "ALGORITHM_CONFIG_HASH_MISMATCH"),
+        ("resolved_config", "ALGORITHM_CONFIG_RESOLUTION_MISMATCH"),
+        ("task01_contract", "TASK01_CONTRACT_HASH_MISMATCH"),
         ("measurement", "COMPUTATIONAL_STABILITY_FAILED"),
     ],
 )
@@ -296,6 +388,12 @@ def test_qc_detects_integrity_tampering(tmp_path, tamper, expected_code):
     elif tamper == "config":
         manifest["algorithm_config_sha256"] = "0" * 64
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    elif tamper == "resolved_config":
+        manifest["resolved_algorithm_config"]["tonal_bins"] = 4
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    elif tamper == "task01_contract":
+        task01_path = isolated_root / manifest["task01_handoff_path"]
+        task01_path.write_text(task01_path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
     else:
         records = [json.loads(line) for line in (run / "measurements.jsonl").read_text().splitlines()]
         record = next(item for item in records if item["measurement_status"] == "valid")
@@ -388,6 +486,87 @@ def test_v1_adapter_rejects_unknown_wide_column(tmp_path):
 
 
 def test_handoff_build_validate_tamper_and_no_overwrite(tmp_path):
+    root, output, manifest = _build_handoff_test_repo(tmp_path)
+
+    assert validate_handoff(manifest, root) == []
+    assert vision_main([
+        "validate-handoff",
+        "--workspace-root", str(root),
+        "--schema-root", str(root / "schema"),
+        str(manifest),
+    ]) == 0
+    with pytest.raises(FileExistsError):
+        build_handoff_bundle(
+            workspace_root=root,
+            reference_run_dir=root / "data/fixtures/visual_measurements/reference_run_v1",
+            output_dir=output,
+            git_commit=_git_head(root),
+            created_at="2026-09-04T09:00:00Z",
+        )
+
+    measurement_path = root / "data/fixtures/visual_measurements/reference_run_v1/measurements.jsonl"
+    measurement_path.write_text(measurement_path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    errors = validate_handoff(manifest, root)
+    assert any("hash mismatch" in error for error in errors)
+    assert any("reference checksum" in error for error in errors)
+
+
+def test_handoff_rejects_rehashed_cross_artifact_lineage_fork(tmp_path, capsys):
+    root, output, manifest_path = _build_handoff_test_repo(tmp_path)
+    run = root / "data/fixtures/visual_measurements/reference_run_v1"
+    task01_path = root / "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json"
+    measurements_path = run / "measurements.jsonl"
+
+    measurements = [json.loads(line) for line in measurements_path.read_text(encoding="utf-8").splitlines()]
+    original_contract_sha256 = sha256_file(task01_path)
+    assert {record["source_contract_sha256"] for record in measurements} == {original_contract_sha256}
+
+    task01 = json.loads(task01_path.read_text(encoding="utf-8"))
+    task01["created_at"] = "2026-09-04T04:08:00Z"
+    _write_json_test(task01_path, task01)
+    forked_contract_sha256 = sha256_file(task01_path)
+
+    run_manifest_path = run / "run_manifest.json"
+    run_manifest = json.loads(run_manifest_path.read_text(encoding="utf-8"))
+    run_manifest["task01_handoff_sha256"] = forked_contract_sha256
+    run_manifest["input_representations"][0]["asset_id"] = "asset_semantic_fork"
+    _write_json_test(run_manifest_path, run_manifest)
+
+    measurements[0]["input_sha256"] = "f" * 64
+    measurements_path.write_text(
+        "".join(json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n" for record in measurements),
+        encoding="utf-8",
+    )
+    _refresh_checksums(run / "checksums.sha256", run)
+
+    handoff = json.loads(manifest_path.read_text(encoding="utf-8"))
+    next(item for item in handoff["input_snapshots"] if item["logical_type"] == "task01_handoff")["sha256"] = forked_contract_sha256
+    for logical_type, path in {
+        "long_measurements": measurements_path,
+        "run_manifest": run_manifest_path,
+        "reference_checksums": run / "checksums.sha256",
+    }.items():
+        next(item for item in handoff["outputs"] if item["logical_type"] == logical_type)["sha256"] = sha256_file(path)
+    _write_json_test(manifest_path, handoff)
+    _refresh_checksums(output / "checksums.sha256", output)
+
+    errors = validate_handoff(manifest_path, root)
+    assert any("task01_handoff.accepted_checkpoint_sha256" in error for error in errors)
+    assert any("run_manifest.input_representations[0].asset_id" in error for error in errors)
+    assert any("measurements[0].source_contract_sha256" in error for error in errors)
+    assert any("measurements[0].input_sha256" in error for error in errors)
+    assert vision_main([
+        "validate-handoff",
+        "--workspace-root", str(root),
+        "--schema-root", str(root / "schema"),
+        str(manifest_path),
+    ]) == 1
+    assert "source_contract_sha256" in capsys.readouterr().err
+
+
+def _build_handoff_test_repo(tmp_path):
+    source_run = _fixture_run(tmp_path / "source", "handoff_contract")
+    qc_run(source_run, ROOT, ROOT / "schema")
     root = tmp_path / "repo"
     files = [
         "pyproject.toml",
@@ -401,8 +580,11 @@ def test_handoff_build_validate_tamper_and_no_overwrite(tmp_path):
         "docs/visual_measurement_migration_zh.md",
         "data/fixtures/visual_measurements/cross_script_component_cases.json",
         "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+        "data/fixtures/asset_system/reference_handoff_v1/fixture/asset_candidates.jsonl",
+        "data/fixtures/asset_system/reference_handoff_v1/fixture/stimuli.jsonl",
         "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_6e451135614c28ccf86c714a.A_layout.png",
         "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_904a6f00145466ed82ec606f.mask.png",
         "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_e3d69a8b57fddd8087ffb0f1.C_ink.png",
     ]
     for relative in files:
@@ -414,11 +596,40 @@ def test_handoff_build_validate_tamper_and_no_overwrite(tmp_path):
         root / "src/glyph_features/vision_system",
     )
     shutil.copytree(
-        ROOT / "data/fixtures/visual_measurements/reference_run_v1",
+        source_run,
         root / "data/fixtures/visual_measurements/reference_run_v1",
     )
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
-    subprocess.run(["git", "add", "."], cwd=root, check=True)
+    _git_add_paths(root, [path for path in root.rglob("*") if path.is_file() and ".git" not in path.parts])
+    subprocess.run(
+        [
+            "git", "-c", "user.name=TASK-02 Test", "-c", "user.email=task02@example.invalid",
+            "-c", "commit.gpgsign=false", "commit", "-q", "-m", "upstream snapshot",
+        ],
+        cwd=root,
+        check=True,
+    )
+    upstream_commit = _git_head(root)
+    config_path = root / "configs/visual_measurements_v2.yaml"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config["accepted_task01_commit"] = upstream_commit
+    _write_json_test(config_path, config)
+    run = root / "data/fixtures/visual_measurements/reference_run_v1"
+    registry_path = run / "feature_registry.json"
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    registry["accepted_task01_commit"] = upstream_commit
+    _write_json_test(registry_path, registry)
+    run_manifest_path = run / "run_manifest.json"
+    run_manifest = json.loads(run_manifest_path.read_text(encoding="utf-8"))
+    run_manifest["accepted_task01_commit"] = upstream_commit
+    run_manifest["task01_lineage"]["accepted_commit"] = upstream_commit
+    run_manifest["registry_sha256"] = sha256_file(config_path)
+    _write_json_test(run_manifest_path, run_manifest)
+    _refresh_checksums(run / "checksums.sha256", run)
+    _git_add_paths(
+        root,
+        [config_path, registry_path, run_manifest_path, run / "checksums.sha256"],
+    )
     subprocess.run(
         [
             "git", "-c", "user.name=TASK-02 Test", "-c", "user.email=task02@example.invalid",
@@ -427,9 +638,7 @@ def test_handoff_build_validate_tamper_and_no_overwrite(tmp_path):
         cwd=root,
         check=True,
     )
-    git_commit = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=root, check=True, text=True, capture_output=True
-    ).stdout.strip()
+    git_commit = _git_head(root)
     output = root / "data/fixtures/visual_measurements/reference_handoff_v1"
 
     summary = build_handoff_bundle(
@@ -440,29 +649,31 @@ def test_handoff_build_validate_tamper_and_no_overwrite(tmp_path):
         created_at="2026-09-04T09:00:00Z",
     )
 
-    manifest = output / "handoff_manifest.json"
     assert summary["valid"] is True
-    assert validate_handoff(manifest, root) == []
-    assert vision_main([
-        "validate-handoff",
-        "--workspace-root", str(root),
-        "--schema-root", str(root / "schema"),
-        str(manifest),
-    ]) == 0
-    with pytest.raises(FileExistsError):
-        build_handoff_bundle(
-            workspace_root=root,
-            reference_run_dir=root / "data/fixtures/visual_measurements/reference_run_v1",
-            output_dir=output,
-            git_commit=git_commit,
-            created_at="2026-09-04T09:00:00Z",
-        )
+    return root, output, output / "handoff_manifest.json"
 
-    measurement_path = root / "data/fixtures/visual_measurements/reference_run_v1/measurements.jsonl"
-    measurement_path.write_text(measurement_path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
-    errors = validate_handoff(manifest, root)
-    assert any("hash mismatch" in error for error in errors)
-    assert any("reference checksum" in error for error in errors)
+
+def _git_head(root):
+    return subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=root, check=True, text=True, capture_output=True
+    ).stdout.strip()
+
+
+def _git_add_paths(root, paths):
+    relative_paths = [str(path.relative_to(root)) for path in paths]
+    subprocess.run(["git", "add", "--", *relative_paths], cwd=root, check=True)
+
+
+def _write_json_test(path, payload):
+    path.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
+
+def _refresh_checksums(checksum_path, root):
+    names = [line.split("  ", 1)[1] for line in checksum_path.read_text(encoding="utf-8").splitlines() if line]
+    checksum_path.write_text(
+        "".join(f"{sha256_file(root / name)}  {name}\n" for name in names),
+        encoding="utf-8",
+    )
 
 
 def _fixture_run(parent: Path, run_id: str) -> Path:
@@ -485,7 +696,14 @@ def _isolate_qc_run(parent: Path, source_run: Path) -> tuple[Path, Path]:
     run = root / "run"
     shutil.copytree(source_run, run)
     manifest = json.loads((run / "run_manifest.json").read_text(encoding="utf-8"))
-    relative_paths = [manifest["registry_path"], *(item["path"] for item in manifest["input_representations"])]
+    relative_paths = [
+        manifest["registry_path"],
+        manifest["task01_handoff_path"],
+        manifest["task01_lineage"]["asset_candidates"]["path"],
+        manifest["task01_lineage"]["stimuli"]["path"],
+        *(item["path"] for item in manifest["input_representations"]),
+        *(item["path"] for item in manifest["supporting_representations"]),
+    ]
     for relative in relative_paths:
         destination = root / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
