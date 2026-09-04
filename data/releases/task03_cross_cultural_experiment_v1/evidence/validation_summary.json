@@ -1,15 +1,17 @@
 {
   "schema_version": "1.0.0",
-  "created_at": "2026-09-04T06:49:28Z",
-  "implementation_commit": "dff452fbb733763d39c82c61011cabdd631265fd",
+  "created_at": "2026-09-04T08:30:19Z",
+  "implementation_commit": "2048fa9866eb8cedc58b7399958331eae5f4325e",
   "specialized_tests": {
     "command": "uv run --frozen pytest tests/test_experiment_system.py -q",
-    "passed": 35,
+    "passed": 55,
+    "duration_seconds": 41.29,
     "exit_code": 0
   },
   "full_tests": {
     "command": "uv run --frozen pytest -q",
-    "passed": 268,
+    "passed": 288,
+    "duration_seconds": 69.10,
     "exit_code": 0
   },
   "node_check": {
@@ -18,23 +20,36 @@
   },
   "uv_lock_check": {
     "command": "uv lock --check",
+    "resolved_packages": 48,
     "exit_code": 0
   },
   "git_diff_check": {
     "command": "git diff --check",
     "exit_code": 0
   },
-  "task01_handoff": {
-    "strategy": "strict validation in an immutable local checkpoint clone",
-    "checkpoint": "af3820836a6ffa92c63016b0e308f624f9b42db0",
+  "frozen_study_validation": {
+    "command": "uv run --frozen glyph-experiment validate-study",
     "valid": true,
-    "failure_count": 0
+    "study_id": "study_cross_cultural_v1",
+    "questionnaire_version": "1.0.0",
+    "language_count": 4,
+    "item_count": 22,
+    "stimulus_count": 16,
+    "synthetic_only": true
+  },
+  "reference_reproducibility": {
+    "reference_seed": "task03-reference-records",
+    "template_seed": "task03-template-v1",
+    "reference_directory_diff": 0,
+    "template_directory_diff": 0,
+    "valid": true
   },
   "assignment_dry_run": {
     "seed_count": 2,
     "participants_per_seed": 1000,
     "assignments_per_seed": 1000,
     "presentations_per_seed": 8000,
+    "unique_presentations_per_seed": 8000,
     "lost_trials": 0,
     "duplicate_responses": 0,
     "maximum_exposure_spread": 0,
@@ -45,29 +60,55 @@
   "browser_validation": {
     "passed": true,
     "languages": 4,
+    "completed_profiles": 1,
+    "completed_consents": 1,
+    "completed_assignments": 1,
     "completed_presentations": 8,
     "completed_ratings": 56,
-    "resume_after_presentations": 4,
-    "mobile_css_viewport": "312x675",
+    "quality_decision_nodes": 8,
+    "resume_after_presentations": 3,
+    "mobile_css_viewport": "384x720",
     "horizontal_overflow_px": 0,
+    "clipped_text_elements": 0,
     "undersized_visible_controls": 0,
-    "integrated_keyboard_driver_limitation_recorded": true
+    "application_error_count": 0,
+    "keyboard_activation_passed": true
+  },
+  "bundle_validation": {
+    "purpose": "engineering_fixture",
+    "formal_read_gate": "passed",
+    "record_counts": {
+      "profiles": 1,
+      "consents": 1,
+      "assignments": 1,
+      "presentations": 8,
+      "ratings": 56,
+      "quality_decisions": 8
+    },
+    "manifest_hashes_and_counts_verified": true,
+    "required_rating_item_set_verified": true,
+    "quality_history_recomputed": true,
+    "latest_quality_excluded": false
   },
   "synthetic_use_gate": {
-    "engineering_fixture_record_count": 56,
+    "engineering_fixture_rating_count": 56,
     "formal_analysis_exit_code": 2,
     "release_exit_code": 2,
     "blocked_code": "SYNTHETIC_FORMAL_EXPORT_FORBIDDEN",
     "blocked_outputs_absent": true
   },
   "security_scan": {
-    "forbidden_files_clean": true,
-    "credentials_clean": true,
-    "pii_clean": true,
-    "real_records_clean": true,
-    "persona_records_clean": true,
-    "absolute_paths_clean": true
+    "producer_absolute_paths_clean": true,
+    "producer_credentials_clean": true,
+    "task04_task05_paths_untouched": true,
+    "bundle_forbidden_pii_keys_clean": true,
+    "real_records_absent": true,
+    "persona_records_absent": true
   },
+  "pilot_blockers": [
+    "Browser-origin timing and focus telemetry has no anti-tamper challenge.",
+    "Participant session resume has no authorization mechanism."
+  ],
   "readiness": {
     "engineering_ready": true,
     "pilot_ready": false,

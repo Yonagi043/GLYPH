@@ -1,8 +1,8 @@
 # TASK-03 跨文化感知实验与多语问卷报告
 
 版本：`1.0.0`
-生成时间：2026-09-04T06:49:28Z
-Implementation commit：`dff452fbb733763d39c82c61011cabdd631265fd`
+生成时间：2026-09-04T08:30:19Z
+Implementation commit：`2048fa9866eb8cedc58b7399958331eae5f4325e`
 
 ## 完成范围
 
@@ -10,8 +10,8 @@ Implementation commit：`dff452fbb733763d39c82c61011cabdd631265fd`
 
 ## 验收结果
 
-- TASK-03 专项：35 passed，退出码 0。
-- 全仓测试：268 passed，退出码 0。
+- TASK-03 专项：55 passed，退出码 0。
+- 全仓测试：288 passed，退出码 0。
 - JavaScript syntax、`uv lock --check`、`git diff --check`：退出码均为 0。
 - 浏览器：四语、桌面/移动、完整 8-trial 交互、恢复、非空像素、无横向溢出、无禁用元数据命中；passed=true。
 - 1000 人：8000 unique presentations，0 lost，0 duplicate，group-stimulus exposure spread 0，stimulus-position spread 1。
