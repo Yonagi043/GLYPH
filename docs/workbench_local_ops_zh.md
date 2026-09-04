@@ -40,13 +40,18 @@ uv run glyph-workbench serve \
   --port 8025
 ```
 
-入口为 `http://127.0.0.1:8025`。启动只初始化工作台 catalog；不会创建、迁移或恢复 social 数据库。页面写操作要求同源 `Origin` 和进程级 CSRF token，导出/备份/恢复路径由启动参数固定，浏览器不能提交文件路径或命令。
+入口为 `http://127.0.0.1:8025`。启动只初始化工作台 catalog；不会创建、迁移或恢复 social 数据库。页面写操作要求同源 `Origin` 和有界 TTL 的一次性 CSRF token；每个 unsafe 请求消费一个新 token，重放或过期均返回 `CSRF_TOKEN_INVALID`。完整 fixture、备份、恢复及 operation 停止/恢复还要求服务器验证动作专属确认短语。导出/备份/恢复路径由启动参数固定，浏览器不能提交文件路径或命令。
 
 ## 4. CLI 操作
 
 ```bash
 # 验证四份 handoff 并登记 pointer-only reference graph
 uv run glyph-workbench initialize \
+  --catalog-database "$GLYPH_RUN_ROOT/catalog.sqlite3" \
+  --social-database "$GLYPH_RUN_ROOT/social-v17.sqlite3"
+
+# 在隔离 staging 中验证并导入 TASK-01 至 TASK-04 的目录或 zip handoff
+uv run glyph-workbench import-handoff HANDOFF_PACKAGE \
   --catalog-database "$GLYPH_RUN_ROOT/catalog.sqlite3" \
   --social-database "$GLYPH_RUN_ROOT/social-v17.sqlite3"
 
@@ -63,7 +68,9 @@ uv run glyph-workbench status \
   --social-database "$GLYPH_RUN_ROOT/social-v17.sqlite3"
 ```
 
-`run-system-fixture` 要求 social 路径不存在，或该库已经有当前 catalog 登记的 validated export。它不会复用一个未知 v17 库制造 fixture。
+`import-handoff` 只接受已知 TASK/schema，拒绝绝对路径、zip slip、重复成员、符号链接、超限和篡改，并在原生 validator 通过后用单个 catalog 事务登记 pointer。包内文件不会被执行或成为中央事实副本。
+
+`run-system-fixture` 要求 social 路径不存在，或该库已经有当前 catalog 登记的 validated export。若 social export 已完成但 catalog attach 前进程退出，重启会从唯一 synthetic public package manifest 验证并幂等 attach；它不会复用未知 v17 库制造 fixture。
 
 ## 5. 健康与凭据
 
@@ -78,7 +85,7 @@ uv run glyph-workbench status \
 
 响应不返回数据库路径、环境变量名、凭据值、平台正文、PII 或受限资产。平台凭据继续由 social 模块从环境读取；工作台不发起真实请求。
 
-分析和完整 system fixture 也可通过固定 operation API 提交。`GET /api/operations` 和 `GET /api/operations/{operation_id}` 返回状态、当前阶段和 attempt；cancel 只在声明阶段边界生效，resume 沿用同一 operation 的已完成阶段。队列只有一个 worker，不能提交任意 command 或路径。`canceled` 的 result 永远为空，不会被显示为成功；进程重启后领域运行仍在数据库中，但进程内 operation 队列本身不作为持久事实源。
+分析和完整 system fixture 也可通过固定 operation API 提交。`GET /api/operations` 和 `GET /api/operations/{operation_id}` 返回持久化的 kind、status、当前阶段、attempt、checkpoint、净化错误码和结果；cancel 只在声明阶段边界生效，resume 沿用同一 operation 的已完成阶段。队列只有一个 worker，不能提交任意 command 或路径。`canceled` 的 result 永远为空，不会被显示为成功。进程重启会把遗留 `queued/running/cancel_requested` attempt 标为 `failed` 和 `OPERATION_INTERRUPTED_BY_RESTART`，保留最后业务 checkpoint，等待显式 resume。
 
 ## 6. Demo 审计包
 
@@ -106,7 +113,7 @@ uv run glyph-workbench restore-drill COORDINATED_BACKUP_ID \
   --restore-root "$GLYPH_RUN_ROOT/restores"
 ```
 
-Catalog 使用 SQLite online backup；social 复用其 v17 backup/restore primitive。协调 manifest 记录两个 backup ID、schema、SHA-256、记录数和顺序一致性窗口。恢复只允许两个互异、尚不存在、非当前源库且非生产库的目标。组件或 checksum 被修改时，在创建目标库前失败；任一恢复阶段失败会删除本次临时目标。
+Catalog 使用 SQLite online backup；social 先以只读连接核对角色、integrity 和精确 v17 schema，再复用不会迁移源库的 backup/restore primitive。非 v17 social 源在创建协调包之前以 `SOCIAL_BACKUP_SOURCE_SCHEMA_UNSUPPORTED` 失败，源库版本、表集和字节不变。协调 manifest 记录两个 backup ID、schema、SHA-256、包含持久 operations 的记录数和顺序一致性窗口。恢复只允许两个互异、尚不存在、非当前源库且非生产库的目标。组件或 checksum 被修改时，在创建目标库前失败；任一恢复阶段失败会删除本次临时目标。
 
 生产恢复不通过 `glyph-workbench restore-drill` 执行。应停止独立 `glyph-social`，按社会叙事运维手册的确认和 pre-restore safety backup 流程操作。
 
@@ -116,6 +123,9 @@ Catalog 使用 SQLite online backup；social 复用其 v17 backup/restore primit
 |---|---|---|
 | `PRODUCTION_SOCIAL_DATABASE_FORBIDDEN` | 指向受保护生产路径 | 换用全新显式临时库；生产变更另行批准 |
 | `SOCIAL_SCHEMA_MIGRATION_REQUIRES_SEPARATE_APPROVAL` | social 不是 v17 | 不自动迁移；转交 social 独立流程 |
+| `SOCIAL_BACKUP_SOURCE_SCHEMA_UNSUPPORTED` | 协调备份输入不是精确 v17 | 停止备份；按 social 独立流程审查或迁移 |
+| `CSRF_TOKEN_INVALID` | token 缺失、过期或已消费 | 重新读取 `/api/session`，每个 unsafe 请求只使用一次 |
+| `CONFIRMATION_PHRASE_INVALID` | 危险操作确认缺失或不精确 | 核对 UI 展示的目标、影响和动作专属短语 |
 | `SYSTEM_FIXTURE_REQUIRES_NEW_OR_ATTACHED_SOCIAL_DATABASE` | 未知 social 库没有已登记 export | 使用新库或先验证并登记正式 export |
 | `UNEXPECTED_MANY_TO_MANY` | 联结可能笛卡尔膨胀 | 修复稳定 ID/表示选择，不降低守卫 |
 | `NARRATIVE_EXPOSURE_NOT_OPERATIONALIZED` | 把 WP2 语境误作个体暴露 | 保持 context-only 或提供预注册暴露设计 |

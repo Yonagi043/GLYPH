@@ -64,7 +64,11 @@ def create_backup(database_path: Path, backup_root: Path, *, reason: str) -> dic
     directory.mkdir(parents=True, exist_ok=False)
     database_copy = directory / "glyph-social.sqlite3"
     temporary = directory / ".glyph-social.sqlite3.tmp"
-    source = sqlite3.connect(database_path, timeout=30)
+    source = sqlite3.connect(
+        database_path.resolve().as_uri() + "?mode=ro",
+        uri=True,
+        timeout=30,
+    )
     target = sqlite3.connect(temporary)
     try:
         source.backup(target)

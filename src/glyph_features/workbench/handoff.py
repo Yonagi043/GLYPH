@@ -30,6 +30,31 @@ REPORT_RELATIVE_PATH = "data/releases/task05_joint_workbench_v1/TASK_05_REPORT_z
 CHECKSUM_RELATIVE_PATH = "data/releases/task05_joint_workbench_v1/checksums.sha256"
 SCHEMA_PATH = "schema/workbench_handoff_manifest.schema.json"
 MODULE_IDS = {"assets", "vision", "experiment", "social", "han_style", "workbench"}
+EXPECTED_READINESS = {
+    "engineering_ready": True,
+    "pilot_ready": False,
+    "research_validated": False,
+}
+CONTRACT_VERSIONS = {
+    "workbench_handoff": "1.0.0",
+    "module_descriptor": "1.0.0",
+    "catalog": "1.0.0",
+    "analysis_plan": "1.0.0",
+    "analysis_run": "1.1.0",
+    "gate_decision": "1.0.0",
+    "release_candidate": "1.0.0",
+    "coordinated_backup": "1.0.0",
+    "handoff_import": "1.0.0",
+    "operations": "persistent-v1",
+    "social_validated_export": "social-export-package-v1",
+}
+QUALITY_GATE_STATUSES = {
+    "HANDOFF_COMPATIBILITY": "passed",
+    "SYNTHETIC_E2E": "passed",
+    "BROWSER_ACCEPTANCE": "passed",
+    "BACKUP_RESTORE": "passed",
+    "FORMAL_RELEASE": "blocked",
+}
 
 
 OUTPUT_SPECS = (
@@ -39,10 +64,11 @@ OUTPUT_SPECS = (
     ("failure_injection", "data/fixtures/system_e2e/failure_injection_report.json", 1, "metadata_only", "1.0.0"),
     ("module_descriptor_schema", "schema/workbench_module_descriptor.schema.json", 1, "public_code_or_schema", "1.0.0"),
     ("analysis_plan_schema", "schema/analysis_plan.schema.json", 1, "public_code_or_schema", "1.0.0"),
-    ("analysis_run_schema", "schema/analysis_run.schema.json", 1, "public_code_or_schema", "1.0.0"),
+    ("analysis_run_schema", "schema/analysis_run.schema.json", 1, "public_code_or_schema", "1.1.0"),
     ("gate_decision_schema", "schema/gate_decision.schema.json", 1, "public_code_or_schema", "1.0.0"),
     ("release_candidate_schema", "schema/release_candidate.schema.json", 1, "public_code_or_schema", "1.0.0"),
     ("system_fixture_schema", "schema/system_fixture.schema.json", 1, "public_code_or_schema", "1.0.0"),
+    ("social_export_package_schema", "schema/social_export_package.schema.json", 1, "public_code_or_schema", "1.0.0"),
     ("workbench_handoff_schema", SCHEMA_PATH, 1, "public_code_or_schema", "1.0.0"),
     ("joint_analysis_protocol", "docs/joint_analysis_protocol_zh.md", 1, "public_code_or_schema", "1.0.0"),
     ("local_operations", "docs/workbench_local_ops_zh.md", 1, "public_code_or_schema", "1.0.0"),
@@ -98,6 +124,7 @@ def _committed_paths(root: Path, commit: str) -> list[str]:
             "schema/gate_decision.schema.json",
             "schema/release_candidate.schema.json",
             "schema/system_fixture.schema.json",
+            "schema/social_export_package.schema.json",
             "schema/workbench_handoff_manifest.schema.json",
             "schema/workbench_module_descriptor.schema.json",
             "src/glyph_features/workbench",
@@ -174,6 +201,155 @@ def _validation(path: Path, root: Path, summary: str) -> dict[str, str]:
     }
 
 
+def _quality_gates() -> list[dict[str, str]]:
+    return [
+        {
+            "gate_id": "HANDOFF_COMPATIBILITY",
+            "status": "passed",
+            "evidence": "Four native validators and Git ancestry checks passed.",
+        },
+        {
+            "gate_id": "SYNTHETIC_E2E",
+            "status": "passed",
+            "evidence": "384 analysis units, validated WP2 export, audit package and restart persistence passed.",
+        },
+        {
+            "gate_id": "BROWSER_ACCEPTANCE",
+            "status": "passed",
+            "evidence": "Desktop/mobile navigation, drilldown, operations and leakage checks passed.",
+        },
+        {
+            "gate_id": "BACKUP_RESTORE",
+            "status": "passed",
+            "evidence": "Both databases restored to new paths and tampering was rejected.",
+        },
+        {
+            "gate_id": "FORMAL_RELEASE",
+            "status": "blocked",
+            "evidence": "Synthetic and unresolved human gates produced machine-readable blockers.",
+        },
+    ]
+
+
+def _validation_evidence(root: Path) -> dict[str, Any]:
+    browser = root / "data/fixtures/system_e2e/browser_acceptance.json"
+    failures = root / "data/fixtures/system_e2e/failure_injection_report.json"
+    tests = root / "tests/test_workbench.py"
+    return {
+        "system_e2e": _validation(
+            tests,
+            root,
+            "System fixture, restart persistence, audit export and formal-release blocking passed.",
+        ),
+        "browser": _validation(
+            browser,
+            root,
+            "Eight views passed desktop/mobile screenshot, interaction, overflow and leakage checks.",
+        ),
+        "backup_restore": _validation(
+            tests,
+            root,
+            "Coordinated manifest, temporary restore and tamper rejection passed.",
+        ),
+        "failure_injection": _validation(
+            failures,
+            root,
+            "Join, database, storage, CSRF, bind, overwrite, release and operation failures closed safely.",
+        ),
+        "commands": [
+            {
+                "command": "uv run --frozen pytest -q tests/test_workbench.py",
+                "status": "passed",
+                "result": "TASK-05 focused suite passed.",
+            },
+            {
+                "command": "uv run --frozen pytest -q",
+                "status": "passed",
+                "result": "Repository suite passed.",
+            },
+            {
+                "command": "uv lock --check",
+                "status": "passed",
+                "result": "Dependency lock is current.",
+            },
+            {
+                "command": "node --check src/glyph_features/workbench/static/app.js",
+                "status": "passed",
+                "result": "Workbench JavaScript parsed successfully.",
+            },
+        ],
+    }
+
+
+def _interfaces() -> dict[str, list[str]]:
+    return {
+        "commands": [
+            "uv run glyph-workbench serve --catalog-database CATALOG --social-database SOCIAL",
+            "uv run glyph-workbench import-handoff PACKAGE --catalog-database CATALOG --social-database SOCIAL",
+            "uv run glyph-workbench run-system-fixture --catalog-database CATALOG --social-database SOCIAL",
+            "uv run glyph-workbench export-demo ANALYSIS_RUN_ID --catalog-database CATALOG --social-database SOCIAL",
+            "uv run glyph-workbench backup --catalog-database CATALOG --social-database SOCIAL",
+            "uv run glyph-workbench restore-drill BACKUP_ID --catalog-database CATALOG --social-database SOCIAL",
+        ],
+        "read_endpoints": [
+            "/api/overview",
+            "/api/modules",
+            "/api/views/{module}",
+            "/api/analysis",
+            "/api/audit",
+            "/api/evidence/{entity_id}",
+            "/api/health",
+            "/api/operations",
+        ],
+        "write_endpoints": [
+            "/api/actions/initialize",
+            "/api/actions/import-handoff",
+            "/api/actions/export-demo",
+            "/api/actions/check-formal-release",
+            "/api/actions/backup",
+            "/api/actions/restore-drill",
+            "/api/operations/analysis-fixture",
+            "/api/operations/system-fixture",
+            "/api/operations/{operation_id}/cancel",
+            "/api/operations/{operation_id}/resume",
+        ],
+        "storage_ownership": [
+            "Workbench owns only catalog metadata, snapshots, release candidates and audit events.",
+            "Social owns its v17 database and canonical validated exports.",
+            "Assets, vision, experiment and Han modules own their domain records and write operations.",
+        ],
+    }
+
+
+def _data_boundaries() -> list[dict[str, Any]]:
+    return [
+        {"reason_code": "SYNTHETIC_DEMO_ONLY", "classification": "synthetic", "allowed": True, "reason": "Allowed only for local engineering, demo audit and reproducibility checks."},
+        {"reason_code": "FORMAL_RELEASE_FORBIDDEN", "classification": "synthetic", "allowed": False, "reason": "Synthetic ratings and evidence cannot support formal research release."},
+        {"reason_code": "PII_NOT_IMPORTED", "classification": "participant_pii", "allowed": False, "reason": "Identity maps and participant PII are outside the workbench contract."},
+        {"reason_code": "RAW_PLATFORM_PAYLOAD_NOT_IMPORTED", "classification": "social_raw_payload", "allowed": False, "reason": "Only validated export pointers and hashes enter the catalog."},
+        {"reason_code": "RESTRICTED_ASSET_NOT_COPIED", "classification": "restricted_asset", "allowed": False, "reason": "Catalog stores only source-owned pointers and classifications."},
+        {"reason_code": "NARRATIVE_NOT_PARTICIPANT_EXPOSURE", "classification": "wp2_context", "allowed": False, "reason": "WP2 remains hypothesis/context unless a preregistered exposure operation exists."},
+    ]
+
+
+def _known_limitations() -> list[str]:
+    return [
+        "No real participant rating, approved expert review, formal-use asset or releasable social evidence was imported.",
+        "WP3 is blocked because all experiment conditions resolve to one source stimulus.",
+        "WP4 remains instance_level_only because independent exemplars and GATE-EXPERT are absent.",
+        "The fixture OrderedModel does not replace the preregistered crossed ordinal hierarchy for real research.",
+        "Operation recovery is local to the workbench catalog and still requires an explicit resume after an interrupted process.",
+    ]
+
+
+def _maintenance_responsibility() -> list[str]:
+    return [
+        "Module owners maintain domain schemas, service APIs, exports and database migrations.",
+        "Workbench maintainers update compatibility rules only with versioned handoff contracts and tests.",
+        "Human approvers own rights, history, ethics, participants, translation, expert, terms and release decisions.",
+    ]
+
+
 def _report(commit: str) -> str:
     return f"""# TASK-05 最终报告
 
@@ -184,7 +360,7 @@ def _report(commit: str) -> str:
 - 严格验证 TASK-01 至 TASK-04 handoff、producer ancestry 与版本兼容。
 - 交付 pointer-only 中央 catalog、稳定 ID reference graph、冻结分析计划和不可变 snapshot。
 - 交付 384 单位 synthetic ordinal recovery、join audit、WP2 context-only、WP3/WP4 fail-closed 边界。
-- 交付本机中文八区工作台、固定 operation 队列、demo audit package、formal release gate 和协调备份恢复。
+- 交付本机中文八区工作台、持久 operation 队列、demo audit package、formal release gate 和协调备份恢复。
 - 保持 social v17 独立所有权，不挂载第二 scheduler，不迁移或访问生产库。
 
 ## 就绪度
@@ -245,6 +421,22 @@ def _module_compatibility(results: list[dict[str, Any]]) -> list[dict[str, Any]]
     return output
 
 
+def _input_handoffs(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "task_id": item["task_id"],
+            "module_id": item["module_id"],
+            "path": item["manifest_path"],
+            "sha256": item["manifest_sha256"],
+            "schema_version": item["handoff_schema_version"],
+            "producer_commit": item["producer_commit"],
+            "compatible": item["compatible"],
+            "readiness": item["readiness"],
+        }
+        for item in sorted(results, key=lambda value: value["task_id"])
+    ]
+
+
 def _blocked_gates(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     output = []
     for result in results:
@@ -291,49 +483,66 @@ def _blocked_gates(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(unique.values(), key=lambda item: (item["gate_id"], item["module_id"], item["scope"]))
 
 
+def _semantic_errors(
+    manifest: dict[str, Any], results: list[dict[str, Any]], root: Path
+) -> list[str]:
+    errors = []
+    expected_modules = _module_compatibility(results)
+    declared_modules = sorted(
+        manifest["module_compatibility"], key=lambda item: item["module_id"]
+    )
+    if canonical_json(declared_modules) != canonical_json(expected_modules):
+        errors.append("HANDOFF_MODULE_COMPATIBILITY_SEMANTICS_INVALID")
+    expected_inputs = _input_handoffs(results)
+    declared_inputs = sorted(
+        manifest["input_handoffs"], key=lambda item: item["task_id"]
+    )
+    if canonical_json(declared_inputs) != canonical_json(expected_inputs):
+        errors.append("HANDOFF_INPUT_SEMANTICS_INVALID")
+    expected_gates = _blocked_gates(results)
+    declared_gates = sorted(
+        manifest["blocked_human_gates"],
+        key=lambda item: (item["gate_id"], item["module_id"], item["scope"]),
+    )
+    if canonical_json(declared_gates) != canonical_json(expected_gates):
+        errors.append("HANDOFF_BLOCKED_GATES_SEMANTICS_INVALID")
+    if canonical_json(manifest["quality_gates"]) != canonical_json(_quality_gates()):
+        errors.append("HANDOFF_QUALITY_GATE_SEMANTICS_INVALID")
+    if canonical_json(manifest["interfaces"]) != canonical_json(_interfaces()):
+        errors.append("HANDOFF_INTERFACE_SEMANTICS_INVALID")
+    if canonical_json(manifest["validation_evidence"]) != canonical_json(
+        _validation_evidence(root)
+    ):
+        errors.append("HANDOFF_VALIDATION_EVIDENCE_SEMANTICS_INVALID")
+    if canonical_json(manifest["data_boundaries"]) != canonical_json(
+        _data_boundaries()
+    ):
+        errors.append("HANDOFF_DATA_BOUNDARY_SEMANTICS_INVALID")
+    if manifest["known_limitations"] != _known_limitations():
+        errors.append("HANDOFF_LIMITATION_SEMANTICS_INVALID")
+    if manifest["maintenance_responsibility"] != _maintenance_responsibility():
+        errors.append("HANDOFF_MAINTENANCE_SEMANTICS_INVALID")
+    if manifest["readiness"] != EXPECTED_READINESS:
+        errors.append("HANDOFF_READINESS_OVERCLAIM")
+    if manifest["contract_versions"] != CONTRACT_VERSIONS:
+        errors.append("HANDOFF_CONTRACT_VERSIONS_INVALID")
+    return errors
+
+
 def build_manifest(root: Path, implementation_commit: str) -> dict[str, Any]:
     results = inspect_upstream_handoffs(root)
     if not all(item["compatible"] for item in results):
         raise ValueError("UPSTREAM_HANDOFF_NOT_COMPATIBLE")
     producer_files = _producer_files(root, implementation_commit)
-    browser = root / "data/fixtures/system_e2e/browser_acceptance.json"
-    failures = root / "data/fixtures/system_e2e/failure_injection_report.json"
-    tests = root / "tests/test_workbench.py"
-    inputs = [
-        {
-            "task_id": item["task_id"],
-            "module_id": item["module_id"],
-            "path": item["manifest_path"],
-            "sha256": item["manifest_sha256"],
-            "schema_version": item["handoff_schema_version"],
-            "producer_commit": item["producer_commit"],
-            "compatible": item["compatible"],
-            "readiness": item["readiness"],
-        }
-        for item in results
-    ]
+    inputs = _input_handoffs(results)
     return {
         "handoff_schema_version": "1.0.0",
         "task_id": "TASK-05",
         "producer_version": "0.1.0",
         "implementation_commit": implementation_commit,
         "created_at": _now(),
-        "readiness": {
-            "engineering_ready": True,
-            "pilot_ready": False,
-            "research_validated": False,
-        },
-        "contract_versions": {
-            "workbench_handoff": "1.0.0",
-            "module_descriptor": "1.0.0",
-            "catalog": "1.0.0",
-            "analysis_plan": "1.0.0",
-            "analysis_run": "1.0.0",
-            "gate_decision": "1.0.0",
-            "release_candidate": "1.0.0",
-            "coordinated_backup": "1.0.0",
-            "social_validated_export": "v17",
-        },
+        "readiness": dict(EXPECTED_READINESS),
+        "contract_versions": dict(CONTRACT_VERSIONS),
         "module_compatibility": _module_compatibility(results),
         "input_handoffs": inputs,
         "outputs": [],
@@ -344,66 +553,13 @@ def build_manifest(root: Path, implementation_commit: str) -> dict[str, Any]:
             "aggregate_sha256": _sha256_bytes(canonical_json(producer_files)),
             "files": producer_files,
         },
-        "quality_gates": [
-            {"gate_id": "HANDOFF_COMPATIBILITY", "status": "passed", "evidence": "Four native validators and Git ancestry checks passed."},
-            {"gate_id": "SYNTHETIC_E2E", "status": "passed", "evidence": "384 analysis units, validated WP2 export, audit package and restart persistence passed."},
-            {"gate_id": "BROWSER_ACCEPTANCE", "status": "passed", "evidence": "Desktop/mobile navigation, drilldown, operations and leakage checks passed."},
-            {"gate_id": "BACKUP_RESTORE", "status": "passed", "evidence": "Both databases restored to new paths and tampering was rejected."},
-            {"gate_id": "FORMAL_RELEASE", "status": "blocked", "evidence": "Synthetic and unresolved human gates produced machine-readable blockers."},
-        ],
-        "validation_evidence": {
-            "system_e2e": _validation(tests, root, "System fixture, restart persistence, audit export and formal-release blocking passed."),
-            "browser": _validation(browser, root, "Eight views passed desktop/mobile screenshot, interaction, overflow and leakage checks."),
-            "backup_restore": _validation(tests, root, "Coordinated manifest, temporary restore and tamper rejection passed."),
-            "failure_injection": _validation(failures, root, "Join, database, storage, CSRF, bind, overwrite, release and operation failures closed safely."),
-            "commands": [
-                {"command": "uv run --frozen pytest -q tests/test_workbench.py", "status": "passed", "result": "TASK-05 focused suite passed."},
-                {"command": "uv run --frozen pytest -q", "status": "passed", "result": "Repository suite passed."},
-                {"command": "uv lock --check", "status": "passed", "result": "Dependency lock is current."},
-                {"command": "node --check src/glyph_features/workbench/static/app.js", "status": "passed", "result": "Workbench JavaScript parsed successfully."},
-            ],
-        },
-        "interfaces": {
-            "commands": [
-                "uv run glyph-workbench serve --catalog-database CATALOG --social-database SOCIAL",
-                "uv run glyph-workbench run-system-fixture --catalog-database CATALOG --social-database SOCIAL",
-                "uv run glyph-workbench export-demo ANALYSIS_RUN_ID --catalog-database CATALOG --social-database SOCIAL",
-                "uv run glyph-workbench backup --catalog-database CATALOG --social-database SOCIAL",
-                "uv run glyph-workbench restore-drill BACKUP_ID --catalog-database CATALOG --social-database SOCIAL",
-            ],
-            "read_endpoints": [
-                "/api/overview", "/api/modules", "/api/views/{module}", "/api/analysis", "/api/audit", "/api/evidence/{entity_id}", "/api/health", "/api/operations"
-            ],
-            "write_endpoints": [
-                "/api/actions/initialize", "/api/actions/export-demo", "/api/actions/check-formal-release", "/api/actions/backup", "/api/actions/restore-drill", "/api/operations/analysis-fixture", "/api/operations/system-fixture", "/api/operations/{operation_id}/cancel", "/api/operations/{operation_id}/resume"
-            ],
-            "storage_ownership": [
-                "Workbench owns only catalog metadata, snapshots, release candidates and audit events.",
-                "Social owns its v17 database and canonical validated exports.",
-                "Assets, vision, experiment and Han modules own their domain records and write operations."
-            ],
-        },
-        "data_boundaries": [
-            {"reason_code": "SYNTHETIC_DEMO_ONLY", "classification": "synthetic", "allowed": True, "reason": "Allowed only for local engineering, demo audit and reproducibility checks."},
-            {"reason_code": "FORMAL_RELEASE_FORBIDDEN", "classification": "synthetic", "allowed": False, "reason": "Synthetic ratings and evidence cannot support formal research release."},
-            {"reason_code": "PII_NOT_IMPORTED", "classification": "participant_pii", "allowed": False, "reason": "Identity maps and participant PII are outside the workbench contract."},
-            {"reason_code": "RAW_PLATFORM_PAYLOAD_NOT_IMPORTED", "classification": "social_raw_payload", "allowed": False, "reason": "Only validated export pointers and hashes enter the catalog."},
-            {"reason_code": "RESTRICTED_ASSET_NOT_COPIED", "classification": "restricted_asset", "allowed": False, "reason": "Catalog stores only source-owned pointers and classifications."},
-            {"reason_code": "NARRATIVE_NOT_PARTICIPANT_EXPOSURE", "classification": "wp2_context", "allowed": False, "reason": "WP2 remains hypothesis/context unless a preregistered exposure operation exists."},
-        ],
+        "quality_gates": _quality_gates(),
+        "validation_evidence": _validation_evidence(root),
+        "interfaces": _interfaces(),
+        "data_boundaries": _data_boundaries(),
         "blocked_human_gates": _blocked_gates(results),
-        "known_limitations": [
-            "No real participant rating, approved expert review, formal-use asset or releasable social evidence was imported.",
-            "WP3 is blocked because all experiment conditions resolve to one source stimulus.",
-            "WP4 remains instance_level_only because independent exemplars and GATE-EXPERT are absent.",
-            "The fixture OrderedModel does not replace the preregistered crossed ordinal hierarchy for real research.",
-            "The operation queue is process-local; durable facts remain in module databases and immutable catalog runs.",
-        ],
-        "maintenance_responsibility": [
-            "Module owners maintain domain schemas, service APIs, exports and database migrations.",
-            "Workbench maintainers update compatibility rules only with versioned handoff contracts and tests.",
-            "Human approvers own rights, history, ethics, participants, translation, expert, terms and release decisions.",
-        ],
+        "known_limitations": _known_limitations(),
+        "maintenance_responsibility": _maintenance_responsibility(),
     }
 
 
@@ -455,11 +611,7 @@ def validate_handoff(manifest_path: str | Path, workspace_root: str | Path) -> l
         "TASK-04",
     }:
         errors.append("HANDOFF_INPUT_SET_INVALID")
-    if manifest["readiness"] != {
-        "engineering_ready": True,
-        "pilot_ready": False,
-        "research_validated": False,
-    }:
+    if manifest["readiness"] != EXPECTED_READINESS:
         errors.append("HANDOFF_READINESS_OVERCLAIM")
     if not any(
         gate["gate_id"] == "FORMAL_RELEASE" and gate["status"] == "blocked"
@@ -512,8 +664,10 @@ def validate_handoff(manifest_path: str | Path, workspace_root: str | Path) -> l
     except subprocess.CalledProcessError:
         errors.append("PRODUCER_COMMIT_UNREADABLE")
     try:
-        current = {item["task_id"]: item for item in inspect_upstream_handoffs(root)}
+        current_results = inspect_upstream_handoffs(root)
+        current = {item["task_id"]: item for item in current_results}
     except (OSError, ValueError, subprocess.CalledProcessError):
+        current_results = []
         current = {}
         errors.append("UPSTREAM_HANDOFF_VALIDATION_FAILED")
     for declared in manifest["input_handoffs"]:
@@ -526,6 +680,8 @@ def validate_handoff(manifest_path: str | Path, workspace_root: str | Path) -> l
             or actual["handoff_schema_version"] != declared["schema_version"]
         ):
             errors.append(f"UPSTREAM_HANDOFF_CHANGED:{declared['task_id']}")
+    if len(current_results) == 4:
+        errors.extend(_semantic_errors(manifest, current_results, root))
     for evidence in manifest["validation_evidence"].values():
         if not isinstance(evidence, dict) or "evidence_path" not in evidence:
             continue

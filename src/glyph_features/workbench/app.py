@@ -7,11 +7,13 @@ import os
 import secrets
 import shutil
 import sqlite3
+import threading
+import time
 import uuid
 from contextlib import asynccontextmanager
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Literal
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
@@ -42,12 +44,68 @@ class ViewName(str, Enum):
 
 class RunInput(BaseModel):
     analysis_run_id: str = Field(pattern=SAFE_ID)
+    confirmation_phrase: str | None = Field(default=None, max_length=64)
+
+
+class ConfirmationInput(BaseModel):
+    confirmation_phrase: str | None = Field(default=None, max_length=64)
 
 
 class BackupInput(BaseModel):
     backup_id: str = Field(
         pattern=r"^coordinated_[0-9]{8}T[0-9]{6}Z_[0-9a-f]{8}$"
     )
+    confirmation_phrase: Literal["RESTORE DRILL"]
+
+
+class HandoffImportInput(BaseModel):
+    source: str = Field(min_length=1, max_length=4096)
+
+
+def _require_confirmation(
+    payload: ConfirmationInput | RunInput | None, expected: str
+) -> None:
+    if payload is None or payload.confirmation_phrase != expected:
+        raise HTTPException(status_code=422, detail="CONFIRMATION_PHRASE_INVALID")
+
+
+class CsrfTokenStore:
+    def __init__(
+        self,
+        *,
+        ttl_seconds: float,
+        clock: Callable[[], float],
+        max_tokens: int = 4096,
+    ):
+        if ttl_seconds <= 0 or max_tokens <= 0:
+            raise ValueError("CSRF_TOKEN_STORE_CONFIGURATION_INVALID")
+        self._ttl_seconds = ttl_seconds
+        self._clock = clock
+        self._max_tokens = max_tokens
+        self._tokens: dict[str, float] = {}
+        self._lock = threading.Lock()
+
+    def _prune(self, now: float) -> None:
+        expired = [token for token, deadline in self._tokens.items() if deadline < now]
+        for token in expired:
+            self._tokens.pop(token, None)
+
+    def issue(self) -> str:
+        now = self._clock()
+        with self._lock:
+            self._prune(now)
+            while len(self._tokens) >= self._max_tokens:
+                self._tokens.pop(next(iter(self._tokens)))
+            token = secrets.token_urlsafe(32)
+            self._tokens[token] = now + self._ttl_seconds
+        return token
+
+    def consume(self, token: str) -> bool:
+        now = self._clock()
+        with self._lock:
+            self._prune(now)
+            deadline = self._tokens.pop(token, None)
+        return deadline is not None and deadline >= now
 
 
 def _json_field(row: dict[str, Any], key: str) -> dict[str, Any]:
@@ -126,6 +184,7 @@ def _analysis_view(service: WorkbenchService) -> dict[str, Any]:
     runs = []
     for row in service.catalog.rows("analysis_runs"):
         result = _json_field(row, "result_json")
+        failure = _json_field(row, "failure_json")
         runs.append(
             {
                 "analysis_run_id": row["analysis_run_id"],
@@ -140,6 +199,7 @@ def _analysis_view(service: WorkbenchService) -> dict[str, Any]:
                 "effect_estimates": result.get("effect_estimates"),
                 "join_audit": result.get("join_audit"),
                 "limitations": result.get("limitations"),
+                "failure": failure or None,
             }
         )
     return {
@@ -230,6 +290,8 @@ def create_app(
     export_root: str | Path,
     backup_root: str | Path,
     restore_root: str | Path,
+    csrf_ttl_seconds: float = 300,
+    csrf_clock: Callable[[], float] | None = None,
 ) -> FastAPI:
     service = WorkbenchService(
         workspace_root,
@@ -239,7 +301,10 @@ def create_app(
     exports = Path(export_root).expanduser().resolve()
     backups = Path(backup_root).expanduser().resolve()
     restores = Path(restore_root).expanduser().resolve()
-    csrf_token = secrets.token_urlsafe(32)
+    csrf_tokens = CsrfTokenStore(
+        ttl_seconds=csrf_ttl_seconds,
+        clock=csrf_clock or time.monotonic,
+    )
 
     def analysis_operation(checkpoint, _context) -> dict[str, Any]:
         checkpoint("run_analysis")
@@ -260,7 +325,8 @@ def create_app(
                 checkpoint=checkpoint,
                 completed_steps=context,
             ),
-        }
+        },
+        catalog=service.catalog,
     )
 
     @asynccontextmanager
@@ -274,7 +340,7 @@ def create_app(
         lifespan=lifespan,
     )
     app.state.service = service
-    app.state.csrf_token = csrf_token
+    app.state.csrf_tokens = csrf_tokens
     app.state.scheduler_started = False
     app.state.operations = operations
     app.mount(
@@ -291,7 +357,7 @@ def create_app(
                 return JSONResponse(
                     {"detail": "LOCAL_ORIGIN_REQUIRED"}, status_code=403
                 )
-            if not secrets.compare_digest(supplied, csrf_token):
+            if not csrf_tokens.consume(supplied):
                 return JSONResponse({"detail": "CSRF_TOKEN_INVALID"}, status_code=403)
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
@@ -327,7 +393,8 @@ def create_app(
     @app.get("/api/session")
     def session() -> dict[str, Any]:
         return {
-            "csrf_token": csrf_token,
+            "csrf_token": csrf_tokens.issue(),
+            "csrf_expires_in_seconds": csrf_ttl_seconds,
             "distribution_label": "SYNTHETIC / DEMO",
             "write_policy": "local_origin_and_csrf_required",
         }
@@ -424,29 +491,42 @@ def create_app(
             raise HTTPException(status_code=404, detail="OPERATION_NOT_FOUND") from error
 
     @app.post("/api/operations/analysis-fixture", status_code=202)
-    def start_analysis_operation() -> dict[str, Any]:
+    def start_analysis_operation(
+        payload: ConfirmationInput | None = None,
+    ) -> dict[str, Any]:
+        _require_confirmation(payload, "RUN ANALYSIS FIXTURE")
         return operations.submit("analysis_fixture")
 
     @app.post("/api/operations/system-fixture", status_code=202)
-    def start_system_operation() -> dict[str, Any]:
+    def start_system_operation(
+        payload: ConfirmationInput | None = None,
+    ) -> dict[str, Any]:
+        _require_confirmation(payload, "RUN SYSTEM FIXTURE")
         return operations.submit("system_fixture")
 
     @app.post("/api/operations/{operation_id}/cancel")
-    def cancel_operation(operation_id: str) -> dict[str, Any]:
+    def cancel_operation(
+        operation_id: str, payload: ConfirmationInput | None = None
+    ) -> dict[str, Any]:
+        _require_confirmation(payload, "STOP OPERATION")
         try:
             return operations.cancel(operation_id)
         except KeyError as error:
             raise HTTPException(status_code=404, detail="OPERATION_NOT_FOUND") from error
 
     @app.post("/api/operations/{operation_id}/resume", status_code=202)
-    def resume_operation(operation_id: str) -> dict[str, Any]:
+    def resume_operation(
+        operation_id: str, payload: ConfirmationInput | None = None
+    ) -> dict[str, Any]:
+        _require_confirmation(payload, "RESUME OPERATION")
         try:
             return operations.resume(operation_id)
         except KeyError as error:
             raise HTTPException(status_code=404, detail="OPERATION_NOT_FOUND") from error
 
     @app.post("/api/actions/initialize")
-    def initialize() -> dict[str, Any]:
+    def initialize(payload: ConfirmationInput | None = None) -> dict[str, Any]:
+        _require_confirmation(payload, "INITIALIZE CATALOG")
         result = service.initialize_catalog()
         return {
             "status": "initialized",
@@ -456,8 +536,13 @@ def create_app(
             "relationship_count": result["graph"]["entity_link_count"],
         }
 
+    @app.post("/api/actions/import-handoff")
+    def import_handoff(payload: HandoffImportInput) -> dict[str, Any]:
+        return service.import_handoff(payload.source)
+
     @app.post("/api/actions/run-fixture")
-    def run_fixture() -> dict[str, Any]:
+    def run_fixture(payload: ConfirmationInput | None = None) -> dict[str, Any]:
+        _require_confirmation(payload, "RUN ANALYSIS FIXTURE")
         run = service.run_fixture_analysis()
         return {
             "distribution_label": "SYNTHETIC / DEMO",
@@ -467,15 +552,20 @@ def create_app(
         }
 
     @app.post("/api/actions/run-system-fixture")
-    def run_system_fixture() -> dict[str, Any]:
+    def run_system_fixture(
+        payload: ConfirmationInput | None = None,
+    ) -> dict[str, Any]:
+        _require_confirmation(payload, "RUN SYSTEM FIXTURE")
         return service.run_system_fixture(export_root=exports, backup_root=backups)
 
     @app.post("/api/actions/export-demo")
     def export_demo(payload: RunInput) -> dict[str, Any]:
+        _require_confirmation(payload, "EXPORT DEMO")
         return service.export_demo(payload.analysis_run_id, exports / "audit")
 
     @app.post("/api/actions/check-formal-release")
     def check_formal_release(payload: RunInput) -> dict[str, Any]:
+        _require_confirmation(payload, "CHECK FORMAL RELEASE")
         try:
             candidate = service.evaluate_release(
                 payload.analysis_run_id, purpose="formal_release"
@@ -485,7 +575,10 @@ def create_app(
         return candidate
 
     @app.post("/api/actions/backup")
-    def create_backup_action() -> dict[str, Any]:
+    def create_backup_action(
+        payload: ConfirmationInput | None = None,
+    ) -> dict[str, Any]:
+        _require_confirmation(payload, "CREATE BACKUP")
         return service.create_backup(backups)
 
     @app.post("/api/actions/restore-drill")

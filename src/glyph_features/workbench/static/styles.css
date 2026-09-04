@@ -309,6 +309,34 @@ tbody tr:hover td { background: #fafbf7; }
 .scrim { background: rgba(12, 16, 13, 0.36); border: 0; display: none; inset: 0; padding: 0; position: fixed; z-index: 40; }
 .scrim.visible { display: block; }
 
+.confirmation-dialog {
+  background: white;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  box-shadow: 0 20px 60px rgba(18, 27, 20, 0.22);
+  color: var(--ink);
+  max-width: calc(100vw - 32px);
+  padding: 0;
+  width: 480px;
+}
+.confirmation-dialog::backdrop { background: rgba(12, 16, 13, 0.62); }
+.confirmation-dialog[open] { animation: dialog-in 160ms ease both; }
+.confirmation-dialog form { margin: 0; padding: 24px; }
+.confirmation-dialog header { border-bottom: 1px solid var(--line); margin-bottom: 18px; padding-bottom: 14px; }
+.confirmation-dialog h2 { font-size: 19px; margin: 5px 0 0; }
+.confirmation-dialog p { color: var(--ink-soft); font-size: 12px; line-height: 1.6; }
+.confirmation-details { border: 1px solid var(--line); margin: 0; }
+.confirmation-details div { display: grid; grid-template-columns: 64px minmax(0, 1fr); }
+.confirmation-details div + div { border-top: 1px solid var(--line); }
+.confirmation-details dt, .confirmation-details dd { font-size: 11px; line-height: 1.55; margin: 0; padding: 9px 10px; }
+.confirmation-details dt { background: var(--surface); color: var(--ink-soft); font-weight: 650; }
+.confirmation-details dd { overflow-wrap: anywhere; }
+.confirmation-dialog label { display: block; font-size: 11px; font-weight: 650; margin: 18px 0 7px; }
+.confirmation-dialog code { background: var(--red-pale); color: var(--red); font-family: var(--mono); padding: 2px 5px; }
+.confirmation-dialog input { border: 1px solid var(--line-strong); border-radius: 2px; font-family: var(--mono); font-size: 13px; min-height: 40px; padding: 8px 10px; width: 100%; }
+.confirmation-dialog footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+.confirmation-error { color: var(--red) !important; min-height: 20px; }
+
 .toast-region { bottom: 18px; display: grid; gap: 8px; max-width: calc(100vw - 36px); position: fixed; right: 18px; width: 360px; z-index: 80; }
 .toast { animation: toast-in 180ms ease both; background: var(--ink); border-left: 4px solid #65c7a4; color: white; font-size: 11px; padding: 12px 14px; }
 .toast.error { border-left-color: #ef7468; }
@@ -321,6 +349,7 @@ tbody tr:hover td { background: #fafbf7; }
 
 @keyframes loading { 0%, 100% { transform: scaleX(.25); } 50% { transform: scaleX(1); } }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(8px) scale(.985); } }
 .page-enter { animation: page-enter 220ms ease both; }
 @keyframes page-enter { from { opacity: 0; transform: translateY(5px); } }
 

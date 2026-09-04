@@ -12,8 +12,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from glyph_features.social_system.backups import restore_backup as restore_social_backup
-from glyph_features.social_system.service import SocialNarrativeService
+from glyph_features.social_system.backups import (
+    create_backup as create_social_backup,
+    restore_backup as restore_social_backup,
+)
+from glyph_features.social_system.storage import SCHEMA_VERSION as SOCIAL_SCHEMA_VERSION
 
 from .catalog import CATALOG_SCHEMA_VERSION, Catalog
 
@@ -79,6 +82,7 @@ def _inspect_catalog(path: Path) -> dict[str, Any]:
                     "artifacts",
                     "entity_links",
                     "analysis_runs",
+                    "operations",
                     "release_candidates",
                     "audit_events",
                 )
@@ -90,6 +94,39 @@ def _inspect_catalog(path: Path) -> dict[str, Any]:
         "schema_version": metadata[0],
         "counts": counts,
     }
+
+
+def _inspect_social_source(path: Path) -> dict[str, Any]:
+    required_tables = {
+        "collection_runs",
+        "observations",
+        "review_events",
+        "collector_cursors",
+    }
+    try:
+        with sqlite3.connect(
+            path.resolve().as_uri() + "?mode=ro", uri=True, timeout=10
+        ) as connection:
+            connection.execute("PRAGMA query_only = ON")
+            integrity = str(
+                connection.execute("PRAGMA integrity_check").fetchone()[0]
+            )
+            version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+            tables = {
+                str(row[0])
+                for row in connection.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'table'"
+                )
+            }
+    except sqlite3.Error as error:
+        raise BackupError("SOCIAL_BACKUP_SOURCE_UNREADABLE") from error
+    if integrity != "ok":
+        raise BackupError("SOCIAL_BACKUP_SOURCE_INTEGRITY_FAILED")
+    if version != SOCIAL_SCHEMA_VERSION:
+        raise BackupError("SOCIAL_BACKUP_SOURCE_SCHEMA_UNSUPPORTED")
+    if not required_tables.issubset(tables):
+        raise BackupError("SOCIAL_BACKUP_SOURCE_TABLES_INCOMPLETE")
+    return {"integrity_check": integrity, "schema_version": version}
 
 
 def create_catalog_backup(database_path: Path, backup_root: Path) -> dict[str, Any]:
@@ -173,16 +210,20 @@ def create_coordinated_backup(
 ) -> dict[str, Any]:
     if not catalog_database.is_file() or not social_database.is_file():
         raise BackupError("COORDINATED_BACKUP_REQUIRES_BOTH_DATABASES")
+    social_source = _inspect_social_source(social_database)
     backup_id = f"coordinated_{_stamp()}_{uuid.uuid4().hex[:8]}"
     directory = backup_root / backup_id
     started_at = _now()
     directory.mkdir(parents=True, exist_ok=False)
     try:
         catalog_manifest = create_catalog_backup(catalog_database, directory / "catalog")
-        social_manifest = SocialNarrativeService(social_database).create_backup(
+        social_manifest = create_social_backup(
+            social_database,
             directory / "social",
             reason=f"workbench_coordinated:{backup_id}",
         )
+        if social_manifest["schema_version"] != social_source["schema_version"]:
+            raise BackupError("SOCIAL_BACKUP_SOURCE_CHANGED_DURING_BACKUP")
         catalog_prefix = f"catalog/{catalog_manifest['backup_id']}"
         social_prefix = f"social/{social_manifest['backup_id']}"
         component_paths = [

@@ -62,14 +62,34 @@
     </main>
   </div>
 
-  <aside class="inspector" id="inspector" aria-labelledby="inspector-title" aria-hidden="true">
+  <aside class="inspector" id="inspector" role="dialog" aria-modal="true" aria-labelledby="inspector-title" aria-hidden="true" tabindex="-1" inert>
     <header>
       <div><span class="eyebrow">证据下钻</span><h2 id="inspector-title">实体详情</h2></div>
       <button type="button" class="icon-button" data-action="close-inspector" aria-label="关闭详情" title="关闭">×</button>
     </header>
     <div id="inspector-content" class="inspector-content"></div>
   </aside>
-  <button type="button" class="scrim" id="scrim" data-action="close-overlays" aria-label="关闭浮层"></button>
+  <button type="button" class="scrim" id="scrim" data-action="close-overlays" aria-label="关闭浮层" tabindex="-1"></button>
+
+  <dialog class="confirmation-dialog" id="confirmation-dialog" aria-labelledby="confirmation-title" aria-describedby="confirmation-target confirmation-description">
+    <form id="confirmation-form">
+      <header>
+        <span class="eyebrow">RESTRICTED LOCAL ACTION</span>
+        <h2 id="confirmation-title">确认操作</h2>
+      </header>
+      <dl class="confirmation-details">
+        <div><dt>目标</dt><dd id="confirmation-target"></dd></div>
+        <div><dt>影响</dt><dd id="confirmation-description"></dd></div>
+      </dl>
+      <label for="confirmation-input">输入 <code id="confirmation-phrase"></code> 以继续</label>
+      <input id="confirmation-input" name="confirmation" type="text" autocomplete="off" spellcheck="false">
+      <p class="confirmation-error" id="confirmation-error" aria-live="polite"></p>
+      <footer>
+        <button class="button" id="confirmation-cancel" type="button">取消</button>
+        <button class="button danger" id="confirmation-submit" type="submit" disabled>确认并执行</button>
+      </footer>
+    </form>
+  </dialog>
 
   <div class="toast-region" id="toast-region" aria-live="assertive"></div>
   <script src="/static/app.js" defer></script>

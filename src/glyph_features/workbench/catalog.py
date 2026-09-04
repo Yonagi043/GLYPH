@@ -129,8 +129,24 @@ CREATE TABLE IF NOT EXISTS analysis_runs (
     data_origin TEXT NOT NULL,
     snapshot_json TEXT NOT NULL,
     result_json TEXT,
+    failure_json TEXT,
     created_at TEXT NOT NULL,
     completed_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS operations (
+    operation_id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (
+        status IN ('queued', 'running', 'cancel_requested', 'completed', 'failed', 'canceled')
+    ),
+    stage TEXT NOT NULL,
+    attempts INTEGER NOT NULL CHECK (attempts >= 0),
+    context_json TEXT NOT NULL,
+    result_json TEXT,
+    error_code TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS release_candidates (
@@ -190,6 +206,12 @@ class Catalog:
                         f"CATALOG_SCHEMA_UNSUPPORTED: expected {CATALOG_SCHEMA_VERSION}, got {actual}"
                     )
             connection.executescript(SCHEMA_SQL)
+            analysis_columns = {
+                row[1]
+                for row in connection.execute("PRAGMA table_info(analysis_runs)")
+            }
+            if "failure_json" not in analysis_columns:
+                connection.execute("ALTER TABLE analysis_runs ADD COLUMN failure_json TEXT")
             if not existing_tables:
                 connection.execute(
                     "INSERT INTO workbench_metadata(singleton, schema_version, created_at) VALUES (1, ?, ?)",
@@ -489,6 +511,257 @@ class Catalog:
             )
         return link_id
 
+    def _insert_import_link(
+        self,
+        connection: sqlite3.Connection,
+        link: dict[str, Any],
+    ) -> str:
+        stable_keys = (
+            "source_module",
+            "source_type",
+            "source_id",
+            "target_module",
+            "target_type",
+            "target_id",
+            "relation",
+        )
+        stable_fields = {key: link[key] for key in stable_keys}
+        link_id = stable_id("link", stable_fields)
+        safe_link = {
+            **stable_fields,
+            "evidence_artifact_id": link.get("evidence_artifact_id"),
+            "analysis_boundary": link.get("analysis_boundary"),
+            "cluster_id": link.get("cluster_id"),
+        }
+        link_json = _json(safe_link)
+        existing = connection.execute(
+            "SELECT link_json FROM entity_links WHERE link_id = ?", (link_id,)
+        ).fetchone()
+        if existing is not None:
+            if existing["link_json"] != link_json:
+                raise CatalogConflict("ENTITY_LINK_IMMUTABLE_CONFLICT")
+            return link_id
+        connection.execute(
+            """
+            INSERT INTO entity_links(
+                link_id, source_module, source_type, source_id, target_module,
+                target_type, target_id, relation, evidence_artifact_id, link_json,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                link_id,
+                link["source_module"],
+                link["source_type"],
+                link["source_id"],
+                link["target_module"],
+                link["target_type"],
+                link["target_id"],
+                link["relation"],
+                link.get("evidence_artifact_id"),
+                link_json,
+                _utc_now(),
+            ),
+        )
+        self._audit(
+            connection,
+            "entity_link_registered",
+            "entity_link",
+            link_id,
+            stable_fields,
+        )
+        return link_id
+
+    def import_validated_handoff(
+        self,
+        descriptor: dict[str, Any],
+        result: dict[str, Any],
+        pointers: Iterable[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Atomically register one validated handoff and pointer-only outputs."""
+
+        pointer_rows = list(pointers)
+        descriptor_digest = hashlib.sha256(canonical_json(descriptor)).hexdigest()
+        handoff_id = stable_id(
+            "handoff",
+            {
+                "task_id": result["task_id"],
+                "manifest_sha256": result["manifest_sha256"],
+            },
+        )
+        with self._connect() as connection:
+            existing_module = connection.execute(
+                "SELECT descriptor_sha256 FROM modules WHERE module_id = ?",
+                (descriptor["module_id"],),
+            ).fetchone()
+            if existing_module is None:
+                readiness = descriptor["readiness"]
+                connection.execute(
+                    """
+                    INSERT INTO modules(
+                        module_id, module_version, descriptor_sha256,
+                        descriptor_json, health, engineering_ready, pilot_ready,
+                        research_validated, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        descriptor["module_id"],
+                        descriptor["module_version"],
+                        descriptor_digest,
+                        _json(descriptor),
+                        descriptor["health"],
+                        int(readiness.get("engineering_ready") is True),
+                        int(readiness.get("pilot_ready") is True),
+                        int(readiness.get("research_validated") is True),
+                        _utc_now(),
+                    ),
+                )
+                self._audit(
+                    connection,
+                    "module_registered",
+                    "module",
+                    descriptor["module_id"],
+                    {"descriptor_sha256": descriptor_digest},
+                )
+            elif existing_module["descriptor_sha256"] != descriptor_digest:
+                raise CatalogConflict("MODULE_DESCRIPTOR_IMMUTABLE_CONFLICT")
+
+            existing_handoff = connection.execute(
+                """
+                SELECT handoff_import_id, manifest_sha256 FROM handoff_imports
+                WHERE task_id = ? AND manifest_path = ?
+                """,
+                (result["task_id"], result["manifest_path"]),
+            ).fetchone()
+            if existing_handoff is not None:
+                if existing_handoff["manifest_sha256"] != result["manifest_sha256"]:
+                    raise CatalogConflict("HANDOFF_IMMUTABLE_CONFLICT")
+                handoff_id = str(existing_handoff["handoff_import_id"])
+            else:
+                connection.execute(
+                    """
+                    INSERT INTO handoff_imports(
+                        handoff_import_id, task_id, module_id, manifest_path,
+                        manifest_sha256, handoff_schema_version, producer_commit,
+                        validation_status, compatible, compatibility_json, imported_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        handoff_id,
+                        result["task_id"],
+                        result["module_id"],
+                        result["manifest_path"],
+                        result["manifest_sha256"],
+                        result["handoff_schema_version"],
+                        result["producer_commit"],
+                        result["validation_status"],
+                        int(result["compatible"] is True),
+                        _json(result),
+                        _utc_now(),
+                    ),
+                )
+                self._audit(
+                    connection,
+                    "handoff_registered",
+                    "handoff_import",
+                    handoff_id,
+                    {"task_id": result["task_id"], "manifest_sha256": result["manifest_sha256"]},
+                )
+
+            artifact_ids = []
+            link_ids = []
+            for pointer in pointer_rows:
+                safe_pointer = {**pointer, "source_handoff_id": handoff_id}
+                location = normalize_repo_path(safe_pointer["path"])
+                digest = safe_pointer["sha256"]
+                artifact_id = stable_id(
+                    "artifact",
+                    {
+                        "module_id": safe_pointer["module_id"],
+                        "logical_type": safe_pointer["logical_type"],
+                        "location": location,
+                        "sha256": digest,
+                    },
+                )
+                pointer_json = _json(
+                    {
+                        key: safe_pointer.get(key)
+                        for key in (
+                            "module_id",
+                            "logical_type",
+                            "sha256",
+                            "schema_version",
+                            "data_classification",
+                            "rights_tier",
+                            "privacy_level",
+                            "record_count",
+                            "validation_schema",
+                            "source_handoff_id",
+                            "path",
+                        )
+                        if safe_pointer.get(key) is not None
+                    }
+                )
+                existing_artifact = connection.execute(
+                    "SELECT pointer_json FROM artifacts WHERE artifact_id = ?",
+                    (artifact_id,),
+                ).fetchone()
+                if existing_artifact is not None:
+                    if existing_artifact["pointer_json"] != pointer_json:
+                        raise CatalogConflict("ARTIFACT_IMMUTABLE_CONFLICT")
+                else:
+                    connection.execute(
+                        """
+                        INSERT INTO artifacts(
+                            artifact_id, module_id, logical_type, uri, sha256,
+                            schema_version, data_classification, rights_tier,
+                            privacy_level, pointer_json, created_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            artifact_id,
+                            safe_pointer["module_id"],
+                            safe_pointer["logical_type"],
+                            location,
+                            digest,
+                            safe_pointer.get("schema_version"),
+                            safe_pointer["data_classification"],
+                            safe_pointer.get("rights_tier"),
+                            safe_pointer.get("privacy_level"),
+                            pointer_json,
+                            _utc_now(),
+                        ),
+                    )
+                    self._audit(
+                        connection,
+                        "artifact_registered",
+                        "artifact",
+                        artifact_id,
+                        {"logical_type": safe_pointer["logical_type"], "sha256": digest},
+                    )
+                artifact_ids.append(artifact_id)
+                link_ids.append(
+                    self._insert_import_link(
+                        connection,
+                        {
+                            "source_module": result["module_id"],
+                            "source_type": "handoff",
+                            "source_id": handoff_id,
+                            "target_module": result["module_id"],
+                            "target_type": "artifact",
+                            "target_id": artifact_id,
+                            "relation": "handoff_declares_artifact",
+                            "evidence_artifact_id": artifact_id,
+                            "analysis_boundary": "pointer_only",
+                        },
+                    )
+                )
+        return {
+            "handoff_import_id": handoff_id,
+            "artifact_ids": artifact_ids,
+            "link_ids": link_ids,
+        }
+
     def register_analysis_plan(self, plan: dict[str, Any]) -> dict[str, str]:
         plan_sha256 = hashlib.sha256(canonical_json(plan)).hexdigest()
         revision_id = stable_id(
@@ -603,7 +876,8 @@ class Catalog:
                 return
             connection.execute(
                 """
-                UPDATE analysis_runs SET status = ?, result_json = ?, completed_at = ?
+                UPDATE analysis_runs
+                SET status = ?, result_json = ?, failure_json = NULL, completed_at = ?
                 WHERE analysis_run_id = ?
                 """,
                 (status, result_json, _utc_now(), analysis_run_id),
@@ -613,7 +887,49 @@ class Catalog:
                 "analysis_run_completed",
                 "analysis_run",
                 analysis_run_id,
-                {"status": status, "result_sha256": hashlib.sha256(result_json.encode()).hexdigest()},
+                {
+                    "status": status,
+                    "result_sha256": hashlib.sha256(result_json.encode()).hexdigest(),
+                },
+            )
+
+    def fail_analysis_run(
+        self,
+        analysis_run_id: str,
+        *,
+        error_code: str,
+        stage: str,
+    ) -> None:
+        failure = {
+            "error_code": error_code,
+            "stage": stage,
+            "diagnostic_summary": (
+                f"Analysis did not complete during {stage}; no result was persisted."
+            ),
+        }
+        with self._connect() as connection:
+            existing = connection.execute(
+                "SELECT result_json FROM analysis_runs WHERE analysis_run_id = ?",
+                (analysis_run_id,),
+            ).fetchone()
+            if existing is None:
+                raise KeyError(analysis_run_id)
+            if existing["result_json"] is not None:
+                return
+            connection.execute(
+                """
+                UPDATE analysis_runs
+                SET status = 'failed', failure_json = ?, completed_at = ?
+                WHERE analysis_run_id = ?
+                """,
+                (_json(failure), _utc_now(), analysis_run_id),
+            )
+            self._audit(
+                connection,
+                "analysis_run_failed",
+                "analysis_run",
+                analysis_run_id,
+                failure,
             )
 
     def analysis_run(self, analysis_run_id: str) -> dict[str, Any]:
@@ -631,7 +947,105 @@ class Catalog:
         )
         if "result_json" in result:
             result.pop("result_json")
+        result["failure"] = (
+            None
+            if result["failure_json"] is None
+            else json.loads(result.pop("failure_json"))
+        )
+        if "failure_json" in result:
+            result.pop("failure_json")
         return result
+
+    def create_operation(self, operation: dict[str, Any]) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO operations(
+                    operation_id, kind, status, stage, attempts, context_json,
+                    result_json, error_code, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    operation["operation_id"],
+                    operation["kind"],
+                    operation["status"],
+                    operation["stage"],
+                    operation["attempts"],
+                    _json(operation["context"]),
+                    None if operation["result"] is None else _json(operation["result"]),
+                    operation["error_code"],
+                    operation["created_at"],
+                    operation["updated_at"],
+                ),
+            )
+            self._audit(
+                connection,
+                "operation_submitted",
+                "operation",
+                operation["operation_id"],
+                {"kind": operation["kind"], "status": operation["status"]},
+            )
+
+    def save_operation(
+        self,
+        operation: dict[str, Any],
+        *,
+        event_type: str | None = None,
+    ) -> None:
+        with self._connect() as connection:
+            updated = connection.execute(
+                """
+                UPDATE operations
+                SET status = ?, stage = ?, attempts = ?, context_json = ?,
+                    result_json = ?, error_code = ?, updated_at = ?
+                WHERE operation_id = ?
+                """,
+                (
+                    operation["status"],
+                    operation["stage"],
+                    operation["attempts"],
+                    _json(operation["context"]),
+                    None if operation["result"] is None else _json(operation["result"]),
+                    operation["error_code"],
+                    operation["updated_at"],
+                    operation["operation_id"],
+                ),
+            )
+            if updated.rowcount != 1:
+                raise KeyError(operation["operation_id"])
+            if event_type is not None:
+                self._audit(
+                    connection,
+                    event_type,
+                    "operation",
+                    operation["operation_id"],
+                    {
+                        "kind": operation["kind"],
+                        "status": operation["status"],
+                        "stage": operation["stage"],
+                        "attempts": operation["attempts"],
+                        "error_code": operation["error_code"],
+                    },
+                )
+
+    def load_operations(self) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM operations ORDER BY created_at, operation_id"
+            ).fetchall()
+        operations = []
+        for row in rows:
+            operation = dict(row)
+            operation["context"] = json.loads(operation.pop("context_json"))
+            operation["result"] = (
+                None
+                if operation["result_json"] is None
+                else json.loads(operation.pop("result_json"))
+            )
+            if "result_json" in operation:
+                operation.pop("result_json")
+            operations.append(operation)
+        return operations
 
     def register_release_candidate(self, candidate: dict[str, Any]) -> dict[str, Any]:
         candidate_json = _json(candidate)
@@ -692,6 +1106,7 @@ class Catalog:
             "gate_decisions",
             "analysis_plans",
             "analysis_runs",
+            "operations",
             "release_candidates",
             "audit_events",
         }

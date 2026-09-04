@@ -2,11 +2,71 @@
 
 const state = {
   view: "overview",
-  csrf: null,
   overview: null,
   health: null,
   cache: new Map(),
   busy: false,
+  inspectorTrigger: null,
+  menuTrigger: null,
+  confirmationTrigger: null,
+  pendingConfirmation: null,
+};
+
+const dangerousActions = {
+  initialize: {
+    title: "确认初始化目录",
+    description: "验证四份上游 handoff，并向当前临时 catalog 写入 module、pointer 与稳定 ID 关系。",
+    target: "本机临时 catalog 数据库",
+    phrase: "INITIALIZE CATALOG",
+  },
+  "run-fixture": {
+    title: "确认运行分析 fixture",
+    description: "创建持久 operation、冻结 synthetic snapshot 并写入分析与审计记录。",
+    target: "本机临时 catalog 数据库",
+    phrase: "RUN ANALYSIS FIXTURE",
+  },
+  "run-system-fixture": {
+    title: "确认运行完整 fixture",
+    description: "创建持久 operation，并依次写入 synthetic social export、分析、demo release 与协调备份。",
+    target: "本机临时 catalog、social、export 与 backup 目录",
+    phrase: "RUN SYSTEM FIXTURE",
+  },
+  backup: {
+    title: "确认协调备份",
+    description: "为两个当前临时数据库创建新的只读一致性副本与 checksum manifest。",
+    target: "本机临时 catalog 与 social 数据库",
+    phrase: "CREATE BACKUP",
+  },
+  "export-demo": {
+    title: "确认导出 demo 审计包",
+    description: "创建新的 no-overwrite synthetic demo 目录和 zip，并登记 release candidate。",
+    target: (data) => `analysis run ${data.run || "未指定"}`,
+    phrase: "EXPORT DEMO",
+  },
+  "check-formal": {
+    title: "确认检查 formal release",
+    description: "执行机械门禁并向 catalog 追加不可变 release candidate 与审计事件；不会绕过 blocker。",
+    target: (data) => `analysis run ${data.run || "未指定"}`,
+    phrase: "CHECK FORMAL RELEASE",
+  },
+  restore: {
+    title: "确认临时恢复演练",
+    description: "将在新的本地目录创建 catalog 与 social 恢复副本并执行完整性检查。",
+    target: (data) => `协调备份 ${data.backup || "未指定"}`,
+    phrase: "RESTORE DRILL",
+  },
+  "cancel-operation": {
+    title: "确认停止 operation",
+    description: "请求持久 operation 在下一个安全 checkpoint 停止，并保留可恢复状态。",
+    target: (data) => `operation ${data.operation || "未指定"}`,
+    phrase: "STOP OPERATION",
+  },
+  "resume-operation": {
+    title: "确认恢复 operation",
+    description: "从已验证 checkpoint 创建下一次 attempt，并继续写入持久状态。",
+    target: (data) => `operation ${data.operation || "未指定"}`,
+    phrase: "RESUME OPERATION",
+  },
 };
 
 const labels = {
@@ -28,6 +88,13 @@ const moduleLabels = {
   han_style: "汉字书体",
   workbench: "工作台",
 };
+
+const mobileNavigation = window.matchMedia("(max-width: 760px)");
+
+function syncNavigationInert() {
+  const rail = document.querySelector("#side-rail");
+  rail.inert = mobileNavigation.matches && !rail.classList.contains("open");
+}
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -67,11 +134,23 @@ function tags(values) {
 }
 
 async function request(path, options = {}) {
+  const method = String(options.method || "GET").toUpperCase();
+  const unsafe = !["GET", "HEAD", "OPTIONS"].includes(method);
+  let csrfHeader = {};
+  if (unsafe) {
+    const sessionResponse = await fetch("/api/session", {
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    });
+    const session = await sessionResponse.json().catch(() => ({}));
+    if (!sessionResponse.ok || !session.csrf_token) throw new Error("CSRF_TOKEN_UNAVAILABLE");
+    csrfHeader = { "X-GLYPH-CSRF": session.csrf_token };
+  }
   const response = await fetch(path, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(options.method && options.method !== "GET" ? { "X-GLYPH-CSRF": state.csrf } : {}),
+      ...csrfHeader,
       ...(options.headers || {}),
     },
   });
@@ -288,7 +367,6 @@ function bindFilters() {
 }
 
 async function loadBase(force = false) {
-  if (!state.csrf) state.csrf = (await request("/api/session")).csrf_token;
   if (!state.overview || force) state.overview = await request("/api/overview");
   if (!state.health || force) state.health = await request("/api/health");
   document.querySelector("#rail-health").textContent = state.health.status === "ready" ? "系统可用" : "系统阻断";
@@ -337,16 +415,19 @@ async function perform(action, data = {}) {
   if (state.busy) return;
   state.busy = true;
   document.querySelectorAll("[data-action]").forEach((button) => { button.disabled = true; });
+  const confirmation = data.confirmationPhrase
+    ? { confirmation_phrase: data.confirmationPhrase }
+    : {};
   const routes = {
-    initialize: ["/api/actions/initialize", {}],
-    "run-fixture": ["/api/operations/analysis-fixture", {}],
-    "run-system-fixture": ["/api/operations/system-fixture", {}],
-    "export-demo": ["/api/actions/export-demo", { analysis_run_id: data.run }],
-    "check-formal": ["/api/actions/check-formal-release", { analysis_run_id: data.run }],
-    backup: ["/api/actions/backup", {}],
-    restore: ["/api/actions/restore-drill", { backup_id: data.backup }],
-    "cancel-operation": [`/api/operations/${data.operation}/cancel`, {}],
-    "resume-operation": [`/api/operations/${data.operation}/resume`, {}],
+    initialize: ["/api/actions/initialize", confirmation],
+    "run-fixture": ["/api/operations/analysis-fixture", confirmation],
+    "run-system-fixture": ["/api/operations/system-fixture", confirmation],
+    "export-demo": ["/api/actions/export-demo", { analysis_run_id: data.run, ...confirmation }],
+    "check-formal": ["/api/actions/check-formal-release", { analysis_run_id: data.run, ...confirmation }],
+    backup: ["/api/actions/backup", confirmation],
+    restore: ["/api/actions/restore-drill", { backup_id: data.backup, confirmation_phrase: data.confirmationPhrase }],
+    "cancel-operation": [`/api/operations/${data.operation}/cancel`, confirmation],
+    "resume-operation": [`/api/operations/${data.operation}/resume`, confirmation],
   };
   try {
     const [path, body] = routes[action];
@@ -369,14 +450,55 @@ async function perform(action, data = {}) {
   }
 }
 
-async function showEvidence(entityId) {
+function focusableElements(container) {
+  return [...container.querySelectorAll("button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex='-1'])")]
+    .filter((element) => !element.hidden && element.getAttribute("aria-hidden") !== "true");
+}
+
+function trapFocus(event, container) {
+  if (event.key !== "Tab") return;
+  const elements = focusableElements(container);
+  if (!elements.length) {
+    event.preventDefault();
+    container.focus();
+    return;
+  }
+  const first = elements[0];
+  const last = elements.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  } else if (!container.contains(document.activeElement)) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+function restoreFocus(element) {
+  if (element?.isConnected && !element.closest("[inert]")) element.focus();
+}
+
+function openInspector(trigger) {
+  closeMenu(false);
+  state.inspectorTrigger = trigger || document.activeElement;
+  const inspector = document.querySelector("#inspector");
+  document.querySelector(".app-shell").inert = true;
+  inspector.inert = false;
+  inspector.classList.add("open");
+  inspector.setAttribute("aria-hidden", "false");
+  document.querySelector("#scrim").classList.add("visible");
+  window.requestAnimationFrame(() => inspector.querySelector("[data-action='close-inspector']")?.focus());
+}
+
+async function showEvidence(entityId, trigger) {
   const inspector = document.querySelector("#inspector");
   const content = document.querySelector("#inspector-content");
   document.querySelector("#inspector-title").textContent = entityId;
   content.innerHTML = `<section class="loading-state"><span class="loading-rule"></span><p>正在解析关系...</p></section>`;
-  inspector.classList.add("open");
-  inspector.setAttribute("aria-hidden", "false");
-  document.querySelector("#scrim").classList.add("visible");
+  openInspector(trigger);
   try {
     const data = await request(`/api/evidence/${encodeURIComponent(entityId)}`);
     content.innerHTML = `<section class="inspector-section"><h3>实体</h3><dl class="definition-list"><div><dt>ID</dt><dd>${escapeHtml(data.entity_id)}</dd></div><div><dt>关系数</dt><dd>${data.relationships.length}</dd></div><div><dt>证据工件</dt><dd>${data.evidence_artifacts.length}</dd></div></dl></section>
@@ -387,29 +509,69 @@ async function showEvidence(entityId) {
   }
 }
 
-async function showHealth() {
+async function showHealth(trigger) {
   try {
     state.health = await request("/api/health");
     const health = state.health;
     const configured = Object.entries(health.credentials_configured).map(([key, value]) => `<div><dt>${escapeHtml(key)}</dt><dd>${badge(value ? "configured" : "not configured")}</dd></div>`).join("");
     document.querySelector("#inspector-title").textContent = "本机系统健康";
     document.querySelector("#inspector-content").innerHTML = `<section class="inspector-section"><h3>数据库</h3><dl class="definition-list"><div><dt>Catalog</dt><dd>${badge(health.catalog.integrity_check)}</dd></div><div><dt>Social</dt><dd>${badge(health.social.health)}</dd></div><div><dt>Scheduler</dt><dd>${badge(health.scheduler_started ? "started" : "not started")}</dd></div><div><dt>失败任务</dt><dd>${health.failed_task_count}</dd></div></dl></section><section class="inspector-section"><h3>平台凭据状态</h3><dl class="definition-list">${configured}</dl></section><section class="inspector-section"><h3>磁盘</h3><dl class="definition-list"><div><dt>可用</dt><dd>${(health.disk.free_bytes / 1073741824).toFixed(1)} GiB</dd></div><div><dt>总量</dt><dd>${(health.disk.total_bytes / 1073741824).toFixed(1)} GiB</dd></div></dl></section>`;
-    document.querySelector("#inspector").classList.add("open");
-    document.querySelector("#inspector").setAttribute("aria-hidden", "false");
-    document.querySelector("#scrim").classList.add("visible");
+    openInspector(trigger);
   } catch (error) { toast(error.message, true); }
 }
 
-function closeInspector() {
-  document.querySelector("#inspector").classList.remove("open");
-  document.querySelector("#inspector").setAttribute("aria-hidden", "true");
+function closeInspector(restore = true) {
+  const inspector = document.querySelector("#inspector");
+  const wasOpen = inspector.classList.contains("open");
+  inspector.classList.remove("open");
+  inspector.setAttribute("aria-hidden", "true");
+  inspector.inert = true;
+  document.querySelector(".app-shell").inert = false;
   if (!document.querySelector("#side-rail").classList.contains("open")) document.querySelector("#scrim").classList.remove("visible");
+  if (wasOpen && restore) restoreFocus(state.inspectorTrigger);
+  state.inspectorTrigger = null;
 }
 
-function closeMenu() {
-  document.querySelector("#side-rail").classList.remove("open");
+function closeMenu(restore = true) {
+  const rail = document.querySelector("#side-rail");
+  const wasOpen = rail.classList.contains("open");
+  rail.classList.remove("open");
+  rail.removeAttribute("role");
+  rail.removeAttribute("aria-modal");
+  syncNavigationInert();
+  document.querySelector("#workspace").inert = false;
   document.querySelector("#menu-button").setAttribute("aria-expanded", "false");
   if (!document.querySelector("#inspector").classList.contains("open")) document.querySelector("#scrim").classList.remove("visible");
+  if (wasOpen && restore) restoreFocus(state.menuTrigger);
+  state.menuTrigger = null;
+}
+
+function openConfirmation(action, data, trigger) {
+  const config = dangerousActions[action];
+  if (!config) return perform(action, data);
+  closeInspector(false);
+  closeMenu(false);
+  state.confirmationTrigger = trigger || document.activeElement;
+  state.pendingConfirmation = { action, data: { ...data }, phrase: config.phrase };
+  document.querySelector("#confirmation-title").textContent = config.title;
+  document.querySelector("#confirmation-description").textContent = config.description;
+  document.querySelector("#confirmation-target").textContent = typeof config.target === "function"
+    ? config.target(data)
+    : config.target;
+  document.querySelector("#confirmation-phrase").textContent = config.phrase;
+  const input = document.querySelector("#confirmation-input");
+  input.value = "";
+  document.querySelector("#confirmation-error").textContent = "";
+  document.querySelector("#confirmation-submit").disabled = true;
+  document.querySelector(".app-shell").inert = true;
+  const dialog = document.querySelector("#confirmation-dialog");
+  dialog.showModal();
+  window.requestAnimationFrame(() => input.focus());
+}
+
+function closeConfirmation() {
+  const dialog = document.querySelector("#confirmation-dialog");
+  if (dialog.open) dialog.close();
 }
 
 document.addEventListener("click", (event) => {
@@ -419,26 +581,89 @@ document.addEventListener("click", (event) => {
     return;
   }
   const entityButton = event.target.closest("[data-entity]");
-  if (entityButton) { showEvidence(entityButton.dataset.entity); return; }
+  if (entityButton) { showEvidence(entityButton.dataset.entity, entityButton); return; }
   const actionButton = event.target.closest("[data-action]");
   if (!actionButton) return;
   const action = actionButton.dataset.action;
   if (action === "refresh") { invalidate(); navigate(state.view, true); }
   else if (action === "close-inspector") closeInspector();
   else if (action === "close-overlays") { closeInspector(); closeMenu(); }
-  else if (action === "show-health") showHealth();
+  else if (action === "show-health") showHealth(actionButton);
+  else if (dangerousActions[action]) openConfirmation(action, actionButton.dataset, actionButton);
   else perform(action, actionButton.dataset);
 });
 
 document.querySelector("#menu-button").addEventListener("click", () => {
   const rail = document.querySelector("#side-rail");
   const open = rail.classList.toggle("open");
+  state.menuTrigger = open ? document.querySelector("#menu-button") : null;
   document.querySelector("#menu-button").setAttribute("aria-expanded", String(open));
   document.querySelector("#scrim").classList.toggle("visible", open);
+  document.querySelector("#workspace").inert = open;
+  if (open) {
+    rail.inert = false;
+    rail.setAttribute("role", "dialog");
+    rail.setAttribute("aria-modal", "true");
+    window.requestAnimationFrame(() => rail.querySelector("[data-view]")?.focus());
+  }
 });
 
+mobileNavigation.addEventListener("change", syncNavigationInert);
+
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") { closeInspector(); closeMenu(); }
+  const confirmation = document.querySelector("#confirmation-dialog");
+  if (confirmation.open) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeConfirmation();
+    } else {
+      trapFocus(event, confirmation);
+    }
+    return;
+  }
+  const inspector = document.querySelector("#inspector");
+  if (inspector.classList.contains("open")) {
+    if (event.key === "Escape") { event.preventDefault(); closeInspector(); }
+    else trapFocus(event, inspector);
+    return;
+  }
+  const rail = document.querySelector("#side-rail");
+  if (rail.classList.contains("open")) {
+    if (event.key === "Escape") { event.preventDefault(); closeMenu(); }
+    else trapFocus(event, rail);
+  }
+});
+
+document.querySelector("#confirmation-dialog").addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeConfirmation();
+});
+
+document.querySelector("#confirmation-dialog").addEventListener("close", () => {
+  document.querySelector(".app-shell").inert = false;
+  const trigger = state.confirmationTrigger;
+  state.confirmationTrigger = null;
+  state.pendingConfirmation = null;
+  restoreFocus(trigger);
+});
+
+document.querySelector("#confirmation-input").addEventListener("input", (event) => {
+  const matches = event.target.value === state.pendingConfirmation?.phrase;
+  document.querySelector("#confirmation-submit").disabled = !matches;
+  document.querySelector("#confirmation-error").textContent = event.target.value && !matches ? "确认短语不匹配" : "";
+});
+
+document.querySelector("#confirmation-cancel").addEventListener("click", closeConfirmation);
+
+document.querySelector("#confirmation-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const pending = state.pendingConfirmation;
+  const phrase = document.querySelector("#confirmation-input").value;
+  if (!pending || phrase !== pending.phrase) return;
+  const requestData = { ...pending.data, confirmationPhrase: phrase };
+  const action = pending.action;
+  closeConfirmation();
+  perform(action, requestData);
 });
 
 window.addEventListener("hashchange", () => navigate(window.location.hash.slice(1) || "overview"));

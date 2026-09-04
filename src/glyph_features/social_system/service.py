@@ -3208,7 +3208,13 @@ class SocialNarrativeService:
             )
             return governance
 
-    def export_run(self, collection_run_id: str, destination_root: Path) -> dict[str, Any]:
+    def export_run(
+        self,
+        collection_run_id: str,
+        destination_root: Path,
+        *,
+        data_origin: str = "real",
+    ) -> dict[str, Any]:
         with ResearchStore(self.database_path) as store:
             data = store.export_data(collection_run_id)
             current_query_yield, _ = self._current_query_yield_report(
@@ -3245,6 +3251,7 @@ class SocialNarrativeService:
             x_request_events=data["x_request_events"],
             x_run_billing_snapshot=data["x_run_billing_snapshot"],
             x_billing_status=data["x_billing_status"],
+            data_origin=data_origin,
         )
         with ResearchStore(self.database_path) as store:
             store.record_audit(

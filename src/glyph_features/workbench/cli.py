@@ -57,6 +57,12 @@ def build_parser() -> argparse.ArgumentParser:
         command = commands.add_parser(name, help=help_text)
         _databases(command)
 
+    handoff_import = commands.add_parser(
+        "import-handoff", help="安全验证并登记 TASK-01 至 TASK-04 handoff 包"
+    )
+    _databases(handoff_import)
+    handoff_import.add_argument("source", type=Path)
+
     system = commands.add_parser("run-system-fixture", help="运行完整 synthetic E2E")
     _databases(system)
     system.add_argument("--export-root", type=Path, default=DEFAULT_EXPORT_ROOT)
@@ -126,6 +132,8 @@ def main(argv: list[str] | None = None) -> int:
                     "snapshot_sha256": run["snapshot_sha256"],
                 }
             )
+        elif args.command == "import-handoff":
+            _print(service.import_handoff(args.source))
         elif args.command == "run-system-fixture":
             _print(
                 service.run_system_fixture(

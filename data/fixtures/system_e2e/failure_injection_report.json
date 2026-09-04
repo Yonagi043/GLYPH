@@ -67,6 +67,61 @@
       "failure": "long_operation_cancellation_and_recovery",
       "expected": "canceled is never completed; resume preserves completed stage context",
       "evidence": "tests/test_workbench.py::test_long_operation_cancel_and_resume_preserves_completed_context"
+    },
+    {
+      "failure": "handoff_zip_path_link_duplicate_or_size_attack",
+      "expected": "package rejected before catalog mutation",
+      "evidence": "tests/test_workbench.py::test_controlled_handoff_import_rejects_paths_links_and_size_limits"
+    },
+    {
+      "failure": "handoff_mid_transaction_or_immutable_conflict",
+      "expected": "transaction rolled back and existing task/path remains immutable",
+      "evidence": "tests/test_workbench.py::test_controlled_handoff_import_rolls_back_mid_transaction"
+    },
+    {
+      "failure": "social_payload_replaced_after_validation",
+      "expected": "SOCIAL_EXPORT_FILE_HASH_MISMATCH or SOCIAL_EXPORT_NARRATIVE_SEMANTICS_INVALID",
+      "evidence": "tests/test_workbench.py::test_social_export_adapter_rejects_payload_and_rehashed_id_tamper"
+    },
+    {
+      "failure": "synthetic_snapshot_claimed_as_real_or_invalid_git_state",
+      "expected": "origin mismatch, nonexistent commit and dirty worktree all rejected",
+      "evidence": "tests/test_workbench.py::test_analysis_snapshot_rejects_origin_commit_and_dirty_producer"
+    },
+    {
+      "failure": "analysis_exception_after_snapshot",
+      "expected": "failed run, stable error code, failure stage, health count and audit event persisted",
+      "evidence": "tests/test_workbench.py::test_analysis_failure_persists_audit_and_health"
+    },
+    {
+      "failure": "process_restart_during_persistent_operation",
+      "expected": "OPERATION_INTERRUPTED_BY_RESTART with checkpoint preserved and explicit resume",
+      "evidence": "tests/test_workbench.py::test_operation_checkpoint_survives_restart_and_resume"
+    },
+    {
+      "failure": "social_export_completed_before_catalog_attach",
+      "expected": "validated public package is attached idempotently after restart",
+      "evidence": "tests/test_workbench.py::test_social_attach_recovers_from_completed_public_export"
+    },
+    {
+      "failure": "coordinated_backup_with_v14_social_source",
+      "expected": "SOCIAL_BACKUP_SOURCE_SCHEMA_UNSUPPORTED with source bytes, schema and tables unchanged",
+      "evidence": "tests/test_workbench.py::test_coordinated_backup_never_migrates_v14_social_source"
+    },
+    {
+      "failure": "self_consistent_task05_handoff_semantic_overclaim",
+      "expected": "readiness, gate, interface and validation-evidence semantics rejected after rehash",
+      "evidence": "tests/test_workbench.py::test_handoff_reconstructs_compatibility_readiness_and_gate_semantics"
+    },
+    {
+      "failure": "csrf_replay_or_expiry",
+      "expected": "HTTP 403 CSRF_TOKEN_INVALID",
+      "evidence": "tests/test_workbench.py::test_csrf_token_is_single_use_and_expires"
+    },
+    {
+      "failure": "dangerous_action_without_exact_confirmation",
+      "expected": "HTTP 422 CONFIRMATION_PHRASE_INVALID",
+      "evidence": "tests/test_workbench.py::test_dangerous_actions_require_server_verified_confirmation_phrases"
     }
   ]
 }

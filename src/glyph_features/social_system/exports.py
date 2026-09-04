@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import shutil
 import uuid
@@ -57,6 +58,50 @@ def _write_csv(path: Path, rows: list[dict[str, Any]], fields: list[str]) -> Non
         writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _write_package_manifest(
+    staging: Path,
+    *,
+    collection_run_id: str,
+    data_origin: str,
+    record_count: int,
+    narrative_count: int,
+    quality_report_count: int,
+) -> None:
+    classifications = {
+        "synthetic": "synthetic_fixture",
+        "real": "restricted_real_data",
+    }
+    if data_origin not in classifications:
+        raise ValueError("data_origin must be synthetic or real")
+    files = []
+    for path in sorted(item for item in staging.rglob("*") if item.is_file()):
+        files.append(
+            {
+                "path": path.relative_to(staging).as_posix(),
+                "sha256": _sha256(path),
+                "byte_size": path.stat().st_size,
+            }
+        )
+    package = {
+        "schema_version": "social-export-package-v1",
+        "collection_run_id": collection_run_id,
+        "data_origin": data_origin,
+        "data_classification": classifications[data_origin],
+        "record_count": record_count,
+        "narrative_count": narrative_count,
+        "quality_report_count": quality_report_count,
+        "files": files,
+    }
+    (staging / "package_manifest.json").write_text(
+        json.dumps(package, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
 
 def _query_rows(queries: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -161,6 +206,7 @@ def build_export(
     x_request_events: list[dict[str, Any]],
     x_run_billing_snapshot: dict[str, Any] | None,
     x_billing_status: dict[str, Any],
+    data_origin: str = "real",
 ) -> dict[str, Any]:
     destination_root.mkdir(parents=True, exist_ok=True)
     staging = destination_root / f".{collection_run_id}.{uuid.uuid4().hex}.tmp"
@@ -370,6 +416,15 @@ def build_export(
             raise ValueError("矩阵生成失败")
         analysis_input_path.unlink()
 
+        _write_package_manifest(
+            staging,
+            collection_run_id=collection_run_id,
+            data_origin=data_origin,
+            record_count=len(observations),
+            narrative_count=len(narratives),
+            quality_report_count=len(quality_reports),
+        )
+
         if final_dir.exists():
             shutil.rmtree(final_dir)
         staging.replace(final_dir)
@@ -381,6 +436,7 @@ def build_export(
             "archive": str(archive),
             "record_count": len(observations),
             "narrative_count": len(narratives),
+            "data_origin": data_origin,
             "valid": True,
             "warnings": [
                 item for item in validation["messages"]

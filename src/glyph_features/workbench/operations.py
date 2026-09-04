@@ -9,6 +9,8 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Any, Callable
 
+from .catalog import Catalog
+
 
 OperationRunner = Callable[[Callable[[str], None], dict[str, Any]], dict[str, Any]]
 TERMINAL_STATUSES = {"completed", "failed", "canceled"}
@@ -41,10 +43,16 @@ def _error_code(error: Exception) -> str:
 class OperationManager:
     """Run only predeclared callables; no shell or caller-provided paths."""
 
-    def __init__(self, runners: dict[str, OperationRunner]):
+    def __init__(
+        self,
+        runners: dict[str, OperationRunner],
+        *,
+        catalog: Catalog | None = None,
+    ):
         if not runners:
             raise ValueError("OPERATION_RUNNER_REQUIRED")
         self._runners = dict(runners)
+        self._catalog = catalog
         self._jobs: dict[str, dict[str, Any]] = {}
         self._events: dict[str, threading.Event] = {}
         self._futures: dict[str, Future[None]] = {}
@@ -53,6 +61,29 @@ class OperationManager:
             max_workers=1,
             thread_name_prefix="glyph-workbench-operation",
         )
+        if self._catalog is not None:
+            for job in self._catalog.load_operations():
+                operation_id = job["operation_id"]
+                self._jobs[operation_id] = job
+                self._events[operation_id] = threading.Event()
+                if job["status"] not in TERMINAL_STATUSES:
+                    job.update(
+                        {
+                            "status": "failed",
+                            "updated_at": _now(),
+                            "error_code": "OPERATION_INTERRUPTED_BY_RESTART",
+                        }
+                    )
+                    self._persist(job, event_type="operation_interrupted")
+
+    def _persist(
+        self,
+        job: dict[str, Any],
+        *,
+        event_type: str | None = None,
+    ) -> None:
+        if self._catalog is not None:
+            self._catalog.save_operation(job, event_type=event_type)
 
     def submit(self, kind: str) -> dict[str, Any]:
         if kind not in self._runners:
@@ -73,6 +104,8 @@ class OperationManager:
                 "error_code": None,
             }
             self._events[operation_id] = threading.Event()
+            if self._catalog is not None:
+                self._catalog.create_operation(self._jobs[operation_id])
             self._schedule(operation_id)
             return self.get(operation_id)
 
@@ -93,6 +126,7 @@ class OperationManager:
                     "error_code": None,
                 }
             )
+            self._persist(job, event_type="operation_started")
         event = self._events[operation_id]
 
         def checkpoint(stage: str) -> None:
@@ -100,6 +134,7 @@ class OperationManager:
                 job = self._jobs[operation_id]
                 job["stage"] = stage
                 job["updated_at"] = _now()
+                self._persist(job)
             if event.is_set():
                 raise OperationCancelled("OPERATION_CANCELED")
 
@@ -117,17 +152,18 @@ class OperationManager:
                         "error_code": "OPERATION_CANCELED",
                     }
                 )
+                self._persist(job, event_type="operation_canceled")
         except Exception as error:
             with self._lock:
                 job.update(
                     {
                         "status": "failed",
-                        "stage": "failed",
                         "updated_at": _now(),
                         "result": None,
                         "error_code": _error_code(error),
                     }
                 )
+                self._persist(job, event_type="operation_failed")
         else:
             with self._lock:
                 job.update(
@@ -139,6 +175,7 @@ class OperationManager:
                         "error_code": None,
                     }
                 )
+                self._persist(job, event_type="operation_completed")
 
     def get(self, operation_id: str) -> dict[str, Any]:
         with self._lock:
@@ -187,6 +224,7 @@ class OperationManager:
                         "error_code": "OPERATION_CANCELED",
                     }
                 )
+                self._persist(job, event_type="operation_canceled")
             else:
                 job.update(
                     {
@@ -194,6 +232,7 @@ class OperationManager:
                         "updated_at": _now(),
                     }
                 )
+                self._persist(job, event_type="operation_cancel_requested")
         return self.get(operation_id)
 
     def resume(self, operation_id: str) -> dict[str, Any]:
@@ -213,11 +252,14 @@ class OperationManager:
                     "error_code": None,
                 }
             )
+            self._persist(job, event_type="operation_resumed")
             self._schedule(operation_id)
         return self.get(operation_id)
 
     def wait(self, operation_id: str, timeout: float = 30) -> dict[str, Any]:
-        self._futures[operation_id].result(timeout=timeout)
+        future = self._futures.get(operation_id)
+        if future is not None:
+            future.result(timeout=timeout)
         return self.get(operation_id)
 
     def shutdown(self) -> None:

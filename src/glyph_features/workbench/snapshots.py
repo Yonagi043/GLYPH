@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import platform
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -55,14 +56,219 @@ def freeze_analysis_plan(
     return registered
 
 
-def _git_commit(root: Path) -> str:
-    result = subprocess.run(
-        ["git", "-C", str(root), "rev-parse", "HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
+
+
+def _git_text(root: Path, *arguments: str, error_code: str) -> str:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), *arguments],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise CatalogError(error_code) from error
     return result.stdout.strip()
+
+
+def _git_commit_bytes(root: Path, commit: str, relative_path: str) -> bytes:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "show", f"{commit}:{relative_path}"],
+            check=True,
+            capture_output=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise CatalogError(
+            f"SNAPSHOT_INPUT_NOT_IN_GIT_COMMIT:{relative_path}"
+        ) from error
+    return result.stdout
+
+
+def _git_provenance(
+    root: Path,
+    requested_commit: str | None,
+    *,
+    committed_files: dict[str, str],
+    producer_commits: Iterable[str],
+) -> dict[str, Any]:
+    repository_root = _git_text(
+        root, "rev-parse", "--show-toplevel", error_code="SNAPSHOT_GIT_REPOSITORY_INVALID"
+    )
+    if Path(repository_root).resolve() != root:
+        raise CatalogError("SNAPSHOT_GIT_REPOSITORY_MISMATCH")
+    head = _git_text(
+        root,
+        "rev-parse",
+        "--verify",
+        "HEAD^{commit}",
+        error_code="SNAPSHOT_GIT_HEAD_INVALID",
+    )
+    candidate = requested_commit or head
+    if not GIT_SHA.fullmatch(candidate):
+        raise CatalogError("SNAPSHOT_GIT_COMMIT_INVALID")
+    resolved = _git_text(
+        root,
+        "rev-parse",
+        "--verify",
+        f"{candidate}^{{commit}}",
+        error_code="SNAPSHOT_GIT_COMMIT_INVALID",
+    )
+    object_type = _git_text(
+        root,
+        "cat-file",
+        "-t",
+        candidate,
+        error_code="SNAPSHOT_GIT_COMMIT_INVALID",
+    )
+    if resolved != candidate or object_type != "commit":
+        raise CatalogError("SNAPSHOT_GIT_COMMIT_INVALID")
+    if candidate != head:
+        raise CatalogError("SNAPSHOT_GIT_COMMIT_NOT_HEAD")
+    dirty = _git_text(
+        root,
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all",
+        "--ignore-submodules=none",
+        error_code="SNAPSHOT_GIT_STATUS_FAILED",
+    )
+    if dirty:
+        raise CatalogError("SNAPSHOT_GIT_WORKTREE_DIRTY")
+    for producer_commit in producer_commits:
+        if not GIT_SHA.fullmatch(producer_commit):
+            raise CatalogError("SNAPSHOT_HANDOFF_COMMIT_INVALID")
+        try:
+            ancestry = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(root),
+                    "merge-base",
+                    "--is-ancestor",
+                    producer_commit,
+                    candidate,
+                ],
+                check=False,
+                capture_output=True,
+            )
+        except OSError as error:
+            raise CatalogError("SNAPSHOT_HANDOFF_COMMIT_INVALID") from error
+        if ancestry.returncode != 0:
+            raise CatalogError(
+                f"SNAPSHOT_HANDOFF_COMMIT_NOT_ANCESTOR:{producer_commit}"
+            )
+    for relative_path, expected_sha256 in committed_files.items():
+        committed_sha256 = hashlib.sha256(
+            _git_commit_bytes(root, candidate, relative_path)
+        ).hexdigest()
+        if committed_sha256 != expected_sha256:
+            raise CatalogError(
+                f"SNAPSHOT_INPUT_GIT_HASH_MISMATCH:{relative_path}"
+            )
+    return {
+        "git_commit": candidate,
+        "git_head": head,
+        "git_object_type": object_type,
+        "git_clean": True,
+        "repository_scope": "workspace_root",
+    }
+
+
+def _classification_origin(value: str) -> str | None:
+    normalized = value.casefold()
+    if "synthetic" in normalized or "fixture" in normalized:
+        return "synthetic"
+    if "real" in normalized or "restricted" in normalized or "private" in normalized:
+        return "real"
+    return None
+
+
+def _existing_legacy_snapshot(
+    catalog: Catalog,
+    root: Path,
+    *,
+    plan_revision_id: str,
+    plan_sha256: str,
+    artifact_ids: set[str],
+    data_origin: str,
+    random_seed: int,
+    git_commit: str | None,
+) -> dict[str, Any] | None:
+    if git_commit is None:
+        return None
+    if not GIT_SHA.fullmatch(git_commit):
+        raise CatalogError("SNAPSHOT_GIT_COMMIT_INVALID")
+    resolved = _git_text(
+        root,
+        "rev-parse",
+        "--verify",
+        f"{git_commit}^{{commit}}",
+        error_code="SNAPSHOT_GIT_COMMIT_INVALID",
+    )
+    head = _git_text(
+        root,
+        "rev-parse",
+        "--verify",
+        "HEAD^{commit}",
+        error_code="SNAPSHOT_GIT_HEAD_INVALID",
+    )
+    if resolved != git_commit:
+        raise CatalogError("SNAPSHOT_GIT_COMMIT_INVALID")
+    ancestry = subprocess.run(
+        ["git", "-C", str(root), "merge-base", "--is-ancestor", git_commit, head],
+        check=False,
+        capture_output=True,
+    )
+    if ancestry.returncode != 0:
+        raise CatalogError("SNAPSHOT_GIT_COMMIT_NOT_ANCESTOR")
+    for row in catalog.rows("analysis_runs"):
+        snapshot = json.loads(row["snapshot_json"])
+        if (
+            snapshot.get("schema_version") != "1.0.0"
+            or snapshot.get("plan_revision_id") != plan_revision_id
+            or snapshot.get("plan_sha256") != plan_sha256
+            or snapshot.get("data_origin") != data_origin
+            or snapshot.get("random_seed") != random_seed
+            or snapshot.get("software_environment", {}).get("git_commit")
+            != git_commit
+            or {
+                item.get("artifact_id")
+                for item in snapshot.get("input_artifacts", [])
+            }
+            != artifact_ids
+        ):
+            continue
+        classifications = {
+            item.get("data_classification", "")
+            for item in snapshot["input_artifacts"]
+        }
+        classified_origins = {
+            origin
+            for classification in classifications
+            if (origin := _classification_origin(classification)) is not None
+        }
+        if classified_origins != {data_origin}:
+            raise CatalogError(
+                "SNAPSHOT_DATA_ORIGIN_MISMATCH:" + ",".join(sorted(classifications))
+            )
+        core = {
+            key: value
+            for key, value in snapshot.items()
+            if key not in {"analysis_run_id", "created_at", "snapshot_sha256"}
+        }
+        expected_sha256 = hashlib.sha256(canonical_json(core)).hexdigest()
+        expected_id = stable_id("analysis", core)
+        if (
+            snapshot.get("snapshot_sha256") != expected_sha256
+            or snapshot.get("analysis_run_id") != expected_id
+            or row["snapshot_sha256"] != expected_sha256
+        ):
+            raise CatalogError("SNAPSHOT_LEGACY_INTEGRITY_INVALID")
+        _require_valid(snapshot, root / "schema/analysis_run.schema.json")
+        return snapshot
+    return None
 
 
 def freeze_analysis_snapshot(
@@ -80,7 +286,23 @@ def freeze_analysis_snapshot(
         raise CatalogError("ANALYSIS_DATA_ORIGIN_INVALID")
     plan_row = catalog.analysis_plan(plan_revision_id)
     selected_ids = set(artifact_ids)
+    legacy = _existing_legacy_snapshot(
+        catalog,
+        root,
+        plan_revision_id=plan_revision_id,
+        plan_sha256=plan_row["plan_sha256"],
+        artifact_ids=selected_ids,
+        data_origin=data_origin,
+        random_seed=random_seed,
+        git_commit=git_commit,
+    )
+    if legacy is not None:
+        return legacy
     artifacts = []
+    committed_files = {
+        relative: _sha256(root / relative)
+        for relative in ("pyproject.toml", "uv.lock", "runtime.lock.json")
+    }
     for row in catalog.rows("artifacts"):
         if row["artifact_id"] not in selected_ids:
             continue
@@ -90,6 +312,7 @@ def freeze_analysis_snapshot(
         path = root / pointer["path"]
         if not path.is_file() or _sha256(path) != row["sha256"]:
             raise CatalogError(f"SNAPSHOT_ARTIFACT_HASH_MISMATCH:{row['artifact_id']}")
+        committed_files[pointer["path"]] = row["sha256"]
         artifacts.append(
             {
                 "artifact_id": row["artifact_id"],
@@ -103,6 +326,19 @@ def freeze_analysis_snapshot(
         )
     if len(artifacts) != len(selected_ids):
         raise CatalogError("SNAPSHOT_ARTIFACT_NOT_REGISTERED")
+    classifications = sorted(
+        {artifact["data_classification"] for artifact in artifacts}
+    )
+    classified_origins = {
+        origin
+        for classification in classifications
+        if (origin := _classification_origin(classification)) is not None
+    }
+    if classified_origins != {data_origin}:
+        raise CatalogError(
+            "SNAPSHOT_DATA_ORIGIN_MISMATCH:"
+            + ",".join(classifications)
+        )
     plan = plan_row["plan"]
     handoffs = [
         {
@@ -132,8 +368,14 @@ def freeze_analysis_snapshot(
             }
             for gate_id in descriptor["human_gates"]
         )
+    provenance = _git_provenance(
+        root,
+        git_commit,
+        committed_files=committed_files,
+        producer_commits=(handoff["producer_commit"] for handoff in handoffs),
+    )
     core = {
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "plan_revision_id": plan_revision_id,
         "plan_sha256": plan_row["plan_sha256"],
         "input_artifacts": sorted(artifacts, key=lambda item: item["artifact_id"]),
@@ -145,7 +387,7 @@ def freeze_analysis_snapshot(
             "missingness": plan["missingness"],
         },
         "software_environment": {
-            "git_commit": git_commit or _git_commit(root),
+            **provenance,
             "python": platform.python_version(),
             "platform": f"{platform.system()}-{platform.machine()}",
             "pyproject_sha256": _sha256(root / "pyproject.toml"),
@@ -154,6 +396,7 @@ def freeze_analysis_snapshot(
         },
         "random_seed": random_seed,
         "data_origin": data_origin,
+        "data_classifications": classifications,
         "gate_state": sorted(
             gate_state,
             key=lambda item: (item["gate_id"], item["module_id"]),

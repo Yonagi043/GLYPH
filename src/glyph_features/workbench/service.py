@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sqlite3
 from collections.abc import Callable
 from pathlib import Path
@@ -15,6 +16,7 @@ from .analysis import run_fixture_analysis
 from .assembly import import_reference_graph
 from .catalog import Catalog
 from .handoffs import inspect_upstream_handoffs
+from .handoff_import import HandoffImportLimits, inspect_handoff_package
 from .joins import build_synthetic_analysis_table
 from .modules import build_module_descriptors
 from .snapshots import freeze_analysis_plan, freeze_analysis_snapshot
@@ -31,6 +33,13 @@ from .backups import (
 
 class DatabaseBoundaryError(ValueError):
     """Raised before opening a database when explicit roles are unsafe."""
+
+
+def _failure_code(error: Exception) -> str:
+    candidate = str(error).split(":", 1)[0]
+    if re.fullmatch(r"[A-Z][A-Z0-9_]{2,80}", candidate):
+        return candidate
+    return f"ANALYSIS_FAILED_{type(error).__name__.upper()}"
 
 
 class WorkbenchService:
@@ -130,6 +139,37 @@ class WorkbenchService:
             "social": self.social_status(),
         }
 
+    def import_handoff(
+        self,
+        source: str | Path,
+        *,
+        max_files: int = 2048,
+        max_file_size: int = 64 * 1024 * 1024,
+        max_total_size: int = 256 * 1024 * 1024,
+    ) -> dict[str, Any]:
+        result, pointers = inspect_handoff_package(
+            source,
+            self.workspace_root,
+            limits=HandoffImportLimits(
+                max_files=max_files,
+                max_file_size=max_file_size,
+                max_total_size=max_total_size,
+            ),
+        )
+        descriptor = build_module_descriptors([result])[0]
+        imported = self.catalog.import_validated_handoff(
+            descriptor, result, pointers
+        )
+        return {
+            "task_id": result["task_id"],
+            "module_id": result["module_id"],
+            "handoff_import_id": imported["handoff_import_id"],
+            "artifact_count": len(imported["artifact_ids"]),
+            "entity_link_count": len(imported["link_ids"]),
+            "validation_status": result["validation_status"],
+            "compatible": result["compatible"],
+        }
+
     def _analysis_input_artifacts(self) -> list[str]:
         required_paths = {
             "configs/joint_analysis_plan_v1.json",
@@ -174,22 +214,37 @@ class WorkbenchService:
         existing = self.catalog.analysis_run(snapshot["analysis_run_id"])
         if existing["result"] is not None:
             return existing
-        rows, join_audit, _ = build_synthetic_analysis_table(self.workspace_root, plan)
-        result = run_fixture_analysis(self.workspace_root, rows, join_audit, plan)
-        result.update(
-            {
-                "analysis_run_id": snapshot["analysis_run_id"],
-                "snapshot_sha256": snapshot["snapshot_sha256"],
-                "join_audit": join_audit,
-            }
-        )
-        result.pop("result_sha256", None)
-        result["result_sha256"] = hashlib.sha256(canonical_json(result)).hexdigest()
-        self.catalog.complete_analysis_run(
-            snapshot["analysis_run_id"],
-            status=result["status"],
-            result=result,
-        )
+        stage = "build_analysis_table"
+        try:
+            rows, join_audit, _ = build_synthetic_analysis_table(
+                self.workspace_root, plan
+            )
+            stage = "fit_analysis"
+            result = run_fixture_analysis(self.workspace_root, rows, join_audit, plan)
+            result.update(
+                {
+                    "analysis_run_id": snapshot["analysis_run_id"],
+                    "snapshot_sha256": snapshot["snapshot_sha256"],
+                    "join_audit": join_audit,
+                }
+            )
+            result.pop("result_sha256", None)
+            result["result_sha256"] = hashlib.sha256(
+                canonical_json(result)
+            ).hexdigest()
+            stage = "persist_result"
+            self.catalog.complete_analysis_run(
+                snapshot["analysis_run_id"],
+                status=result["status"],
+                result=result,
+            )
+        except Exception as error:
+            self.catalog.fail_analysis_run(
+                snapshot["analysis_run_id"],
+                error_code=_failure_code(error),
+                stage=stage,
+            )
+            raise
         return self.catalog.analysis_run(snapshot["analysis_run_id"])
 
     def overview(self) -> dict[str, Any]:
@@ -253,6 +308,30 @@ class WorkbenchService:
     def run_social_fixture(self, export_root: str | Path) -> dict[str, Any]:
         exported = SocialExportAdapter(self.social_database).create_fixture_export(
             export_root
+        )
+        registered = register_social_export(self.catalog, exported)
+        return {
+            **registered,
+            "distribution_label": exported["distribution_label"],
+            "quality_status": exported["quality_status"],
+            "release_allowed": exported["release_allowed"],
+        }
+
+    def attach_existing_social_fixture_export(
+        self, export_root: str | Path
+    ) -> dict[str, Any]:
+        root = Path(export_root).expanduser().resolve()
+        candidates = sorted(
+            path
+            for path in root.iterdir()
+            if path.is_dir() and (path / "package_manifest.json").is_file()
+        ) if root.is_dir() else []
+        if not candidates:
+            raise CatalogError("SOCIAL_FIXTURE_EXPORT_NOT_FOUND")
+        if len(candidates) != 1:
+            raise CatalogError("SOCIAL_FIXTURE_EXPORT_AMBIGUOUS")
+        exported = SocialExportAdapter.validate_export(
+            candidates[0], expected_data_origin="synthetic"
         )
         registered = register_social_export(self.catalog, exported)
         return {
@@ -338,6 +417,11 @@ class WorkbenchService:
                     "distribution_label": "SYNTHETIC / DEMO",
                     "release_allowed": False,
                 }
+            social_export_root = Path(export_root) / "social"
+            if social_export_root.is_dir():
+                return self.attach_existing_social_fixture_export(
+                    social_export_root
+                )
             raise DatabaseBoundaryError(
                 "SYSTEM_FIXTURE_REQUIRES_NEW_OR_ATTACHED_SOCIAL_DATABASE"
             )

@@ -166,6 +166,14 @@ def _inspect(spec: HandoffSpec, root: Path) -> dict[str, Any]:
             "compatible": False,
             "errors": ["HANDOFF_MISSING"],
         }
+    return _inspect_manifest(spec, manifest_path, root)
+
+
+def _inspect_manifest(
+    spec: HandoffSpec,
+    manifest_path: Path,
+    root: Path,
+) -> dict[str, Any]:
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         errors = spec.validator(manifest_path, root)
@@ -217,6 +225,25 @@ def _inspect(spec: HandoffSpec, root: Path) -> dict[str, Any]:
         "contract_versions": manifest.get("contract_versions") or {},
         "errors": errors,
     }
+
+
+def inspect_handoff_manifest(
+    manifest_path: str | Path,
+    workspace_root: str | Path,
+) -> dict[str, Any]:
+    """Validate one supplied manifest with its task's native validator."""
+
+    root = Path(workspace_root).resolve()
+    path = Path(manifest_path).resolve()
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError("HANDOFF_MANIFEST_UNREADABLE") from error
+    task_id = value.get("task_id") if isinstance(value, dict) else None
+    spec = next((item for item in UPSTREAM_HANDOFFS if item.task_id == task_id), None)
+    if spec is None:
+        raise ValueError(f"HANDOFF_TASK_UNSUPPORTED:{task_id}")
+    return _inspect_manifest(spec, path, root)
 
 
 def inspect_upstream_handoffs(workspace_root: str | Path) -> list[dict[str, Any]]:

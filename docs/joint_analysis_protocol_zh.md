@@ -4,7 +4,7 @@
 
 ## 1. 证据与所有权
 
-联合层只消费 TASK-01 至 TASK-04 的验证 handoff 和 social v17 validated export。领域模块继续拥有业务数据与写操作，catalog 只保存 pointer、版本、SHA-256、稳定 ID 关系和联合运行状态。任何不支持的 handoff schema、哈希或 producer ancestry 都会阻断总装。
+联合层只消费 TASK-01 至 TASK-04 的验证 handoff 和 social v17 validated export。目录/zip handoff 先在隔离 staging 中完成路径、限额、可信 manifest、payload hash、workspace binding 和原生 validator 检查，再用单个事务登记。Social export 的版本化 package manifest 在全部 payload 完成后生成，覆盖 manifest、governance、quality、observations、queries、sources、narratives 和矩阵；adapter 重算哈希、记录数、稳定 ID 和 narrative 投影。领域模块继续拥有业务数据与写操作，catalog 只保存 pointer、版本、SHA-256、稳定 ID 关系和联合运行状态。
 
 Synthetic fixture 用于工程恢复测试，不是参与者证据、专家判断、版权批准或研究结论。三个就绪度独立报告：
 
@@ -34,9 +34,10 @@ participant_x_stimulus_x_item
 - 四份 handoff、所有输入 artifact、schema/registry/ontology 版本和哈希；
 - 纳入、排除、缺失和表示规则；
 - Git commit、Python/依赖、平台和随机种子；
+- Git commit 必须是实际 commit object、等于 clean HEAD；所有选定输入字节必须与该 commit 的 blob 一致，上游 producer commit 必须可追溯；
 - synthetic/real 来源和冻结时的人工 gate 状态。
 
-同一输入按 canonical JSON 得到同一 run ID；结果完成后不可覆盖。计划同版本内容改变时返回 `ANALYSIS_PLAN_IMMUTABLE_CONFLICT`。真实结果出现后的修改必须新建 amendment/version。
+Snapshot v1.1 还记录输入分类、repository scope、Git object type 和 clean 状态；synthetic/fixture 输入不能以 `data_origin=real` 冻结。同一输入按 canonical JSON 得到同一 run ID；结果完成后不可覆盖。已存在的 v1.0 snapshot 只有在显式提供其祖先 commit、ID/hash 与请求参数完全一致时原样重取，不会被迁移或重写。计划同版本内容改变时返回 `ANALYSIS_PLAN_IMMUTABLE_CONFLICT`。真实结果出现后的修改必须新建 amendment/version。
 
 ## 4. 模型方法决定
 
@@ -44,7 +45,7 @@ Likert 量表走 ordinal route；continuous 量表走 continuous route；混用�
 
 Statsmodels 与 Pandas 为 BSD 系许可证，NumPy/SciPy 为 BSD 系许可证。当前使用不需要网络、模型权重或遥测。完整依赖哈希在 `uv.lock`；正式升级需重新验证 OrderedModel 公共 API、参数恢复、收敛和锁文件。
 
-Fixture approximation 不冒充预注册研究模型：真实研究仍要求参与者与刺激的交叉层级 ordinal 模型。模型失败必须形成 failed run 和诊断，不能静默降级后沿用 confirmatory 标签。
+Fixture approximation 不冒充预注册研究模型：真实研究仍要求参与者与刺激的交叉层级 ordinal 模型。模型、join 或持久化失败必须形成 failed run、稳定错误码、失败阶段和 audit event，不能静默降级后沿用 confirmatory 标签，也不能永久停在 `snapshot_frozen`。
 
 ## 5. 工作包
 
