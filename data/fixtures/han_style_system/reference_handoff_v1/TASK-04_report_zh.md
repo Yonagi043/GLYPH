@@ -1,8 +1,8 @@
 # TASK-04 汉字书体知识与专家在环子系统报告
 
-版本：`1.0.0`
+版本：`1.1.0`
 起始 checkpoint：`af3820836a6ffa92c63016b0e308f624f9b42db0`
-implementation commit：`bd4ee7ec4be85a712ae0640aa55b81f280440e11`
+implementation commit：`dc269966775a4730ebef1865c4c932eb99794b2d`
 
 ## 完成范围
 

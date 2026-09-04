@@ -25,19 +25,27 @@
       "status": "blocked"
     }
   ],
+  "contract_compatibility": {
+    "backward_compatible": false,
+    "previous_version": "1.0.0",
+    "reason": "1.1.0 requires repository-pinned review and rights provenance, explicit lineage units, claim decision bindings, and semantic handoff recomputation."
+  },
   "contract_versions": {
-    "expert_review": "1.0.0",
-    "han_adapter_record": "1.0.0",
+    "expert_review": "1.1.0",
+    "han_adapter_record": "1.1.0",
     "han_character_mapping": "1.0.0",
     "han_glyph_instance": "1.0.0",
-    "han_handoff_manifest": "1.0.0",
-    "han_knowledge_claim": "1.0.0",
-    "han_stimulus_candidate": "1.0.0",
-    "han_style_concept": "1.0.0"
+    "han_handoff_manifest": "1.1.0",
+    "han_knowledge_claim": "1.1.0",
+    "han_review_item": "1.1.0",
+    "han_review_package": "1.1.0",
+    "han_stimulus_candidate": "1.1.0",
+    "han_style_concept": "1.0.0",
+    "han_style_trust_root": "1.0.0"
   },
-  "created_at": "2026-09-04T07:00:00Z",
-  "handoff_schema_version": "1.0.0",
-  "implementation_commit": "bd4ee7ec4be85a712ae0640aa55b81f280440e11",
+  "created_at": "2026-09-04T08:00:00Z",
+  "handoff_schema_version": "1.1.0",
+  "implementation_commit": "dc269966775a4730ebef1865c4c932eb99794b2d",
   "inference_readiness": {
     "category_level_candidate_count": 0,
     "default_scope": "instance_level_only",
@@ -54,7 +62,7 @@
       "record_count": 1,
       "rights_or_privacy_level": "public_code_or_schema",
       "schema_version": "1.0.0",
-      "sha256": "7bdba44a022841b646ec2ebc34339fb9b37726b7245c97eb17f6e6c90af265df"
+      "sha256": "39acd683866f3a58608d55efff24fe8728b5139bb251c7417d69ba1dc33ca935"
     },
     {
       "implementation_bound": true,
@@ -100,6 +108,15 @@
       "rights_or_privacy_level": "metadata_only",
       "schema_version": "2.0.0",
       "sha256": "e9ab54f00970d8be674b77f4e1990b2396f18b4d92f05da32f97b6615f761273"
+    },
+    {
+      "implementation_bound": true,
+      "logical_type": "han_style_trust_root",
+      "path": "configs/han_style_trust_root_v1.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": "1.0.0",
+      "sha256": "e662bc3fc8ee3ac5c1d8aa9d167fdb123d4890f7a024ba9150961242153f60f8"
     }
   ],
   "known_limitations": [
@@ -157,8 +174,8 @@
       "path": "data/fixtures/han_style_system/claims.jsonl",
       "record_count": 2,
       "rights_or_privacy_level": "open_fixture",
-      "schema_version": "1.0.0",
-      "sha256": "d1bbaa80fa0117f708de8fddd8cd285a0b670ffca39bf312a45f4dcdca4b015a"
+      "schema_version": "1.1.0",
+      "sha256": "39158d7c40fe5df6ea7fb289df4e7f36eb3d880cf1a82b3928d4ebc4ff70527f"
     },
     {
       "implementation_bound": true,
@@ -184,8 +201,8 @@
       "path": "data/fixtures/han_style_system/reference_run_v1/candidate_bundle/adapters.jsonl",
       "record_count": 14,
       "rights_or_privacy_level": "open_fixture",
-      "schema_version": "1.0.0",
-      "sha256": "7d724a1715c1672560750503c0cb17189d65b766504976314683aaeaf0085074"
+      "schema_version": "1.1.0",
+      "sha256": "00ff1dbe1857553bcbd0aa70df536cde8902c6285da22c693b08a4e9d82e0b4a"
     },
     {
       "implementation_bound": true,
@@ -194,7 +211,7 @@
       "record_count": 4,
       "rights_or_privacy_level": "metadata_only",
       "schema_version": "1.0.0",
-      "sha256": "9d6191fec9d64ddd07a9136e29792ac3b275640ed69444bb3b4fbb9048c9e801"
+      "sha256": "1afe7c665fd4315cdd27977a2321dc6c6c35b4300087e415889e848e92b457fc"
     },
     {
       "implementation_bound": true,
@@ -202,8 +219,8 @@
       "path": "data/fixtures/han_style_system/reference_run_v1/candidate_bundle/stimulus_candidates.jsonl",
       "record_count": 2,
       "rights_or_privacy_level": "open_fixture",
-      "schema_version": "1.0.0",
-      "sha256": "c0dfd2e482ec67e1fff0656a6a43db321ed6fc486bad64cf1d68a9276e0aa6b1"
+      "schema_version": "1.1.0",
+      "sha256": "2f8865d2346ea698540a2c26b8f6d55001eebac0e1166d36f6ec44f7b53d27f8"
     },
     {
       "implementation_bound": true,
@@ -230,7 +247,7 @@
       "record_count": 6,
       "rights_or_privacy_level": "open_fixture",
       "schema_version": null,
-      "sha256": "977046c4300e21e455993a81e8678416b00a0eff714583976a54ea4914b26278"
+      "sha256": "9606cbb6813e0867fc17915803055d7047a89c08bf913228e59b936a1445927f"
     },
     {
       "implementation_bound": true,
@@ -239,7 +256,7 @@
       "record_count": 1,
       "rights_or_privacy_level": "open_fixture",
       "schema_version": null,
-      "sha256": "e80326e98bed65ea30209e4e3f1896eaecc958c59606e2a5a13d76113f29f36b"
+      "sha256": "071b2455aec76601b30303a7f53340c66d04dc55bec24cb017d6c7dade3d1cca"
     },
     {
       "implementation_bound": true,
@@ -247,8 +264,8 @@
       "path": "data/fixtures/han_style_system/reference_run_v1/review_package/items.jsonl",
       "record_count": 1,
       "rights_or_privacy_level": "open_fixture",
-      "schema_version": "1.0.0",
-      "sha256": "1023ddf27bed82c942767d917cfee7266125c5ceeaa5cc172a9c661e59dd40f6"
+      "schema_version": "1.1.0",
+      "sha256": "73f3cb32f03f51ded14566a11163fa8ec0e15e53e13a25ae60c92dee985145e5"
     },
     {
       "implementation_bound": true,
@@ -256,8 +273,8 @@
       "path": "data/fixtures/han_style_system/reference_run_v1/review_package/package_manifest.json",
       "record_count": 1,
       "rights_or_privacy_level": "open_fixture",
-      "schema_version": "1.0.0",
-      "sha256": "65712ae571e26d4a7317a715ade7ffdd4288906ed6c4f277bbda70776cffaf32"
+      "schema_version": "1.1.0",
+      "sha256": "66e00b2484364196578f11f4e7307076a7fa56c5280eea3267659d681d3e8e4e"
     },
     {
       "implementation_bound": true,
@@ -266,7 +283,7 @@
       "record_count": 1,
       "rights_or_privacy_level": "open_fixture",
       "schema_version": null,
-      "sha256": "ff3e596038e97fe4ea7a807659b6ae1ada4ca90e72cff1ae135a5572f6dc705f"
+      "sha256": "7ef59ead6bccebb13aee94f2774475e6438fef101681615ce61e949046a56860"
     },
     {
       "implementation_bound": true,
@@ -274,8 +291,8 @@
       "path": "data/fixtures/han_style_system/reference_run_v1/reviews.jsonl",
       "record_count": 2,
       "rights_or_privacy_level": "open_fixture",
-      "schema_version": "1.0.0",
-      "sha256": "f7bda078fa7c631acae2f5cfaae4e0958aa71fa07234dcb0563c81e8b3868b44"
+      "schema_version": "1.1.0",
+      "sha256": "0f5080f4b45ca4e9d1b25905821519b1c647ed33e0a2f9d6a232bd8f309efcd2"
     },
     {
       "implementation_bound": true,
@@ -284,7 +301,7 @@
       "record_count": 2,
       "rights_or_privacy_level": "open_fixture",
       "schema_version": "1.0.0",
-      "sha256": "a89b9e157d35de2a9be8749664c639516f05a4e6e0629058107189791dc4f628"
+      "sha256": "7f9b724d362a741345b0f4a6351a764cae457d7d685fe301ad13647c9bb3d78e"
     },
     {
       "implementation_bound": true,
@@ -311,7 +328,7 @@
       "record_count": 0,
       "rights_or_privacy_level": "public_code_or_schema",
       "schema_version": "1.0.0",
-      "sha256": "26597b74a28adea0916d00fe726d658cf8c765f7cfca706669b892259936ea8d"
+      "sha256": "1cf68cbb3e1b749522d7d9a8bc531b0e3b26e62fdd5ea429b7dbb2c165f2cdbf"
     },
     {
       "implementation_bound": true,
@@ -320,7 +337,7 @@
       "record_count": 1,
       "rights_or_privacy_level": "public_code_or_schema",
       "schema_version": null,
-      "sha256": "3c175bb820990a741639c00bf17e527dd73b56eb4fa1471b293f981cc679dc57"
+      "sha256": "3c5daefd3da6b0986d28ffb70d298615b41151368f73c1d25b67520da9e5886b"
     },
     {
       "implementation_bound": false,
@@ -356,7 +373,7 @@
       "record_count": 1,
       "rights_or_privacy_level": "public_code_or_schema",
       "schema_version": null,
-      "sha256": "1856b28ab6d0a06da41bb9b7619d542a672a1a29bc85b6a02e972a5ced71ae60"
+      "sha256": "2e3e35de66c9e80ddb22f89d7e8e18b6e855fd2df742f40f392a679b4299e332"
     },
     {
       "implementation_bound": false,
@@ -365,16 +382,21 @@
       "record_count": 24,
       "rights_or_privacy_level": "metadata_only",
       "schema_version": null,
-      "sha256": "d17782e54c3feae6b964d8cfcb1f819f59d13d2270360832930660a6c06f605a"
+      "sha256": "c2422173139a38334274255807b8ef8dc7fb468780804d4327053cf7cdafe6cc"
     }
   ],
   "producer_provenance": {
-    "aggregate_sha256": "832639eba67f6ef734425c6b1a10a5cce5339a044422acbb626c11d7d840b0f2",
+    "aggregate_sha256": "be98ef2037d79fe8678191271c14c5356661718373b52ff192bee9ed04068bf7",
     "files": [
       {
         "path": "configs/han_style_protocol_v1.yaml",
         "role": "config",
-        "sha256": "7bdba44a022841b646ec2ebc34339fb9b37726b7245c97eb17f6e6c90af265df"
+        "sha256": "39acd683866f3a58608d55efff24fe8728b5139bb251c7417d69ba1dc33ca935"
+      },
+      {
+        "path": "configs/han_style_trust_root_v1.json",
+        "role": "config",
+        "sha256": "e662bc3fc8ee3ac5c1d8aa9d167fdb123d4890f7a024ba9150961242153f60f8"
       },
       {
         "path": "pyproject.toml",
@@ -389,12 +411,12 @@
       {
         "path": "schema/expert_review.schema.json",
         "role": "schema",
-        "sha256": "a5bb554ec769c1252cfd0f23b09632d617bcf98891ee78f5a80a4ca2c4def7cf"
+        "sha256": "deb918f09a01e7f33f44e599e7e8cca37ad13ff9439c6188171ca5ca5fd58000"
       },
       {
         "path": "schema/han_adapter_record.schema.json",
         "role": "schema",
-        "sha256": "3e23739fe0b5d856314d0f67ff5befb08cf503105536a146a0b26840b10be97c"
+        "sha256": "11c8bcfc2ef2d3824250ec3ee83d6b225639fe1a3287198e8f67bd7527330a1a"
       },
       {
         "path": "schema/han_character_mapping.schema.json",
@@ -409,32 +431,37 @@
       {
         "path": "schema/han_handoff_manifest.schema.json",
         "role": "schema",
-        "sha256": "fd278a4c6c7cdf108ae4576a43757d73967c53a33c3ff2c98c87f23d4706f041"
+        "sha256": "47a64d9ac564bee0101ac41d309875376f96ea2ff28bf92022873bb6437b2890"
       },
       {
         "path": "schema/han_knowledge_claim.schema.json",
         "role": "schema",
-        "sha256": "090f0b095641d22ad649cbe05e12376d7f0e3942b65498d5e9fc6f6ea97e00d0"
+        "sha256": "5e93a6dbabd848ffaa401b897de7ecef602eee2ecc0283698539c5834ffe9a06"
       },
       {
         "path": "schema/han_review_item.schema.json",
         "role": "schema",
-        "sha256": "baa098745aa4184bb96cf5de621be3fb292962c94e139a7c56577885e894c750"
+        "sha256": "9b9d7eafb134348826f4134d7960dbb473d625369f109ee4f2d6be3f4c439730"
       },
       {
         "path": "schema/han_review_package.schema.json",
         "role": "schema",
-        "sha256": "07f1f73e7b6dc52f2fcd2603d027bbe315fea8b8b9750e40a9ecb04240db4953"
+        "sha256": "1961d7ad5e16f7836166b6886085d1ca07cc758d12b9a4dc15f2d1d576dd33fa"
       },
       {
         "path": "schema/han_stimulus_candidate.schema.json",
         "role": "schema",
-        "sha256": "86436989b1c85f6c9b10fef2366af0506fc771fabff7cd5522ff11002f9cd098"
+        "sha256": "40257b82f3767a0a0d0dbb7bf9f01460eebfa1f41bf3e8e2b37272ed9b8076f5"
       },
       {
         "path": "schema/han_style_concept.schema.json",
         "role": "schema",
         "sha256": "97505b6cc0b8d958d50dcb016c37fc59b50e797ea0c5102870be41a64613a6ad"
+      },
+      {
+        "path": "schema/han_style_trust_root.schema.json",
+        "role": "schema",
+        "sha256": "1612f288153238cbd41ee546dc0d0c316eff793eb253967e1153c112fcad8499"
       },
       {
         "path": "schema/shared.schema.json",
@@ -444,22 +471,22 @@
       {
         "path": "src/glyph_features/han_style_system/__init__.py",
         "role": "producer_source",
-        "sha256": "25bba0345e40d6877ada18c81496edaecafa28382ef2b11e6a153577295d365b"
+        "sha256": "d02f41f3a2fdc464c9c1d0702c16356a1cde8b78ecc37d121d0651c0b769eeed"
       },
       {
         "path": "src/glyph_features/han_style_system/adapters.py",
         "role": "producer_source",
-        "sha256": "433dcec3e1bcda591f50e61e1876f6ddf16568aa30117239aef4ffbe5044728f"
+        "sha256": "68f818751a9ee9582e25c106c1ad37f4ca8324339a21923e765ed2b0e78f0a7d"
       },
       {
         "path": "src/glyph_features/han_style_system/claims.py",
         "role": "producer_source",
-        "sha256": "2bb6392dcd0a1216aa01ac9b48e99c542e46c8874a4a82ae300770c6d6386202"
+        "sha256": "8f4df1b18a200e10894bb028253fb6481ffc685e4d0b3cb1385c300060f144d6"
       },
       {
         "path": "src/glyph_features/han_style_system/cli.py",
         "role": "producer_source",
-        "sha256": "982a7aef302f7674f3c4ce3e0e9bef875e8993ab158bcaedcca5393d21a41ae9"
+        "sha256": "09eab8fb89cc381ee5e35a73be55b621e0688fda6c4d9cc23cc504a1f8aa845f"
       },
       {
         "path": "src/glyph_features/han_style_system/glyphs.py",
@@ -469,7 +496,7 @@
       {
         "path": "src/glyph_features/han_style_system/handoff.py",
         "role": "producer_source",
-        "sha256": "852d6a39c3e8b3b6e6a4ea32954c23a4d6e438966a95d99ffc255d7986fb9ec1"
+        "sha256": "a79c52e057170d4706a381a3c47ac781be3c9f12e9aec7bf87c4564d7147489c"
       },
       {
         "path": "src/glyph_features/han_style_system/io.py",
@@ -484,12 +511,22 @@
       {
         "path": "src/glyph_features/han_style_system/review.py",
         "role": "producer_source",
-        "sha256": "977977e88b9cd77ccd334023c4017bf23e5f51e4cd005ba83065332bca8274d6"
+        "sha256": "454f7c7e35ebe45d6ba02b670843b9f2039455fdd1bd67055e95305bfe3b1104"
+      },
+      {
+        "path": "src/glyph_features/han_style_system/rights.py",
+        "role": "producer_source",
+        "sha256": "0d9fcb8cdb3b99d1b400afdcd654d04351fea27453c586c88967d2c7c1aad636"
       },
       {
         "path": "src/glyph_features/han_style_system/stimuli.py",
         "role": "producer_source",
-        "sha256": "74a8a23c83d066eb7beb446a1422ab3778edb6422ee795120799618f4719a7c9"
+        "sha256": "4a006dc9edff96b80579cb2e643b1cce1182ea79b084f9c76494e9435caf5d3d"
+      },
+      {
+        "path": "src/glyph_features/han_style_system/trust.py",
+        "role": "producer_source",
+        "sha256": "c26e37545900f47b40ba1038134f4611e90a615fce431eb58101581d6398a56c"
       },
       {
         "path": "uv.lock",
@@ -497,11 +534,11 @@
         "sha256": "0071d3fed47107d0a1f3b8e23b4057225ea277bd5de0c5d4a1926b7cd63dc5d7"
       }
     ],
-    "implementation_commit": "bd4ee7ec4be85a712ae0640aa55b81f280440e11",
+    "implementation_commit": "dc269966775a4730ebef1865c4c932eb99794b2d",
     "snapshot_matches_commit": true,
     "working_tree_state_at_export": "clean"
   },
-  "producer_version": "1.0.0",
+  "producer_version": "1.1.0",
   "quality_gates": [
     {
       "evidence": "data/fixtures/han_style_system/reference_handoff_v1/checksums.sha256",
