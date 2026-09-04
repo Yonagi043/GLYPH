@@ -539,6 +539,22 @@ def _decision_status(
         for review in reviews
     ):
         blockers.append("REVIEW_PROVENANCE_UNTRUSTED")
+    policy_reviews = [
+        review
+        for review in reviews
+        if review["overall_decision"] in {"pass", "fail", "needs_revision"}
+    ]
+    blockers.extend(
+        _independent_review_policy_blockers(
+            policy_reviews,
+            minimum,
+            minimum_substantive_dimensions,
+            required_dimensions,
+            required_role_groups,
+        )
+    )
+    if blockers:
+        return "blocked", sorted(set(blockers))
     decisions = {review["overall_decision"] for review in reviews}
     substantive = decisions - {"outside_expertise", "not_applicable"}
     if "pass" in substantive and substantive & {"fail", "needs_revision"}:
@@ -558,21 +574,31 @@ def _decision_status(
         return "failed", sorted(set(blockers))
     if "needs_revision" in substantive:
         return "needs_revision", sorted(set(blockers))
-    passing = [review for review in reviews if review["overall_decision"] == "pass"]
-    if len({review["reviewer_id"] for review in passing}) < minimum:
+    return "passed", []
+
+
+def _independent_review_policy_blockers(
+    reviews: list[dict[str, Any]],
+    minimum: int,
+    minimum_substantive_dimensions: int,
+    required_dimensions: tuple[str, ...],
+    required_role_groups: tuple[frozenset[str], ...],
+) -> list[str]:
+    blockers: list[str] = []
+    if len({review["reviewer_id"] for review in reviews}) < minimum:
         blockers.append("INSUFFICIENT_INDEPENDENT_REVIEWS")
     if any(
         review.get("round") != 1
         or review.get("independence_attestation") is not True
         or review.get("prior_review_visibility") != "hidden"
-        for review in passing
+        for review in reviews
     ):
         blockers.append("INDEPENDENCE_POLICY_NOT_MET")
-    roles = {review["reviewer_role"] for review in passing}
+    roles = {review["reviewer_role"] for review in reviews}
     if any(not roles.intersection(group) for group in required_role_groups):
         blockers.append("REVIEW_ROLE_COVERAGE_INSUFFICIENT")
     covered_dimensions: set[str] = set()
-    for review in passing:
+    for review in reviews:
         dimensions = review.get("dimensions", {})
         substantive_dimensions = {
             dimension
@@ -581,14 +607,18 @@ def _decision_status(
         }
         if len(substantive_dimensions) < minimum_substantive_dimensions:
             blockers.append("REVIEW_SUBSTANTIVE_DIMENSIONS_INSUFFICIENT")
-        if any(dimensions.get(dimension) != "pass" for dimension in substantive_dimensions):
+        if review["overall_decision"] == "pass" and any(
+            dimensions.get(dimension) != "pass" for dimension in substantive_dimensions
+        ):
             blockers.append("REVIEW_DIMENSION_DECISION_INCONSISTENT")
         covered_dimensions.update(
-            dimension for dimension in required_dimensions if dimensions.get(dimension) == "pass"
+            dimension
+            for dimension in required_dimensions
+            if dimensions.get(dimension) not in {None, "outside_expertise", "not_applicable"}
         )
     if set(required_dimensions) - covered_dimensions:
         blockers.append("REVIEW_DIMENSION_COVERAGE_INSUFFICIENT")
-    return ("blocked", sorted(set(blockers))) if blockers else ("passed", [])
+    return sorted(set(blockers))
 
 
 def _validate_gate_approval(

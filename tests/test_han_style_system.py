@@ -89,6 +89,73 @@ def synthetic_review_rows(package_dir: Path, decisions: tuple[str, str] = ("pass
     return rows
 
 
+def configured_review_policy() -> dict:
+    config = json.loads((ROOT / "configs/han_style_protocol_v1.yaml").read_text(encoding="utf-8"))
+    return {
+        "minimum_independent_reviews": int(config["review"]["minimum_independent_reviews"]),
+        "minimum_substantive_dimensions": int(
+            config["review"]["minimum_substantive_dimensions_per_review"]
+        ),
+        "required_dimensions": tuple(config["review"]["required_dimension_coverage"]),
+        "required_role_groups": tuple(
+            frozenset(group) for group in config["review"]["required_role_groups"]
+        ),
+    }
+
+
+def adjudication_policy_attack_reviews(package_dir: Path) -> list[dict]:
+    policy = configured_review_policy()
+    trust_root = json.loads(
+        (ROOT / "configs/han_style_trust_root_v1.json").read_text(encoding="utf-8")
+    )
+    independent_reviewers = [
+        reviewer
+        for reviewer in trust_root["fixture_reviewers"]
+        if "independent" in reviewer["allowed_round_types"]
+    ]
+    same_role_pair = next(
+        (left, right, role)
+        for index, left in enumerate(independent_reviewers)
+        for right in independent_reviewers[index + 1 :]
+        for role in sorted(set(left["allowed_roles"]) & set(right["allowed_roles"]))
+        if any(role not in group for group in policy["required_role_groups"])
+    )
+    adjudicator = next(
+        reviewer
+        for reviewer in trust_root["fixture_reviewers"]
+        if "adjudication" in reviewer["allowed_round_types"]
+    )
+    independent_rows = synthetic_review_rows(package_dir, decisions=("pass", "fail"))
+    for row, reviewer in zip(independent_rows, same_role_pair[:2], strict=True):
+        row["reviewer_id"] = reviewer["reviewer_id"]
+        row["reviewer_role"] = same_role_pair[2]
+        for dimension in policy["required_dimensions"]:
+            row[dimension] = "not_applicable"
+    independent = import_review_rows(
+        package_dir,
+        independent_rows,
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    adjudication = dict(independent_rows[0])
+    adjudication.update(
+        {
+            "reviewer_id": adjudicator["reviewer_id"],
+            "reviewer_role": sorted(adjudicator["allowed_roles"])[0],
+            "round": "2",
+            "review_round_type": "adjudication",
+            "independence_attestation": "false",
+            "prior_review_visibility": "visible_for_adjudication",
+            "overall_decision": "pass",
+            "conflict_review_ids": "|".join(review["review_id"] for review in independent),
+        }
+    )
+    return import_review_rows(
+        package_dir,
+        [*independent_rows, adjudication],
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+
+
 def ontology_records() -> list[dict]:
     classification = {
         "small_seal": "historical_script",
@@ -484,6 +551,269 @@ def test_review_conflict_is_retained_and_blocks_fixture_status(tmp_path: Path) -
     assert summary["fixture_status"] == "conflicted"
     assert summary["decision_counts"] == {"fail": 1, "pass": 1}
     assert len(reviews) == 2
+
+
+def test_adjudication_cannot_bypass_independent_review_policy(tmp_path: Path) -> None:
+    context = fixture_context()
+    policy = configured_review_policy()
+    package_dir = tmp_path / "review-package"
+    build_review_package(
+        context["glyphs"],
+        context["mappings"],
+        context["assets"],
+        workspace_root=ROOT,
+        output_dir=package_dir,
+        created_at="2026-09-04T00:00:00Z",
+        ordering_seed="fixture-seed-v1",
+    )
+    reviews = adjudication_policy_attack_reviews(package_dir)
+
+    summary = aggregate_reviews(reviews, **policy)["glyph_han_fixture_01"]
+    candidates = build_stimulus_candidates(
+        context["glyphs"],
+        context["mappings"],
+        reviews,
+        context["rights"],
+        schema_path=ROOT / "schema/han_stimulus_candidate.schema.json",
+        render_profiles=["bbox_height_matched", "ink_area_matched"],
+        minimum_independent_reviews=policy["minimum_independent_reviews"],
+        minimum_independent_exemplars=3,
+        created_at="2026-09-04T00:00:00Z",
+        minimum_substantive_dimensions=policy["minimum_substantive_dimensions"],
+        required_dimensions=policy["required_dimensions"],
+        required_role_groups=policy["required_role_groups"],
+    )
+
+    assert summary["fixture_status"] == "blocked"
+    assert {
+        "REVIEW_ROLE_COVERAGE_INSUFFICIENT",
+        "REVIEW_SUBSTANTIVE_DIMENSIONS_INSUFFICIENT",
+        "REVIEW_DIMENSION_COVERAGE_INSUFFICIENT",
+    } <= set(summary["fixture_policy_blockers"])
+    assert summary["decision_counts"] == {"fail": 1, "pass": 2}
+    assert summary["adjudication_review_ids"] == [reviews[2]["review_id"]]
+    assert {candidate["review_summary"]["fixture_status"] for candidate in candidates} == {
+        "blocked"
+    }
+    assert all(
+        set(summary["fixture_policy_blockers"])
+        <= set(candidate["review_summary"]["fixture_policy_blockers"])
+        for candidate in candidates
+    )
+    assert {candidate["release_status"] for candidate in candidates} == {"fixture_only"}
+    assert {candidate["task01_freeze"]["status"] for candidate in candidates} == {"blocked"}
+    assert {candidate["stimulus_id"] for candidate in candidates} == {None}
+    assert {candidate["inference_scope"]["scope"] for candidate in candidates} == {
+        "instance_level_only"
+    }
+
+
+def test_adjudicator_cannot_supply_missing_independent_reviewer(tmp_path: Path) -> None:
+    context = fixture_context()
+    policy = configured_review_policy()
+    trust_root = json.loads(
+        (ROOT / "configs/han_style_trust_root_v1.json").read_text(encoding="utf-8")
+    )
+    independent_reviewer = next(
+        reviewer
+        for reviewer in trust_root["fixture_reviewers"]
+        if "independent" in reviewer["allowed_round_types"]
+    )
+    adjudicator = next(
+        reviewer
+        for reviewer in trust_root["fixture_reviewers"]
+        if "adjudication" in reviewer["allowed_round_types"]
+    )
+    package_dir = tmp_path / "review-package"
+    build_review_package(
+        context["glyphs"],
+        context["mappings"],
+        context["assets"],
+        workspace_root=ROOT,
+        output_dir=package_dir,
+        created_at="2026-09-04T00:00:00Z",
+        ordering_seed="fixture-seed-v1",
+    )
+    independent_rows = synthetic_review_rows(package_dir, decisions=("pass", "fail"))
+    for round_number, row in enumerate(independent_rows, start=1):
+        row["reviewer_id"] = independent_reviewer["reviewer_id"]
+        row["reviewer_role"] = sorted(independent_reviewer["allowed_roles"])[0]
+        row["round"] = str(round_number)
+    independent = import_review_rows(
+        package_dir,
+        independent_rows,
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    adjudication = dict(independent_rows[0])
+    adjudication.update(
+        {
+            "reviewer_id": adjudicator["reviewer_id"],
+            "reviewer_role": sorted(adjudicator["allowed_roles"])[0],
+            "round": "3",
+            "review_round_type": "adjudication",
+            "independence_attestation": "false",
+            "prior_review_visibility": "visible_for_adjudication",
+            "overall_decision": "pass",
+            "conflict_review_ids": "|".join(review["review_id"] for review in independent),
+        }
+    )
+    reviews = import_review_rows(
+        package_dir,
+        [*independent_rows, adjudication],
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+
+    summary = aggregate_reviews(reviews, **policy)["glyph_han_fixture_01"]
+
+    assert summary["fixture_status"] == "blocked"
+    assert "INSUFFICIENT_INDEPENDENT_REVIEWS" in summary["fixture_policy_blockers"]
+    assert "INDEPENDENCE_POLICY_NOT_MET" in summary["fixture_policy_blockers"]
+    assert summary["synthetic_review_count"] == 1
+    assert summary["decision_counts"] == {"fail": 1, "pass": 2}
+    assert summary["adjudication_review_ids"] == [reviews[2]["review_id"]]
+
+
+def test_parallel_terminal_adjudications_cannot_resolve_conflict(tmp_path: Path) -> None:
+    context = fixture_context()
+    policy = configured_review_policy()
+    trust_root = json.loads(
+        (ROOT / "configs/han_style_trust_root_v1.json").read_text(encoding="utf-8")
+    )
+    adjudicators = [
+        reviewer
+        for reviewer in trust_root["fixture_reviewers"]
+        if "adjudication" in reviewer["allowed_round_types"]
+    ][:2]
+    package_dir = tmp_path / "review-package"
+    build_review_package(
+        context["glyphs"],
+        context["mappings"],
+        context["assets"],
+        workspace_root=ROOT,
+        output_dir=package_dir,
+        created_at="2026-09-04T00:00:00Z",
+        ordering_seed="fixture-seed-v1",
+    )
+    independent_rows = synthetic_review_rows(package_dir, decisions=("pass", "fail"))
+    independent = import_review_rows(
+        package_dir,
+        independent_rows,
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    conflict_ids = "|".join(review["review_id"] for review in independent)
+    adjudication_rows = []
+    for decision, reviewer in zip(("pass", "fail"), adjudicators, strict=True):
+        adjudication = dict(independent_rows[0])
+        adjudication.update(
+            {
+                "reviewer_id": reviewer["reviewer_id"],
+                "reviewer_role": sorted(reviewer["allowed_roles"])[0],
+                "round": "2",
+                "review_round_type": "adjudication",
+                "independence_attestation": "false",
+                "prior_review_visibility": "visible_for_adjudication",
+                "overall_decision": decision,
+                "conflict_review_ids": conflict_ids,
+            }
+        )
+        adjudication_rows.append(adjudication)
+    reviews = import_review_rows(
+        package_dir,
+        [*independent_rows, *adjudication_rows],
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+
+    summary = aggregate_reviews(reviews, **policy)["glyph_han_fixture_01"]
+
+    assert summary["fixture_status"] == "conflicted"
+    assert summary["fixture_policy_blockers"] == ["ADJUDICATION_REQUIRED"]
+    assert summary["decision_counts"] == {"fail": 2, "pass": 2}
+    assert summary["adjudication_review_ids"] == sorted(
+        review["review_id"] for review in reviews[2:]
+    )
+    assert [review["review_round_type"] for review in reviews] == [
+        "independent",
+        "independent",
+        "adjudication",
+        "adjudication",
+    ]
+
+
+def test_cyclic_adjudication_supersedes_cannot_resolve_conflict(tmp_path: Path) -> None:
+    context = fixture_context()
+    policy = configured_review_policy()
+    trust_root = json.loads(
+        (ROOT / "configs/han_style_trust_root_v1.json").read_text(encoding="utf-8")
+    )
+    adjudicators = [
+        reviewer
+        for reviewer in trust_root["fixture_reviewers"]
+        if "adjudication" in reviewer["allowed_round_types"]
+    ][:2]
+    package_dir = tmp_path / "review-package"
+    build_review_package(
+        context["glyphs"],
+        context["mappings"],
+        context["assets"],
+        workspace_root=ROOT,
+        output_dir=package_dir,
+        created_at="2026-09-04T00:00:00Z",
+        ordering_seed="fixture-seed-v1",
+    )
+    independent_rows = synthetic_review_rows(package_dir, decisions=("pass", "fail"))
+    independent = import_review_rows(
+        package_dir,
+        independent_rows,
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    conflict_ids = "|".join(review["review_id"] for review in independent)
+    first_adjudication = dict(independent_rows[0])
+    first_adjudication.update(
+        {
+            "reviewer_id": adjudicators[0]["reviewer_id"],
+            "reviewer_role": sorted(adjudicators[0]["allowed_roles"])[0],
+            "round": "2",
+            "review_round_type": "adjudication",
+            "independence_attestation": "false",
+            "prior_review_visibility": "visible_for_adjudication",
+            "overall_decision": "needs_revision",
+            "conflict_review_ids": conflict_ids,
+        }
+    )
+    first_round = import_review_rows(
+        package_dir,
+        [*independent_rows, first_adjudication],
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    second_adjudication = dict(first_adjudication)
+    second_adjudication.update(
+        {
+            "reviewer_id": adjudicators[1]["reviewer_id"],
+            "reviewer_role": sorted(adjudicators[1]["allowed_roles"])[0],
+            "round": "3",
+            "overall_decision": "pass",
+            "supersedes_review_id": first_round[2]["review_id"],
+        }
+    )
+    second_round = import_review_rows(
+        package_dir,
+        [*independent_rows, first_adjudication, second_adjudication],
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+    first_adjudication["supersedes_review_id"] = second_round[3]["review_id"]
+    reviews = import_review_rows(
+        package_dir,
+        [*independent_rows, first_adjudication, second_adjudication],
+        schema_path=ROOT / "schema/expert_review.schema.json",
+    )
+
+    summary = aggregate_reviews(reviews, **policy)["glyph_han_fixture_01"]
+
+    assert summary["fixture_status"] == "conflicted"
+    assert summary["fixture_policy_blockers"] == ["ADJUDICATION_REQUIRED"]
+    assert summary["decision_counts"] == {"fail": 1, "needs_revision": 1, "pass": 2}
+    assert reviews[2]["supersedes_review_id"] == reviews[3]["review_id"]
+    assert reviews[3]["supersedes_review_id"] == reviews[2]["review_id"]
 
 
 def test_same_role_all_na_reviews_cannot_satisfy_formal_policy() -> None:
@@ -1368,6 +1698,76 @@ def test_strict_handoff_recomputes_review_and_gate_truth(tmp_path: Path) -> None
 
     assert "HAN_HANDOFF_REVIEW_SUMMARY_MISMATCH" in errors
     assert "HAN_HANDOFF_GATE_TRUTH_MISMATCH gate=formal_expert_review" in errors
+
+
+def test_strict_handoff_rejects_rehashed_adjudication_policy_bypass() -> None:
+    with tempfile.TemporaryDirectory(prefix=".han-adjudication-attack-", dir=ROOT) as temporary:
+        attack_root = Path(temporary)
+        package_dir = FIXTURE / "reference_run_v1/review_package"
+        reviews = adjudication_policy_attack_reviews(package_dir)
+        review_path = attack_root / "reviews.jsonl"
+        write_jsonl(review_path, reviews)
+        manifest = copy.deepcopy(
+            json.loads(
+                (FIXTURE / "reference_handoff_v1/handoff_manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+        )
+        review_artifact = next(
+            artifact
+            for artifact in manifest["outputs"]
+            if artifact["logical_type"] == "expert_review"
+        )
+        review_artifact.update(
+            {
+                "path": review_path.relative_to(ROOT).as_posix(),
+                "sha256": hashlib.sha256(review_path.read_bytes()).hexdigest(),
+                "record_count": len(reviews),
+            }
+        )
+        checksum_artifact = next(
+            artifact
+            for artifact in manifest["outputs"]
+            if artifact["logical_type"] == "checksums"
+        )
+        checksum_path = attack_root / "checksums.sha256"
+        checksum_artifact["path"] = checksum_path.relative_to(ROOT).as_posix()
+        checksum_path.write_text(
+            "".join(
+                f"{artifact['sha256']}  {artifact['path']}\n"
+                for artifact in manifest["outputs"]
+                if artifact["logical_type"] != "checksums"
+            ),
+            encoding="utf-8",
+        )
+        checksum_artifact.update(
+            {
+                "sha256": hashlib.sha256(checksum_path.read_bytes()).hexdigest(),
+                "record_count": len(manifest["outputs"]) - 1,
+            }
+        )
+        manifest_path = attack_root / "handoff_manifest.json"
+        task05_entrypoint = next(
+            entrypoint
+            for entrypoint in manifest["next_task_entrypoints"]
+            if entrypoint["target_system"] == "TASK-05"
+        )
+        task05_entrypoint["path"] = manifest_path.relative_to(ROOT).as_posix()
+        manifest_path.write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+        errors = validate_handoff(manifest_path, ROOT)
+
+        assert not any(error.startswith("HAN_HANDOFF_HASH_MISMATCH") for error in errors)
+        assert "HAN_HANDOFF_CHECKSUM_SET_MISMATCH" not in errors
+        assert "HAN_HANDOFF_REVIEW_SUMMARY_MISMATCH" in errors
+        assert "HAN_HANDOFF_CANDIDATE_SEMANTICS_MISMATCH" in errors
+        assert (
+            "HAN_HANDOFF_GATE_TRUTH_MISMATCH gate=synthetic_double_review" in errors
+        )
 
 
 @pytest.mark.parametrize("forge_claim_graph", [False, True])
