@@ -23,6 +23,8 @@ v2.0.1 不改变 20 个 active 特征、8 个 deprecated v1 定义、canonical l
 
 TASK-02 handoff 从 `1.0.0` 升级为不向后兼容的 `1.1.0`：新包必须包含 TASK-01 handoff、asset candidates、stimuli 和 measured/supporting representations 的快照，并通过 accepted checkpoint 与逐 measurement 来源复验。旧 `1.0.0` handoff 不能通过降低 schema 继续发布，应从保留 TASK-01 来源的 v2.0.1 run 重新生成。
 
+仓库中的 `reference_run_v1/` 与 `reference_handoff_v1/` 作为 v2.0.0/1.0.0 历史证据保留；当前可验证工件使用 `reference_run_v2/` 与 `reference_handoff_v2/`。
+
 ## 3. 李婕 CV MVP
 
 原目录的理论、公式、字段字典、文献与检索日志全部保留。`lijie_aesthetic_cv/cv_program/` 作为历史原型保留，不再是第二套生产管线。新入口为：

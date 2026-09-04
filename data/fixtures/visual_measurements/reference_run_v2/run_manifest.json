@@ -1,0 +1,148 @@
+{
+  "accepted_task01_commit": "af3820836a6ffa92c63016b0e308f624f9b42db0",
+  "algorithm_config_sha256": "1db1e859767d04b11afa94b156f8f3c5cf97cd93912325b20c05a46b4b663188",
+  "algorithm_implementations": {
+    "component_labeling": {
+      "implementation": "scipy.ndimage.label",
+      "version": "1.14.1"
+    },
+    "hole_labeling": {
+      "implementation": "scipy.ndimage.label",
+      "version": "1.14.1"
+    },
+    "skeleton": {
+      "implementation": "skimage.morphology.skeletonize",
+      "version": "0.24.0"
+    },
+    "symmetry": {
+      "implementation": "numpy.flip",
+      "version": "2.0.2"
+    },
+    "tonal_histogram": {
+      "implementation": "numpy.bincount",
+      "version": "2.0.2"
+    }
+  },
+  "canonical_output": "measurements.jsonl",
+  "created_at": "2026-09-04T10:00:00Z",
+  "extraction_run_id": "task02_fixture_reference_v2",
+  "failure_count": 0,
+  "fixture_only": true,
+  "implementation_sha256": "7b66e01e42d026d7907382e2c294b05af255da12aa73794d254f87a6f29334fd",
+  "input_representations": [
+    {
+      "asset_candidate_record_sha256": "547eac8f02b8dde2b6e4a8b82ccc042437e4bd1540c6dc0cd11c932e4cbe8f29",
+      "asset_curation_status": "passed",
+      "asset_id": "asset_6e451135614c28ccf86c714a",
+      "asset_qc_status": "passed",
+      "asset_rights_tier": "open",
+      "asset_role": "A_layout",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_6e451135614c28ccf86c714a.A_layout.png",
+      "representation": "A_layout",
+      "sha256": "09d33c2db0b15601b2f778885e6290be0755ce16c7c6aab126fa5e0d712dee3a",
+      "stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_qc_status": "passed",
+      "stimulus_record_sha256": "b83233ff34a4ba7eae54391724d6bae640e84754ae9ad165889eceecda4e38d0",
+      "stimulus_rights_tier": "open",
+      "transform_config_sha256": "b6373dd53dc648cecc51a229eae788ac43e855113fa75989b4675e1b5ba069c9"
+    },
+    {
+      "asset_candidate_record_sha256": "beb4ef1d3563df7befb597d466aea6ded22ddf7027dcc65e4da5b4a0189e279f",
+      "asset_curation_status": "passed",
+      "asset_id": "asset_c7e16ea61e90d876c6fe05b9",
+      "asset_qc_status": "passed",
+      "asset_rights_tier": "open",
+      "asset_role": "B_shape",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+      "representation": "B_shape",
+      "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b",
+      "stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_qc_status": "passed",
+      "stimulus_record_sha256": "b83233ff34a4ba7eae54391724d6bae640e84754ae9ad165889eceecda4e38d0",
+      "stimulus_rights_tier": "open",
+      "transform_config_sha256": "b6373dd53dc648cecc51a229eae788ac43e855113fa75989b4675e1b5ba069c9"
+    },
+    {
+      "asset_candidate_record_sha256": "042296919547598096408fcc4540c85e89da3fd0dfeb0d31f1ae3273ee8634af",
+      "asset_curation_status": "passed",
+      "asset_id": "asset_e3d69a8b57fddd8087ffb0f1",
+      "asset_qc_status": "passed",
+      "asset_rights_tier": "open",
+      "asset_role": "C_ink",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_e3d69a8b57fddd8087ffb0f1.C_ink.png",
+      "representation": "C_ink",
+      "sha256": "09d33c2db0b15601b2f778885e6290be0755ce16c7c6aab126fa5e0d712dee3a",
+      "stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_qc_status": "passed",
+      "stimulus_record_sha256": "b83233ff34a4ba7eae54391724d6bae640e84754ae9ad165889eceecda4e38d0",
+      "stimulus_rights_tier": "open",
+      "transform_config_sha256": "b6373dd53dc648cecc51a229eae788ac43e855113fa75989b4675e1b5ba069c9"
+    }
+  ],
+  "measurement_count": 60,
+  "protocol_version": "visual_measurements_v2.0.1",
+  "registry_path": "configs/visual_measurements_v2.yaml",
+  "registry_sha256": "af093ac82a3042b63d80e96aaf080c9a8e60af08079b063dc6e43f6aa8edb4eb",
+  "resolved_algorithm_config": {
+    "binary_threshold": 128,
+    "component_connectivity": 8,
+    "hole_connectivity": 4,
+    "skeleton_algorithm": "skimage.morphology.skeletonize",
+    "symmetry_alignment": "representation_canvas",
+    "tonal_bins": 32
+  },
+  "schema_version": "1.1.0",
+  "software_environment": {
+    "architecture": "arm64",
+    "numpy": "2.0.2",
+    "operating_system": "Darwin",
+    "pillow": "11.3.0",
+    "python": "3.11.15",
+    "python_implementation": "CPython",
+    "scikit_image": "0.24.0",
+    "scipy": "1.14.1"
+  },
+  "software_environment_sha256": "c5aec03cad5608259abc17070c91e135f2a5aed24d5bf6fa4e448a1332d6bd8e",
+  "supporting_representations": [
+    {
+      "asset_candidate_record_sha256": "96893a3767dd9d9492d2fb45b4d30660ed14fc0bd1062c2a7a53d4bd403abe4a",
+      "asset_curation_status": "passed",
+      "asset_id": "asset_904a6f00145466ed82ec606f",
+      "asset_qc_status": "passed",
+      "asset_rights_tier": "open",
+      "asset_role": "mask",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_904a6f00145466ed82ec606f.mask.png",
+      "representation": "B_shape_mask",
+      "sha256": "90f01a5a1c2d63daa596d0f73050aaf9f3cef00a9bb202318b9148eda59fbd6b",
+      "stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_qc_status": "passed",
+      "stimulus_record_sha256": "b83233ff34a4ba7eae54391724d6bae640e84754ae9ad165889eceecda4e38d0",
+      "stimulus_rights_tier": "open",
+      "transform_config_sha256": "b6373dd53dc648cecc51a229eae788ac43e855113fa75989b4675e1b5ba069c9"
+    }
+  ],
+  "task01_handoff_path": "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+  "task01_handoff_schema_version": "2.0.0",
+  "task01_handoff_sha256": "acc193134495401b9a026aab0e7a866d7f15202b9b865db0d73d6f689bd1bdab",
+  "task01_lineage": {
+    "accepted_commit": "af3820836a6ffa92c63016b0e308f624f9b42db0",
+    "asset_candidates": {
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/asset_candidates.jsonl",
+      "record_count": 5,
+      "schema_version": "1.0.0",
+      "sha256": "e132abc1bc2658315ac89a7d9c7772ac0bf3e510500eb8a8adda2d9c695c01ad"
+    },
+    "handoff": {
+      "path": "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+      "record_count": 1,
+      "schema_version": "2.0.0",
+      "sha256": "acc193134495401b9a026aab0e7a866d7f15202b9b865db0d73d6f689bd1bdab"
+    },
+    "stimuli": {
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/stimuli.jsonl",
+      "record_count": 1,
+      "schema_version": "2.0.0",
+      "sha256": "a7c49d069effc90ba1d696e38681ff91326edfcfe874c0bf270dac4e368c6f4a"
+    }
+  }
+}

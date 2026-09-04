@@ -94,6 +94,6 @@ QC 分开报告：
 
 ## 6. 参考运行
 
-`data/fixtures/visual_measurements/reference_run_v1/` 是 CC0 工程 fixture：1 个 stimulus、3 个表示、60 条 active 测量、0 提取失败。它用于 schema、确定性、敏感性、checksum 和下游接线回归，不是公共 release、真人 pilot 或审美结论。
+`data/fixtures/visual_measurements/reference_run_v2/` 是当前 CC0 工程 fixture：1 个 stimulus、3 个测量表示、1 个 `B_shape_mask` 支撑表示、60 条 active 测量、0 提取失败。它用于 schema、确定性、敏感性、checksum、来源链和下游接线回归，不是公共 release、真人 pilot 或审美结论。`reference_run_v1/` 保留为 v2.0.0 历史工件，不满足 handoff 1.1 的新增来源要求。
 
 当前参考运行有 19 条有效值、41 条显式缺失和 14 条阈值敏感性 warning。表面、构念和预测效度均保持 blocked。
