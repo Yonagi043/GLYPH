@@ -12,7 +12,7 @@ from typing import Any
 import uvicorn
 
 from .assignment import audit_assignments, build_assignments
-from .export import ExportBlocked, write_deidentified_export
+from .export import ExportBlocked, write_deidentified_bundle
 from .fixtures import build_synthetic_catalog
 from .handoff import DEFAULT_HANDOFF_ROOT, build_handoff, validate_handoff
 from .power import power_scenarios
@@ -148,8 +148,8 @@ def main(argv: list[str] | None = None) -> int:
                 return EXIT_OPERATION
             _load_frozen_protocol(args.study_id)
             store = ExperimentStore(args.database.resolve(), study_id=args.study_id)
-            result = write_deidentified_export(
-                store.deidentified_ratings(study_id=args.study_id),
+            result = write_deidentified_bundle(
+                store.deidentified_records(study_id=args.study_id),
                 args.output,
                 purpose=args.purpose,
             )
@@ -305,8 +305,10 @@ def _build_reference(output_dir: Path, seed: str) -> dict[str, Any]:
         "created_at": protocol["created_at"],
     }
     consent = {
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "study_id": protocol["study_id"],
+        "protocol_version": protocol["protocol_version"],
+        "questionnaire_version": questionnaire["questionnaire_version"],
         "participant_id": participant["participant_id"],
         "data_origin": "synthetic",
         "consent_version": "1.0.0",
@@ -346,7 +348,7 @@ def _build_reference(output_dir: Path, seed: str) -> dict[str, Any]:
         "viewport": {"css_width": 1280, "css_height": 800, "stimulus_css_width": 512, "stimulus_css_height": 512, "device_pixel_ratio": 2},
         "focus_loss_count": 0,
         "zoom_anomaly": False,
-        "quality_signals": [],
+        "attention_response": "circle",
     }
     rating_definitions = [
         item
@@ -381,6 +383,12 @@ def _build_reference(output_dir: Path, seed: str) -> dict[str, Any]:
         for index, definition in enumerate(rating_definitions, start=1)
     ]
     decision = build_quality_decision(participant, consent, [event], ratings)
+    server_quality = {
+        "rule_version": decision["rule_version"],
+        "exclude_from_analysis": decision["exclude_from_analysis"],
+        "reason_codes": decision["reason_codes"],
+    }
+    ratings = [{**rating, "quality": server_quality} for rating in ratings]
     records = {
         "study_protocol.json": (protocol, "study_protocol.schema.json"),
         "questionnaire_definition.json": (questionnaire, "questionnaire_definition.schema.json"),

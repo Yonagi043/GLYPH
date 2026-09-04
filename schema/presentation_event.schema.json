@@ -3,7 +3,7 @@
   "title": "GLYPH stimulus presentation event",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "event_id", "request_id", "study_id", "assignment_id", "presentation_id", "participant_id", "data_origin", "stimulus_id", "expected_asset_sha256", "displayed_asset_sha256", "load_status", "trial_index", "started_at", "ended_at", "preload_ms", "response_ms", "viewport", "focus_loss_count", "zoom_anomaly", "quality_signals"],
+  "required": ["schema_version", "event_id", "request_id", "study_id", "assignment_id", "presentation_id", "participant_id", "data_origin", "stimulus_id", "expected_asset_sha256", "displayed_asset_sha256", "load_status", "trial_index", "started_at", "ended_at", "preload_ms", "response_ms", "viewport", "focus_loss_count", "zoom_anomaly", "attention_response"],
   "properties": {
     "schema_version": { "const": "1.0.0" },
     "event_id": { "$ref": "shared.schema.json#/$defs/id" },
@@ -36,18 +36,9 @@
     },
     "focus_loss_count": { "type": "integer", "minimum": 0 },
     "zoom_anomaly": { "type": "boolean" },
-    "quality_signals": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": { "type": "string", "enum": ["TOO_FAST", "VIEWPORT_UNUSABLE", "ASSET_FAILURE", "FOCUS_LOSS", "ZOOM_ANOMALY"] }
-    }
+    "attention_response": { "type": "string", "enum": ["circle", "square", "triangle"] }
   },
   "allOf": [
-    {
-      "if": { "properties": { "load_status": { "const": "loaded" } }, "required": ["load_status"] },
-      "then": { "properties": { "displayed_asset_sha256": { "type": "string" } } },
-      "else": { "properties": { "quality_signals": { "contains": { "const": "ASSET_FAILURE" } } } }
-    },
     {
       "if": { "properties": { "data_origin": { "const": "synthetic" } }, "required": ["data_origin"] },
       "then": { "properties": { "participant_id": { "pattern": "^synp_[a-z0-9_-]{4,63}$" } } },

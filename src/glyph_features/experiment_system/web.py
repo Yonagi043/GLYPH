@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
@@ -12,7 +13,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from glyph_features.asset_system.catalog import resolve_workspace_asset
 
-from .assignment import build_assignments
 from .fixtures import build_synthetic_catalog
 from .schema import ROOT, canonical_sha256, require_frozen_study_id
 from .storage import ExperimentStore, StoreError
@@ -25,8 +25,9 @@ class SessionInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     language: Literal["zh-Hans", "en", "ja", "ko"]
-    native_scripts: list[Literal["latin", "han", "kana", "hangul"]] = Field(min_length=1)
     session_nonce: str = Field(pattern=r"^[a-z0-9_-]{8,64}$")
+    profile: dict[str, Any] | None = None
+    consent: dict[str, Any] | None = None
 
 
 class SubmissionInput(BaseModel):
@@ -83,33 +84,58 @@ def create_app(database_path: str | Path, *, study_id: str, root: Path = ROOT) -
 
     @app.post("/api/session")
     def create_session(payload: SessionInput) -> dict[str, Any]:
-        participant_id = f"synp_browser_{canonical_sha256(payload.model_dump())[:16]}"
-        participant_group = payload.native_scripts[0] if len(payload.native_scripts) == 1 else "multiscript"
+        if payload.profile is None:
+            raise HTTPException(status_code=422, detail={"code": "PROFILE_REQUIRED"})
+        if payload.consent is None:
+            raise HTTPException(status_code=422, detail={"code": "CONSENT_REQUIRED"})
+        participant_id = f"synp_browser_{canonical_sha256({'study_id': study_id, 'session_nonce': payload.session_nonce})[:16]}"
+        native_scripts = payload.profile.get("native_scripts", [])
+        participant_group = native_scripts[0] if len(native_scripts) == 1 else "multiscript"
         participant = {
             "participant_id": participant_id,
             "participant_group": participant_group,
             "data_origin": "synthetic",
         }
-        assignment = build_assignments(
-            [participant],
-            catalog["items"],
-            study_id=protocol["study_id"],
-            questionnaire_version=questionnaire["questionnaire_version"],
-            seed=f"{protocol['randomization']['seed_namespace']}:{payload.session_nonce}",
-            block_size=protocol["design"]["block_size"],
-            required_anchor_count=protocol["design"]["anchor_count"],
-            created_at=protocol["created_at"],
-        )[0]
+        recorded_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        profile = {
+            **payload.profile,
+            "schema_version": "1.0.0",
+            "study_id": study_id,
+            "participant_id": participant_id,
+            "data_origin": "synthetic",
+            "questionnaire_language": payload.language,
+            "created_at": recorded_at,
+        }
+        consent = {
+            **payload.consent,
+            "schema_version": "1.1.0",
+            "study_id": study_id,
+            "protocol_version": protocol["protocol_version"],
+            "questionnaire_version": questionnaire["questionnaire_version"],
+            "participant_id": participant_id,
+            "data_origin": "synthetic",
+            "recorded_at": recorded_at,
+        }
         try:
-            saved, _ = store.save_assignment(assignment)
+            saved, _ = store.allocate_assignment(
+                participant,
+                profile=profile,
+                consent=consent,
+                session_nonce=payload.session_nonce,
+                request_payload=payload.model_dump(mode="json"),
+                seed=protocol["randomization"]["seed_namespace"],
+                block_size=protocol["design"]["block_size"],
+                required_anchor_count=protocol["design"]["anchor_count"],
+                created_at=protocol["created_at"],
+            )
         except StoreError as error:
             _raise_store_error(error)
-        return _public_assignment(store.assignment_for(saved["participant_id"]))
+        return _public_session(store, saved["participant_id"])
 
     @app.get("/api/session/{participant_id}")
     def resume_session(participant_id: str) -> dict[str, Any]:
         try:
-            return _public_assignment(store.assignment_for(participant_id))
+            return _public_session(store, participant_id)
         except StoreError as error:
             _raise_store_error(error)
 
@@ -159,6 +185,14 @@ def _public_assignment(assignment: dict[str, Any]) -> dict[str, Any]:
             for trial in assignment["trials"]
         ],
     }
+
+
+def _public_session(store: ExperimentStore, participant_id: str) -> dict[str, Any]:
+    result = _public_assignment(store.assignment_for(participant_id))
+    result["profile"] = store.profile_for(participant_id)
+    result["consent"] = store.consent_for(participant_id)
+    result["quality_decision"] = store.latest_quality_decision(participant_id)
+    return result
 
 
 def _raise_store_error(error: StoreError) -> None:

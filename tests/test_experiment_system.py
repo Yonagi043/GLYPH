@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
+import shutil
+from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -11,8 +15,11 @@ from glyph_features.asset_system.catalog import validate_record
 from glyph_features.experiment_system.assignment import audit_assignments, build_assignments
 from glyph_features.experiment_system.export import (
     ExportBlocked,
+    read_and_validate_bundle,
     read_and_validate_export,
     require_export_eligible,
+    validate_deidentified_bundle,
+    write_deidentified_bundle,
     write_deidentified_export,
 )
 from glyph_features.experiment_system.fixtures import build_synthetic_catalog, load_task01_fixture
@@ -34,6 +41,15 @@ from glyph_features.experiment_system.cli import (
 
 ROOT = Path(__file__).parents[1]
 STUDY_ID = "study_cross_cultural_v1"
+REQUIRED_RATINGS = (
+    ("item_aesthetic", "aesthetic"),
+    ("item_premium", "premium"),
+    ("item_modern", "modern"),
+    ("item_trustworthy", "trustworthy"),
+    ("item_visual_clarity", "visual_clarity"),
+    ("item_recognition", "recognition"),
+    ("item_unfamiliarity", "unfamiliarity"),
+)
 
 
 def rating_record() -> dict:
@@ -193,8 +209,10 @@ def contract_records() -> tuple[dict, dict, dict, dict]:
         "created_at": "2026-09-04T00:00:00Z",
     }
     consent = {
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "study_id": protocol["study_id"],
+        "protocol_version": protocol["protocol_version"],
+        "questionnaire_version": questionnaire["questionnaire_version"],
         "participant_id": participant["participant_id"],
         "data_origin": "synthetic",
         "consent_version": "1.0.0",
@@ -250,6 +268,89 @@ def synthetic_participants(count: int = 1000) -> list[dict[str, str]]:
         {"participant_id": f"synp_{index:04d}", "participant_group": groups[index % 4], "data_origin": "synthetic"}
         for index in range(count)
     ]
+
+
+def web_session_payload(
+    session_nonce: str,
+    *,
+    language: str = "en",
+    native_scripts: list[str] | None = None,
+) -> dict:
+    scripts = native_scripts or ["latin", "han"]
+    return {
+        "language": language,
+        "session_nonce": session_nonce,
+        "profile": {
+            "mother_tongues": [
+                {"bcp47": language, "dominance": "primary"},
+                {"bcp47": "zh-Hans" if language == "en" else "en", "dominance": "additional"},
+            ],
+            "native_scripts": scripts,
+            "script_proficiencies": [
+                {"script": script, "reading": 4, "writing": 3, "exposure_frequency": 5}
+                for script in ("latin", "han", "kana", "hangul")
+            ],
+            "region_category": "multiple",
+            "cross_cultural_exposure": "moderate",
+            "training": {"design": "informal", "typography": "none", "calligraphy": "none"},
+            "age_band": "25_34",
+            "education_level": "undergraduate",
+            "language_understood": True,
+        },
+        "consent": {
+            "consent_version": "1.0.0",
+            "status": "consented",
+            "age_eligible": True,
+        },
+    }
+
+
+def allocate_store_session(store: ExperimentStore, *, seed: str) -> dict:
+    protocol = json.loads((ROOT / "configs/cross_cultural_study_v1.json").read_text(encoding="utf-8"))
+    payload = web_session_payload(
+        f"store_{hashlib.sha256(seed.encode()).hexdigest()[:16]}",
+        language="zh-Hans",
+        native_scripts=["han", "latin"],
+    )
+    participant_id = f"synp_store_{hashlib.sha256(seed.encode()).hexdigest()[:16]}"
+    participant = {
+        "participant_id": participant_id,
+        "participant_group": "multiscript",
+        "data_origin": "synthetic",
+    }
+    recorded_at = protocol["created_at"]
+    profile = {
+        **payload["profile"],
+        "schema_version": "1.0.0",
+        "study_id": STUDY_ID,
+        "participant_id": participant_id,
+        "data_origin": "synthetic",
+        "questionnaire_language": payload["language"],
+        "created_at": recorded_at,
+    }
+    consent = {
+        **payload["consent"],
+        "schema_version": "1.1.0",
+        "study_id": STUDY_ID,
+        "protocol_version": protocol["protocol_version"],
+        "questionnaire_version": "1.0.0",
+        "participant_id": participant_id,
+        "data_origin": "synthetic",
+        "recorded_at": recorded_at,
+    }
+    assignment, created = store.allocate_assignment(
+        participant,
+        profile=profile,
+        consent=consent,
+        session_nonce=payload["session_nonce"],
+        request_payload=payload,
+        seed=seed,
+        block_size=protocol["design"]["block_size"],
+        required_anchor_count=protocol["design"]["anchor_count"],
+        created_at=recorded_at,
+    )
+    assert created
+    return assignment
 
 
 def test_balanced_incomplete_blocks_cover_1000_synthetic_participants() -> None:
@@ -366,21 +467,91 @@ def trial_submission(
         "viewport": {"css_width": 1280, "css_height": 800, "stimulus_css_width": 512, "stimulus_css_height": 512, "device_pixel_ratio": 2},
         "focus_loss_count": 0,
         "zoom_anomaly": False,
-        "quality_signals": [],
+        "attention_response": "circle",
     }
-    rating = rating_record()
-    rating.update({
-        "rating_id": f"rating_{trial['presentation_id'][-12:]}",
-        "assignment_id": assignment["assignment_id"],
-        "block_id": assignment["block_id"],
+    ratings = []
+    for item_id, construct in REQUIRED_RATINGS:
+        rating = rating_record()
+        rating.update({
+            "rating_id": f"rating_{trial['presentation_id'][-12:]}_{item_id.removeprefix('item_')}",
+            "assignment_id": assignment["assignment_id"],
+            "block_id": assignment["block_id"],
+            "presentation_id": trial["presentation_id"],
+            "stimulus_id": trial["stimulus_id"],
+            "participant_id": assignment["participant_id"],
+            "data_origin": assignment["data_origin"],
+            "displayed_asset_sha256": trial["asset_sha256"],
+            "trial_index": trial["trial_index"],
+            "item_id": item_id,
+            "construct": construct,
+        })
+        ratings.append(rating)
+    return event, ratings
+
+
+def web_trial_submission(
+    session: dict,
+    *,
+    trial_offset: int,
+    response_ms: int = 1800,
+    viewport_width: int = 1280,
+    viewport_height: int = 800,
+    response_value: int = 4,
+) -> tuple[dict, list[dict]]:
+    trial = session["trials"][trial_offset]
+    suffix = trial["presentation_id"][-16:]
+    event = {
+        "schema_version": "1.0.0",
+        "event_id": f"event_{suffix}",
+        "request_id": f"request_{suffix}",
+        "study_id": session["study_id"],
+        "assignment_id": session["assignment_id"],
         "presentation_id": trial["presentation_id"],
+        "participant_id": session["participant_id"],
+        "data_origin": "synthetic",
         "stimulus_id": trial["stimulus_id"],
-        "participant_id": assignment["participant_id"],
-        "data_origin": assignment["data_origin"],
-        "displayed_asset_sha256": trial["asset_sha256"],
+        "expected_asset_sha256": trial["expected_asset_sha256"],
+        "displayed_asset_sha256": trial["expected_asset_sha256"],
+        "load_status": "loaded",
         "trial_index": trial["trial_index"],
-    })
-    return event, [rating]
+        "started_at": "2026-09-04T00:00:00Z",
+        "ended_at": f"2026-09-04T00:00:{trial_offset + 1:02d}Z",
+        "preload_ms": 12,
+        "response_ms": response_ms,
+        "viewport": {
+            "css_width": viewport_width,
+            "css_height": viewport_height,
+            "stimulus_css_width": max(1, min(512, viewport_width)),
+            "stimulus_css_height": max(1, min(512, viewport_height)),
+            "device_pixel_ratio": 2,
+        },
+        "focus_loss_count": 0,
+        "zoom_anomaly": False,
+        "attention_response": "circle",
+    }
+    ratings = []
+    for item_id, construct in REQUIRED_RATINGS:
+        rating = rating_record()
+        rating.update({
+            "rating_id": f"rating_{suffix}_{item_id.removeprefix('item_')}",
+            "assignment_id": session["assignment_id"],
+            "block_id": session["block_id"],
+            "presentation_id": trial["presentation_id"],
+            "stimulus_id": trial["stimulus_id"],
+            "participant_id": session["participant_id"],
+            "respondent_language_bcp47": session["profile"]["questionnaire_language"],
+            "native_scripts": session["profile"]["native_scripts"],
+            "displayed_asset_sha256": trial["expected_asset_sha256"],
+            "trial_index": trial["trial_index"],
+            "response_time_ms": response_ms,
+            "response": {"value": response_value, "missing_reason": None},
+            "item_id": item_id,
+            "construct": construct,
+            "quality": {"rule_version": "1.0.0", "exclude_from_analysis": False, "reason_codes": []},
+            "collected_at": event["ended_at"],
+        })
+        ratings.append(rating)
+    return event, ratings
 
 
 def test_store_persists_assignment_and_idempotent_concurrent_submission(tmp_path: Path) -> None:
@@ -395,28 +566,38 @@ def test_store_persists_assignment_and_idempotent_concurrent_submission(tmp_path
     assert not created_again
     assert persisted == assignment
 
+    database = tmp_path / "restricted" / "submission.sqlite3"
+    store = ExperimentStore(database)
+    assignment = allocate_store_session(store, seed="store-test-submission")
     event, ratings = trial_submission(assignment)
     with ThreadPoolExecutor(max_workers=8) as executor:
         results = list(executor.map(lambda _: ExperimentStore(database).submit_trial(event, ratings), range(8)))
     assert [result["status"] for result in results].count("accepted") == 1
     assert [result["status"] for result in results].count("duplicate") == 7
-    assert store.counts() == {"assignments": 1, "presentations": 1, "ratings": 1}
+    assert store.counts() == {
+        "profiles": 1,
+        "consents": 1,
+        "assignments": 1,
+        "presentations": 1,
+        "ratings": 7,
+        "quality_decisions": 1,
+    }
     assert ExperimentStore(database).assignment_for(assignment["participant_id"])["resume_next_trial"] == 2
 
 
 def test_store_rejects_conflicting_retry_and_unverified_asset(tmp_path: Path) -> None:
-    assignment = build_assignments(
-        synthetic_participants(1), synthetic_catalog(), study_id="study_cross_cultural_v1", questionnaire_version="1.0.0", seed="store-conflict"
-    )[0]
     store = ExperimentStore(tmp_path / "experiment.sqlite3")
-    store.save_assignment(assignment)
+    assignment = allocate_store_session(store, seed="store-conflict")
     event, ratings = trial_submission(assignment)
     store.submit_trial(event, ratings)
 
     conflict = copy.deepcopy(event)
     conflict["response_ms"] += 1
+    conflict_ratings = copy.deepcopy(ratings)
+    for rating in conflict_ratings:
+        rating["response_time_ms"] += 1
     with pytest.raises(StoreError) as caught:
-        store.submit_trial(conflict, ratings)
+        store.submit_trial(conflict, conflict_ratings)
     assert caught.value.code == "REQUEST_ID_CONFLICT"
 
     second_event, second_ratings = trial_submission(
@@ -429,11 +610,8 @@ def test_store_rejects_conflicting_retry_and_unverified_asset(tmp_path: Path) ->
         store.submit_trial(second_event, second_ratings)
     assert caught.value.code == "RATING_ID_CONFLICT"
 
-    second_assignment = build_assignments(
-        synthetic_participants(1), synthetic_catalog(), study_id="study_cross_cultural_v1", questionnaire_version="1.0.0", seed="store-hash"
-    )[0]
     second_store = ExperimentStore(tmp_path / "second.sqlite3")
-    second_store.save_assignment(second_assignment)
+    second_assignment = allocate_store_session(second_store, seed="store-hash")
     bad_event, bad_ratings = trial_submission(second_assignment, request_id="request_fixture_002")
     bad_event["displayed_asset_sha256"] = "0" * 64
     with pytest.raises(StoreError) as caught:
@@ -477,18 +655,19 @@ def test_store_persists_synthetic_mode_and_rejects_real_or_questionnaire_spoofin
         store.save_assignment(spoofed_asset)
     assert caught.value.code == "ASSIGNMENT_CATALOG_MISMATCH"
 
-    store.save_assignment(assignment)
-    event, ratings = trial_submission(assignment)
+    submission_store = ExperimentStore(tmp_path / "submission.sqlite3")
+    submission_assignment = allocate_store_session(submission_store, seed="store-lock-submission")
+    event, ratings = trial_submission(submission_assignment)
     real_event = copy.deepcopy(event)
     real_event["data_origin"] = "real"
     with pytest.raises(StoreError) as caught:
-        store.submit_trial(real_event, ratings)
+        submission_store.submit_trial(real_event, ratings)
     assert caught.value.code == "REAL_COLLECTION_LOCKED"
 
     wrong_construct = copy.deepcopy(ratings)
     wrong_construct[0]["construct"] = "premium"
     with pytest.raises(StoreError) as caught:
-        store.submit_trial(event, wrong_construct)
+        submission_store.submit_trial(event, wrong_construct)
     assert caught.value.code == "QUESTIONNAIRE_CONSTRUCT_MISMATCH"
 
 
@@ -563,12 +742,12 @@ def test_synthetic_web_api_hides_metadata_and_verifies_assets(tmp_path: Path) ->
     assert __import__("hashlib").sha256(practice_asset.content).hexdigest() == practice.json()["expected_asset_sha256"]
     response = client.post(
         "/api/session",
-        json={"language": "en", "native_scripts": ["latin"], "session_nonce": "browserfixture01"},
+        json=web_session_payload("browserfixture01", native_scripts=["latin"]),
     )
     assert response.status_code == 200
     spoofed = client.post(
         "/api/session",
-        json={"language": "en", "native_scripts": ["latin"], "session_nonce": "browserfixture02", "data_origin": "real"},
+        json={**web_session_payload("browserfixture02", native_scripts=["latin"]), "data_origin": "real"},
     )
     assert spoofed.status_code == 422
     session = response.json()
@@ -580,6 +759,201 @@ def test_synthetic_web_api_hides_metadata_and_verifies_assets(tmp_path: Path) ->
     resumed = client.get(f"/api/session/{session['participant_id']}")
     assert resumed.status_code == 200
     assert resumed.json()["assignment_id"] == session["assignment_id"]
+
+
+def test_web_ui_collects_complete_profile_and_never_decides_quality() -> None:
+    app_js = (ROOT / "src/glyph_features/experiment_system/static/app.js").read_text(encoding="utf-8")
+    for field_name in (
+        "mother-tongue",
+        "dominant-language",
+        "proficiency-reading",
+        "proficiency-writing",
+        "proficiency-exposure",
+        "training-design",
+        "training-typography",
+        "training-calligraphy",
+        "region-category",
+        "cross-cultural-exposure",
+        "age-band",
+        "education-level",
+    ):
+        assert field_name in app_js
+    assert "profile: state.profile" in app_js
+    assert "consent: state.consent" in app_js
+    assert "attention_response: state.attentionResponse" in app_js
+    assert "state.language = state.profile.questionnaire_language" in app_js
+    assert "languageSelect.disabled = Boolean(state.assignment)" in app_js
+    assert "attention_check:" not in app_js
+    assert "quality:" not in app_js
+
+
+def test_web_session_persists_and_restores_profile_and_consent(tmp_path: Path) -> None:
+    database = tmp_path / "experiment.sqlite3"
+    client = TestClient(create_app(database, study_id=STUDY_ID))
+    response = client.post("/api/session", json=web_session_payload("profileconsent01"))
+    assert response.status_code == 200, response.text
+    session = response.json()
+    assert session["profile"]["mother_tongues"] == [
+        {"bcp47": "en", "dominance": "primary"},
+        {"bcp47": "zh-Hans", "dominance": "additional"},
+    ]
+    assert session["profile"]["native_scripts"] == ["latin", "han"]
+    assert {row["script"] for row in session["profile"]["script_proficiencies"]} == {
+        "latin", "han", "kana", "hangul",
+    }
+    assert session["consent"] == {
+        "schema_version": "1.1.0",
+        "study_id": STUDY_ID,
+        "protocol_version": "1.0.0",
+        "questionnaire_version": "1.0.0",
+        "participant_id": session["participant_id"],
+        "data_origin": "synthetic",
+        "consent_version": "1.0.0",
+        "status": "consented",
+        "age_eligible": True,
+        "recorded_at": session["consent"]["recorded_at"],
+    }
+    resumed = TestClient(create_app(database, study_id=STUDY_ID)).get(
+        f"/api/session/{session['participant_id']}"
+    )
+    assert resumed.status_code == 200
+    assert resumed.json()["profile"] == session["profile"]
+    assert resumed.json()["consent"] == session["consent"]
+    assert ExperimentStore(database).counts() == {
+        "profiles": 1,
+        "consents": 1,
+        "assignments": 1,
+        "presentations": 0,
+        "ratings": 0,
+        "quality_decisions": 0,
+    }
+
+
+def test_server_is_authoritative_for_quality_and_preserves_history(tmp_path: Path) -> None:
+    database = tmp_path / "experiment.sqlite3"
+    client = TestClient(create_app(database, study_id=STUDY_ID))
+    session = client.post("/api/session", json=web_session_payload("qualityattack01")).json()
+    event, ratings = web_trial_submission(
+        session,
+        trial_offset=0,
+        response_ms=1,
+        viewport_width=240,
+        viewport_height=320,
+    )
+    ratings[0]["quality"] = {
+        "rule_version": "1.0.0",
+        "exclude_from_analysis": False,
+        "reason_codes": [],
+    }
+    event["attention_response"] = "square"
+    ratings[0]["attention_check"] = True
+    first = client.post("/api/submissions", json={"event": event, "ratings": ratings})
+    assert first.status_code == 200, first.text
+    first_decision = first.json()["quality_decision"]
+    assert first_decision["exclude_from_analysis"] is True
+    assert {"ATTENTION_FAILED", "INCOMPLETE", "TOO_FAST", "VIEWPORT_UNUSABLE"} <= set(first_decision["reason_codes"])
+    assert first_decision["previous_decision_id"] is None
+
+    second_event, second_ratings = web_trial_submission(session, trial_offset=1, response_value=5)
+    second = client.post("/api/submissions", json={"event": second_event, "ratings": second_ratings})
+    assert second.status_code == 200, second.text
+    second_decision = second.json()["quality_decision"]
+    assert second_decision["previous_decision_id"] == first_decision["decision_id"]
+    assert second_decision["decision_id"] != first_decision["decision_id"]
+    resumed = client.get(f"/api/session/{session['participant_id']}").json()
+    assert resumed["quality_decision"] == second_decision
+    assert ExperimentStore(database).counts()["quality_decisions"] == 2
+
+
+def test_server_rejects_incomplete_required_rating_set(tmp_path: Path) -> None:
+    client = TestClient(create_app(tmp_path / "experiment.sqlite3", study_id=STUDY_ID))
+    session = client.post("/api/session", json=web_session_payload("missingratings01")).json()
+    event, ratings = web_trial_submission(session, trial_offset=0)
+    response = client.post("/api/submissions", json={"event": event, "ratings": ratings[:1]})
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "RATING_ITEM_SET_MISMATCH"
+    unexpected = copy.deepcopy(ratings[0])
+    unexpected.update({
+        "rating_id": f"{unexpected['rating_id']}_brand_fit",
+        "item_id": "item_brand_fit",
+        "construct": "brand_fit",
+    })
+    response = client.post("/api/submissions", json={"event": event, "ratings": [*ratings, unexpected]})
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "RATING_ITEM_SET_MISMATCH"
+
+
+def test_web_session_rejects_missing_profile_with_stable_code(tmp_path: Path) -> None:
+    client = TestClient(create_app(tmp_path / "experiment.sqlite3", study_id=STUDY_ID))
+    response = client.post(
+        "/api/session",
+        json={"language": "en", "session_nonce": "missingprofile01", "consent": {"status": "consented"}},
+    )
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "PROFILE_REQUIRED"
+
+
+def test_web_session_allocation_uses_persistent_global_quotas(tmp_path: Path) -> None:
+    database = tmp_path / "experiment.sqlite3"
+    sessions: list[dict] = []
+    for batch in range(2):
+        client = TestClient(create_app(database, study_id=STUDY_ID))
+        for offset in range(32):
+            response = client.post(
+                "/api/session",
+                json=web_session_payload(
+                    f"persistent{batch:02d}{offset:04d}",
+                    native_scripts=["latin"],
+                ),
+            )
+            assert response.status_code == 200, response.text
+            sessions.append(response.json())
+
+    exposure: Counter[str] = Counter()
+    positions: dict[str, Counter[int]] = defaultdict(Counter)
+    for session in sessions:
+        for trial in session["trials"]:
+            exposure[trial["stimulus_id"]] += 1
+            positions[trial["stimulus_id"]][trial["trial_index"]] += 1
+
+    assert len(exposure) == 16
+    assert max(exposure.values()) - min(exposure.values()) <= 1
+    assert max(
+        max(position_counts[position] for position in range(1, 9))
+        - min(position_counts[position] for position in range(1, 9))
+        for position_counts in positions.values()
+    ) <= 1
+    assert TestClient(create_app(database, study_id=STUDY_ID)).get("/api/debug/counts").json()["assignments"] == 64
+
+
+def test_web_session_nonce_is_transactional_under_concurrency(tmp_path: Path) -> None:
+    database = tmp_path / "experiment.sqlite3"
+    client = TestClient(create_app(database, study_id=STUDY_ID))
+    same_payload = web_session_payload("concurrent_same01", native_scripts=["latin"])
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        same_results = list(executor.map(lambda _: client.post("/api/session", json=same_payload), range(8)))
+    assert {response.status_code for response in same_results} == {200}
+    assert len({response.json()["assignment_id"] for response in same_results}) == 1
+
+    different_payloads = [
+        web_session_payload(f"concurrent_diff{index:02d}", native_scripts=["latin"])
+        for index in range(16)
+    ]
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        different_results = list(
+            executor.map(lambda payload: client.post("/api/session", json=payload), different_payloads)
+        )
+    assert {response.status_code for response in different_results} == {200}
+    sessions = [same_results[0].json(), *(response.json() for response in different_results)]
+    assert len({session["assignment_id"] for session in sessions}) == 17
+    exposure = Counter(
+        trial["stimulus_id"]
+        for session in sessions
+        for trial in session["trials"]
+    )
+    assert len(exposure) == 16
+    assert max(exposure.values()) - min(exposure.values()) <= 1
+    assert ExperimentStore(database).counts()["assignments"] == 17
 
 
 def test_cli_validates_study_and_runs_1000_participant_dry_run(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -659,15 +1033,12 @@ def test_frozen_study_id_rejects_other_studies(tmp_path: Path, capsys: pytest.Ca
 
 
 def test_deidentified_export_is_bound_to_the_frozen_study(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    assignment = build_assignments(
-        synthetic_participants(1), synthetic_catalog(), study_id=STUDY_ID, questionnaire_version="1.0.0", seed="export-study"
-    )[0]
     database = tmp_path / "experiment.sqlite3"
     store = ExperimentStore(database)
-    store.save_assignment(assignment)
+    assignment = allocate_store_session(store, seed="export-study")
     event, ratings = trial_submission(assignment)
     store.submit_trial(event, ratings)
-    output = tmp_path / "ratings.jsonl"
+    output = tmp_path / "export"
     assert experiment_cli([
         "export",
         "--study-id", STUDY_ID,
@@ -677,13 +1048,212 @@ def test_deidentified_export_is_bound_to_the_frozen_study(tmp_path: Path, capsys
         "--deidentified",
     ]) == EXIT_OK
     summary = __import__("json").loads(capsys.readouterr().out)
-    assert summary["record_count"] == 1
+    assert summary["record_counts"] == {
+        "assignments": 1,
+        "consents": 1,
+        "presentations": 1,
+        "profiles": 1,
+        "quality_decisions": 1,
+        "ratings": 7,
+    }
 
     mismatched = copy.deepcopy(assignment)
     mismatched["study_id"] = "study_other"
     with pytest.raises(StoreError) as caught:
         ExperimentStore(tmp_path / "other.sqlite3").save_assignment(mismatched)
     assert caught.value.code == "STUDY_ID_MISMATCH"
+
+
+def test_cli_exports_complete_deidentified_session_bundle(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    database = tmp_path / "experiment.sqlite3"
+    client = TestClient(create_app(database, study_id=STUDY_ID))
+    session = client.post("/api/session", json=web_session_payload("exportbundle01")).json()
+    event, ratings = web_trial_submission(session, trial_offset=0)
+    assert client.post("/api/submissions", json={"event": event, "ratings": ratings}).status_code == 200
+
+    output = tmp_path / "deidentified-export"
+    assert experiment_cli([
+        "export",
+        "--study-id", STUDY_ID,
+        "--database", str(database),
+        "--output", str(output),
+        "--purpose", "engineering_fixture",
+        "--deidentified",
+    ]) == EXIT_OK
+    summary = __import__("json").loads(capsys.readouterr().out)
+    assert summary["record_counts"] == {
+        "assignments": 1,
+        "consents": 1,
+        "presentations": 1,
+        "profiles": 1,
+        "quality_decisions": 1,
+        "ratings": 7,
+    }
+    manifest = __import__("json").loads((output / "export_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["synthetic_only"] is True
+    assert manifest["quality_rule_version"] == "1.0.0"
+    assert {artifact["record_type"] for artifact in manifest["artifacts"]} == set(summary["record_counts"])
+    for filename in (
+        "participant_profiles.jsonl",
+        "consent_receipts.jsonl",
+        "assignments.jsonl",
+        "presentation_events.jsonl",
+        "ratings.jsonl",
+        "quality_decisions.jsonl",
+    ):
+        assert (output / filename).is_file()
+
+    formal_output = tmp_path / "formal-export"
+    assert experiment_cli([
+        "export",
+        "--study-id", STUDY_ID,
+        "--database", str(database),
+        "--output", str(formal_output),
+        "--purpose", "formal_analysis",
+        "--deidentified",
+    ]) == EXIT_OPERATION
+    assert __import__("json").loads(capsys.readouterr().err)["code"] == "SYNTHETIC_FORMAL_EXPORT_FORBIDDEN"
+    assert not formal_output.exists()
+
+
+def test_bundle_reader_rejects_server_quality_exclusions_for_formal_use(tmp_path: Path) -> None:
+    database = tmp_path / "experiment.sqlite3"
+    client = TestClient(create_app(database, study_id=STUDY_ID))
+    session = client.post("/api/session", json=web_session_payload("formalquality01")).json()
+    event, ratings = web_trial_submission(session, trial_offset=0)
+    assert client.post("/api/submissions", json={"event": event, "ratings": ratings}).status_code == 200
+    records = ExperimentStore(database).deidentified_records(study_id=STUDY_ID)
+    real_participant_id = "p_reference_001"
+    for rows in records.values():
+        for record in rows:
+            record["data_origin"] = "real"
+            if "participant_id" in record:
+                record["participant_id"] = real_participant_id
+    previous = records["quality_decisions"][0]
+    decision = build_quality_decision(
+        records["profiles"][0],
+        records["consents"][0],
+        records["presentations"],
+        records["ratings"],
+        decided_at=previous["decided_at"],
+    )
+    records["quality_decisions"] = [decision]
+    server_quality = {
+        "rule_version": decision["rule_version"],
+        "exclude_from_analysis": decision["exclude_from_analysis"],
+        "reason_codes": decision["reason_codes"],
+    }
+    for rating in records["ratings"]:
+        rating["quality"] = server_quality
+
+    output = tmp_path / "formal-bundle"
+    write_deidentified_bundle(records, output, purpose="engineering_fixture")
+    manifest_path = output / "export_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["purpose"] = "formal_analysis"
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    gates = {gate: "passed" for gate in ("GATE-ETHICS", "GATE-PARTICIPANTS", "GATE-TRANSLATION")}
+    with pytest.raises(ExportBlocked) as caught:
+        read_and_validate_bundle(output, purpose="formal_analysis", human_gates=gates)
+    assert caught.value.code == "QUALITY_EXCLUSION_PRESENT"
+
+
+def test_bundle_validation_recomputes_every_quality_history_node(tmp_path: Path) -> None:
+    database = tmp_path / "experiment.sqlite3"
+    client = TestClient(create_app(database, study_id=STUDY_ID))
+    session = client.post("/api/session", json=web_session_payload("qualityhistory01")).json()
+    for trial_offset in range(2):
+        event, ratings = web_trial_submission(session, trial_offset=trial_offset)
+        assert client.post("/api/submissions", json={"event": event, "ratings": ratings}).status_code == 200
+    records = ExperimentStore(database).deidentified_records(study_id=STUDY_ID)
+    records["quality_decisions"][0]["reason_codes"].append("TOO_FAST")
+    errors = validate_deidentified_bundle(records)
+    assert any(error.startswith("QUALITY_DECISION_RECOMPUTE_MISMATCH:") for error in errors)
+
+
+def test_bundle_validation_rejects_quality_history_branches(tmp_path: Path) -> None:
+    database = tmp_path / "experiment.sqlite3"
+    client = TestClient(create_app(database, study_id=STUDY_ID))
+    session = client.post("/api/session", json=web_session_payload("qualitybranch01")).json()
+    for trial_offset in range(2):
+        event, ratings = web_trial_submission(session, trial_offset=trial_offset)
+        assert client.post("/api/submissions", json={"event": event, "ratings": ratings}).status_code == 200
+    records = ExperimentStore(database).deidentified_records(study_id=STUDY_ID)
+    branch = copy.deepcopy(records["quality_decisions"][1])
+    branch["decision_id"] = "quality_branch_0001"
+    records["quality_decisions"].append(branch)
+    errors = validate_deidentified_bundle(records)
+    assert any(error.startswith("QUALITY_HISTORY_BRANCH:") for error in errors)
+
+
+def test_bundle_validation_rejects_duplicate_participant_assignments(tmp_path: Path) -> None:
+    database = tmp_path / "experiment.sqlite3"
+    client = TestClient(create_app(database, study_id=STUDY_ID))
+    session = client.post("/api/session", json=web_session_payload("duplicateassignment01")).json()
+    event, ratings = web_trial_submission(session, trial_offset=0)
+    assert client.post("/api/submissions", json={"event": event, "ratings": ratings}).status_code == 200
+    records = ExperimentStore(database).deidentified_records(study_id=STUDY_ID)
+    duplicate = copy.deepcopy(records["assignments"][0])
+    duplicate["assignment_id"] = "assignment_duplicate_001"
+    duplicate["block_id"] = "block_duplicate_001"
+    records["assignments"].insert(0, duplicate)
+    errors = validate_deidentified_bundle(records)
+    assert f"DUPLICATE_PARTICIPANT_ASSIGNMENT:{session['participant_id']}" in errors
+
+
+def test_bundle_writer_rejects_missing_required_rating_items(tmp_path: Path) -> None:
+    database = tmp_path / "experiment.sqlite3"
+    client = TestClient(create_app(database, study_id=STUDY_ID))
+    session = client.post("/api/session", json=web_session_payload("bundlemissingrating01")).json()
+    event, ratings = web_trial_submission(session, trial_offset=0)
+    assert client.post("/api/submissions", json={"event": event, "ratings": ratings}).status_code == 200
+    records = ExperimentStore(database).deidentified_records(study_id=STUDY_ID)
+    removed = records["ratings"].pop()
+    with pytest.raises(ExportBlocked) as caught:
+        write_deidentified_bundle(records, tmp_path / "invalid-bundle", purpose="engineering_fixture")
+    assert caught.value.code == "DEIDENTIFIED_BUNDLE_INVALID"
+    assert "RATING_ITEM_SET_MISMATCH" in str(caught.value)
+    records["ratings"].append(removed)
+    unexpected = copy.deepcopy(removed)
+    unexpected.update({
+        "rating_id": f"{unexpected['rating_id']}_brand_fit",
+        "item_id": "item_brand_fit",
+        "construct": "brand_fit",
+    })
+    records["ratings"].append(unexpected)
+    with pytest.raises(ExportBlocked) as caught:
+        write_deidentified_bundle(records, tmp_path / "invalid-extra-bundle", purpose="engineering_fixture")
+    assert caught.value.code == "DEIDENTIFIED_BUNDLE_INVALID"
+    assert "RATING_ITEM_SET_MISMATCH" in str(caught.value)
+
+
+def test_bundle_reader_binds_manifest_claims_to_records(tmp_path: Path) -> None:
+    database = tmp_path / "experiment.sqlite3"
+    client = TestClient(create_app(database, study_id=STUDY_ID))
+    session = client.post("/api/session", json=web_session_payload("manifestbinding01")).json()
+    event, ratings = web_trial_submission(session, trial_offset=0)
+    assert client.post("/api/submissions", json={"event": event, "ratings": ratings}).status_code == 200
+    output = tmp_path / "bundle"
+    write_deidentified_bundle(
+        ExperimentStore(database).deidentified_records(study_id=STUDY_ID),
+        output,
+        purpose="engineering_fixture",
+    )
+    manifest_path = output / "export_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["study_id"] = "study_other"
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    with pytest.raises(ExportBlocked) as caught:
+        read_and_validate_bundle(output, purpose="engineering_fixture")
+    assert caught.value.code == "EXPORT_MANIFEST_CONTENT_MISMATCH"
+
+    manifest["study_id"] = STUDY_ID
+    profiles = next(artifact for artifact in manifest["artifacts"] if artifact["record_type"] == "profiles")
+    profiles["schema"] = "consent_receipt.schema.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    with pytest.raises(ExportBlocked) as caught:
+        read_and_validate_bundle(output, purpose="engineering_fixture")
+    assert caught.value.code == "EXPORT_MANIFEST_BINDING_MISMATCH"
 
 
 def test_cli_builds_schema_valid_reference_bundle_without_overwrite(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -748,3 +1318,198 @@ def test_handoff_builder_revalidates_task01_before_staging(
         )
     assert not output.exists()
     assert not output.with_name(".handoff.staging").exists()
+
+
+def _copy_handoff_workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, dict]:
+    source_manifest = ROOT / "data/releases/task03_cross_cultural_experiment_v1/handoff_manifest.json"
+    manifest = json.loads(source_manifest.read_text(encoding="utf-8"))
+    root = tmp_path / "workspace"
+    for artifact in [*manifest["input_snapshots"], *manifest["outputs"]]:
+        source = ROOT / artifact["path"]
+        target = root / artifact["path"]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+    for entrypoint in manifest["next_task_entrypoints"]:
+        source = ROOT / entrypoint["path"]
+        target = root / entrypoint["path"]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        if not any(artifact["path"] == entrypoint["path"] for artifact in manifest["outputs"]):
+            input_artifact = next(
+                (artifact for artifact in manifest["input_snapshots"] if artifact["path"] == entrypoint["path"]),
+                None,
+            )
+            manifest["outputs"].append({
+                "logical_type": "next_task_entrypoint",
+                "path": entrypoint["path"],
+                "sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+                "record_count": 1,
+                "privacy_level": input_artifact["privacy_level"] if input_artifact else "synthetic_fixture",
+                "schema_version": input_artifact["schema_version"] if input_artifact else "1.0.0",
+                "validation_schema": input_artifact["validation_schema"] if input_artifact else None,
+            })
+    records_root = root / "data/fixtures/experiment_system/reference_v1/records"
+    consent_path = records_root / "consent_receipt.json"
+    consent = json.loads(consent_path.read_text(encoding="utf-8"))
+    consent.update({
+        "schema_version": "1.1.0",
+        "protocol_version": "1.0.0",
+        "questionnaire_version": "1.0.0",
+    })
+    consent_path.write_text(json.dumps(consent, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    reference_path = records_root / "reference_manifest.json"
+    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    reference_consent = next(artifact for artifact in reference["artifacts"] if artifact["path"] == "consent_receipt.json")
+    reference_consent["sha256"] = hashlib.sha256(consent_path.read_bytes()).hexdigest()
+    reference_path.write_text(json.dumps(reference, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest["contract_versions"]["consent_receipt"] = "1.1.0"
+    for artifact in manifest["outputs"]:
+        target = root / artifact["path"]
+        artifact["sha256"] = hashlib.sha256(target.read_bytes()).hexdigest()
+        if artifact["path"].endswith("/records/consent_receipt.json"):
+            artifact["schema_version"] = "1.1.0"
+    manifest["outputs"].sort(key=lambda artifact: artifact["path"])
+    manifest_path = root / "data/releases/task03_cross_cultural_experiment_v1/handoff_manifest.json"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    monkeypatch.setattr(handoff_module, "_validate_producer", lambda manifest, root, errors: None)
+    assert handoff_module.validate_handoff(manifest_path, root) == []
+    return manifest_path, manifest
+
+
+def test_strict_handoff_rejects_unprotected_or_modified_entrypoint(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest_path, manifest = _copy_handoff_workspace(tmp_path, monkeypatch)
+    manifest["next_task_entrypoints"][1]["path"] = manifest["input_snapshots"][0]["path"]
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    errors = handoff_module.validate_handoff(manifest_path, manifest_path.parents[3])
+    assert any(error.startswith("ENTRYPOINT_NOT_PROTECTED_OUTPUT:") for error in errors)
+
+
+def test_strict_handoff_rejects_reference_manifest_removed_from_outputs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest_path, manifest = _copy_handoff_workspace(tmp_path, monkeypatch)
+    entrypoint_path = manifest["next_task_entrypoints"][1]["path"]
+    manifest["outputs"] = [artifact for artifact in manifest["outputs"] if artifact["path"] != entrypoint_path]
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    errors = handoff_module.validate_handoff(manifest_path, manifest_path.parents[3])
+    assert f"ENTRYPOINT_NOT_PROTECTED_OUTPUT:TASK-05:{entrypoint_path}" in errors
+
+
+def test_strict_handoff_rejects_rehashed_reference_foreign_key_divergence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest_path, manifest = _copy_handoff_workspace(tmp_path, monkeypatch)
+    root = manifest_path.parents[3]
+    records_root = root / "data/fixtures/experiment_system/reference_v1/records"
+    quality_path = records_root / "quality_decision.json"
+    quality = json.loads(quality_path.read_text(encoding="utf-8"))
+    quality["participant_id"] = "synp_reference_diverged"
+    quality_path.write_text(json.dumps(quality, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    reference_path = records_root / "reference_manifest.json"
+    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    next(artifact for artifact in reference["artifacts"] if artifact["path"] == "quality_decision.json")["sha256"] = hashlib.sha256(quality_path.read_bytes()).hexdigest()
+    reference_path.write_text(json.dumps(reference, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    for artifact in manifest["outputs"]:
+        target = root / artifact["path"]
+        if artifact["path"] in {
+            "data/fixtures/experiment_system/reference_v1/records/quality_decision.json",
+            "data/fixtures/experiment_system/reference_v1/records/reference_manifest.json",
+        }:
+            artifact["sha256"] = hashlib.sha256(target.read_bytes()).hexdigest()
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    errors = handoff_module.validate_handoff(manifest_path, root)
+    assert any(error.startswith("REFERENCE_QUALITY_PARTICIPANT_MISMATCH:") for error in errors)
+
+
+def test_strict_handoff_recomputes_reference_record_counts_after_rehash(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest_path, manifest = _copy_handoff_workspace(tmp_path, monkeypatch)
+    root = manifest_path.parents[3]
+    reference_path = root / "data/fixtures/experiment_system/reference_v1/records/reference_manifest.json"
+    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    ratings = next(artifact for artifact in reference["artifacts"] if artifact["path"] == "ratings.jsonl")
+    ratings["record_count"] -= 1
+    reference_path.write_text(json.dumps(reference, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    top_reference = next(artifact for artifact in manifest["outputs"] if artifact["path"].endswith("/records/reference_manifest.json"))
+    top_reference["sha256"] = hashlib.sha256(reference_path.read_bytes()).hexdigest()
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    errors = handoff_module.validate_handoff(manifest_path, root)
+    assert "REFERENCE_REFERENCE_COUNT_MISMATCH:ratings.jsonl" in errors
+
+
+def test_strict_handoff_rejects_rehashed_catalog_asset_divergence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest_path, manifest = _copy_handoff_workspace(tmp_path, monkeypatch)
+    root = manifest_path.parents[3]
+    records_root = root / "data/fixtures/experiment_system/reference_v1/records"
+    assignment_path = records_root / "assignment.json"
+    event_path = records_root / "presentation_event.json"
+    ratings_path = records_root / "ratings.jsonl"
+    replacement_sha256 = "f" * 64
+    assignment = json.loads(assignment_path.read_text(encoding="utf-8"))
+    trial = next(item for item in assignment["trials"] if item["trial_index"] == 1)
+    trial["asset_sha256"] = replacement_sha256
+    assignment_path.write_text(json.dumps(assignment, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    event = json.loads(event_path.read_text(encoding="utf-8"))
+    event["expected_asset_sha256"] = replacement_sha256
+    event["displayed_asset_sha256"] = replacement_sha256
+    event_path.write_text(json.dumps(event, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    ratings = [json.loads(line) for line in ratings_path.read_text(encoding="utf-8").splitlines() if line]
+    for rating in ratings:
+        rating["displayed_asset_sha256"] = replacement_sha256
+    ratings_path.write_text(
+        "".join(json.dumps(rating, sort_keys=True, separators=(",", ":")) + "\n" for rating in ratings),
+        encoding="utf-8",
+    )
+    _rehash_reference_attack(manifest, root, {assignment_path, event_path, ratings_path})
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    errors = handoff_module.validate_handoff(manifest_path, root)
+    assert any(error.startswith("REFERENCE_ASSIGNMENT_CATALOG_MISMATCH:") for error in errors)
+
+
+def test_strict_handoff_rejects_rehashed_questionnaire_item_divergence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest_path, manifest = _copy_handoff_workspace(tmp_path, monkeypatch)
+    root = manifest_path.parents[3]
+    ratings_path = root / "data/fixtures/experiment_system/reference_v1/records/ratings.jsonl"
+    ratings = [json.loads(line) for line in ratings_path.read_text(encoding="utf-8").splitlines() if line]
+    ratings[0]["item_id"] = "item_fabricated"
+    ratings_path.write_text(
+        "".join(json.dumps(rating, sort_keys=True, separators=(",", ":")) + "\n" for rating in ratings),
+        encoding="utf-8",
+    )
+    _rehash_reference_attack(manifest, root, {ratings_path})
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    errors = handoff_module.validate_handoff(manifest_path, root)
+    assert any(error.startswith("REFERENCE_RATING_QUESTIONNAIRE_MISMATCH:") for error in errors)
+
+
+def _rehash_reference_attack(manifest: dict, root: Path, modified_paths: set[Path]) -> None:
+    records_root = root / "data/fixtures/experiment_system/reference_v1/records"
+    reference_path = records_root / "reference_manifest.json"
+    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    modified_names = {path.name for path in modified_paths}
+    for artifact in reference["artifacts"]:
+        if artifact["path"] in modified_names:
+            artifact["sha256"] = hashlib.sha256((records_root / artifact["path"]).read_bytes()).hexdigest()
+    reference_path.write_text(json.dumps(reference, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    modified_paths.add(reference_path)
+    modified_repo_paths = {path.relative_to(root).as_posix() for path in modified_paths}
+    for artifact in manifest["outputs"]:
+        if artifact["path"] in modified_repo_paths:
+            artifact["sha256"] = hashlib.sha256((root / artifact["path"]).read_bytes()).hexdigest()

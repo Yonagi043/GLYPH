@@ -20,6 +20,16 @@ ANCHOR_SCRIPT_PAIRS = (
     (1, 3),
     (0, 2),
 )
+EXACT_FOUR_ITEM_SCHEDULES = (
+    ((0, 1), (2, 3), (0, 1), (2, 3), (1, 2), (3, 0), (1, 2), (3, 0),
+     (3, 0), (1, 2), (3, 0), (1, 2), (2, 3), (0, 1), (2, 3), (0, 1)),
+    ((0, 1), (2, 3), (1, 2), (0, 3), (1, 2), (3, 0), (0, 1), (3, 2),
+     (3, 0), (1, 2), (2, 3), (1, 0), (2, 3), (0, 1), (3, 0), (2, 1)),
+    ((1, 2), (0, 3), (0, 1), (2, 3), (0, 1), (3, 2), (1, 2), (3, 0),
+     (2, 3), (1, 0), (3, 0), (1, 2), (3, 0), (2, 1), (2, 3), (0, 1)),
+    ((1, 2), (0, 3), (1, 2), (0, 3), (0, 1), (3, 2), (0, 1), (3, 2),
+     (2, 3), (1, 0), (2, 3), (1, 0), (3, 0), (2, 1), (3, 0), (2, 1)),
+)
 
 
 class AssignmentError(ValueError):
@@ -44,6 +54,7 @@ def build_assignments(
     minimum_anchor_count: int = 1,
     required_anchor_count: int | None = None,
     created_at: str = "2026-09-04T00:00:00Z",
+    prior_assignments: Iterable[dict[str, Any]] = (),
 ) -> list[dict[str, Any]]:
     if block_size % len(SCRIPTS) != 0:
         raise AssignmentError("BLOCK_SIZE_NOT_SCRIPT_BALANCED", str(block_size))
@@ -65,11 +76,9 @@ def build_assignments(
     if len({item["participant_id"] for item in participant_rows}) != len(participant_rows):
         raise AssignmentError("DUPLICATE_PARTICIPANT_ID", "participant IDs must be unique")
 
-    exposure: dict[str, Counter[str]] = defaultdict(Counter)
-    positions: dict[str, Counter[tuple[str, int]]] = defaultdict(Counter)
-    group_sequences: Counter[str] = Counter()
-    anchor_event_counts: Counter[tuple[str, str]] = Counter()
-    nonanchor_event_counts: Counter[tuple[str, str]] = Counter()
+    exposure, positions, group_sequences, anchor_event_counts, nonanchor_event_counts = (
+        _quota_state(prior_assignments)
+    )
     assignments: list[dict[str, Any]] = []
     for participant in participant_rows:
         participant_id = participant["participant_id"]
@@ -91,31 +100,16 @@ def build_assignments(
                     or (group_sequence + anchor_scripts.index(script)) % 2 == 0
                 )
             if exact_four_item_design:
-                anchor = next(item for item in by_script[script] if item["is_anchor"])
+                anchor = next(item for item in candidates if item["is_anchor"])
                 nonanchors = sorted(
-                    (item for item in by_script[script] if not item["is_anchor"]),
-                    key=lambda item: _rank(seed, script, item["stimulus_id"], "nonanchor-order"),
+                    (item for item in candidates if not item["is_anchor"]),
+                    key=lambda item: item["stimulus_id"],
                 )
-                event_key = (group, script)
-                if anchor_required:
-                    nonanchor_index = (anchor_event_counts[event_key] + 1) % len(nonanchors)
-                    chosen = [anchor, nonanchors[nonanchor_index]]
-                    anchor_event_counts[event_key] += 1
-                else:
-                    rotation_cycle = group_sequence // len(SCRIPTS)
-                    omitted_index = (nonanchor_event_counts[event_key] + 2 * rotation_cycle) % len(nonanchors)
-                    chosen = [item for index, item in enumerate(nonanchors) if index != omitted_index]
-                    nonanchor_event_counts[event_key] += 1
-                direct = sum(
-                    positions[group][(item["stimulus_id"], position)]
-                    for item, position in zip(chosen, candidate_slots, strict=True)
-                )
-                swapped = sum(
-                    positions[group][(item["stimulus_id"], position)]
-                    for item, position in zip(reversed(chosen), candidate_slots, strict=True)
-                )
-                if swapped < direct:
-                    chosen.reverse()
+                exact_candidates = [anchor, *nonanchors]
+                schedule = EXACT_FOUR_ITEM_SCHEDULES[SCRIPTS.index(script)]
+                chosen = [exact_candidates[index] for index in schedule[group_sequence % len(schedule)]]
+                if any(item["is_anchor"] for item in chosen) != anchor_required:
+                    raise AssignmentError("EXACT_SCHEDULE_ANCHOR_MISMATCH", f"{group}:{group_sequence}:{script}")
                 selected_by_script[script] = chosen
                 selected_work_ids.update(item["work_id"] for item in chosen)
                 continue
@@ -204,6 +198,39 @@ def build_assignments(
     return assignments
 
 
+def _quota_state(
+    prior_assignments: Iterable[dict[str, Any]],
+) -> tuple[
+    dict[str, Counter[str]],
+    dict[str, Counter[tuple[str, int]]],
+    Counter[str],
+    Counter[tuple[str, str]],
+    Counter[tuple[str, str]],
+]:
+    exposure: dict[str, Counter[str]] = defaultdict(Counter)
+    positions: dict[str, Counter[tuple[str, int]]] = defaultdict(Counter)
+    group_sequences: Counter[str] = Counter()
+    anchor_event_counts: Counter[tuple[str, str]] = Counter()
+    nonanchor_event_counts: Counter[tuple[str, str]] = Counter()
+    for assignment in prior_assignments:
+        group = assignment["participant_group"]
+        group_sequences[group] += 1
+        scripts_with_anchor: set[str] = set()
+        scripts_present: set[str] = set()
+        for trial in assignment["trials"]:
+            stimulus_id = trial["stimulus_id"]
+            script = trial["writing_system"]
+            scripts_present.add(script)
+            if trial["is_anchor"]:
+                scripts_with_anchor.add(script)
+            exposure[group][stimulus_id] += 1
+            positions[group][(stimulus_id, trial["trial_index"])] += 1
+        for script in scripts_present:
+            event_counts = anchor_event_counts if script in scripts_with_anchor else nonanchor_event_counts
+            event_counts[(group, script)] += 1
+    return exposure, positions, group_sequences, anchor_event_counts, nonanchor_event_counts
+
+
 def _projected_balance_score(
     option: tuple[dict[str, Any], ...],
     candidate_slots: list[int],
@@ -214,7 +241,7 @@ def _projected_balance_score(
     seed: str,
     participant_id: str,
     script: str,
-) -> tuple[int, int, int, int, str]:
+) -> tuple[int, int, int, int, int, str]:
     option_ids = {item["stimulus_id"] for item in option}
     projected_positions = {
         (item["stimulus_id"], position)
@@ -235,8 +262,10 @@ def _projected_balance_score(
         ]
         maximum_position_spread = max(maximum_position_spread, max(position_values) - min(position_values))
         position_square_sum += sum(value * value for value in position_values)
+    exposure_spread = max(exposure_values) - min(exposure_values)
     return (
-        max(exposure_values) - min(exposure_values),
+        max(exposure_spread, maximum_position_spread),
+        exposure_spread,
         maximum_position_spread,
         exposure_square_sum,
         position_square_sum,

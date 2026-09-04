@@ -12,6 +12,7 @@ from typing import Any
 
 from glyph_features.asset_system.catalog import normalize_repo_path
 
+from .export import validate_deidentified_bundle
 from .fixtures import load_task01_fixture
 from .schema import canonical_sha256, validate_record
 
@@ -23,6 +24,7 @@ PRODUCER_SCOPES = (
     "configs/questionnaire_v1.json",
     "schema/consent_receipt.schema.json",
     "schema/experiment_assignment.schema.json",
+    "schema/experiment_export_manifest.schema.json",
     "schema/experiment_handoff_manifest.schema.json",
     "schema/experiment_rating.schema.json",
     "schema/experiment_stimulus_catalog.schema.json",
@@ -164,7 +166,7 @@ def build_handoff(
                 "study_protocol": "1.0.0",
                 "questionnaire_definition": "1.0.0",
                 "participant_profile": "1.0.0",
-                "consent_receipt": "1.0.0",
+                "consent_receipt": "1.1.0",
                 "experiment_stimulus_catalog": "1.0.0",
                 "experiment_assignment": "1.0.0",
                 "presentation_event": "1.0.0",
@@ -242,6 +244,7 @@ def validate_handoff(manifest_path: str | Path, workspace_root: str | Path) -> l
     for label in ("input_snapshots", "outputs"):
         for artifact in manifest[label]:
             _validate_artifact(artifact, root, label, errors)
+    _validate_entrypoints(manifest, root, errors)
     _validate_bundle(manifest_file, manifest, root, errors)
     return errors
 
@@ -387,6 +390,152 @@ def _validate_bundle(manifest_file: Path, manifest: dict[str, Any], root: Path, 
                 errors.append(f"checksum mismatch: {relative}")
 
 
+def _validate_entrypoints(manifest: dict[str, Any], root: Path, errors: list[str]) -> None:
+    outputs_by_path: dict[str, list[dict[str, Any]]] = {}
+    for artifact in manifest["outputs"]:
+        outputs_by_path.setdefault(artifact["path"], []).append(artifact)
+    for path, artifacts in outputs_by_path.items():
+        if len(artifacts) != 1:
+            errors.append(f"OUTPUT_PATH_NOT_UNIQUE:{path}")
+    for entrypoint in manifest["next_task_entrypoints"]:
+        path = entrypoint["path"]
+        try:
+            target = root / normalize_repo_path(path)
+        except ValueError as error:
+            errors.append(f"ENTRYPOINT_PATH_UNSAFE:{entrypoint['task_id']}:{path}:{error}")
+            continue
+        if not target.is_file() or target.is_symlink():
+            errors.append(f"ENTRYPOINT_MISSING:{entrypoint['task_id']}:{path}")
+        artifacts = outputs_by_path.get(path, [])
+        if len(artifacts) != 1:
+            errors.append(f"ENTRYPOINT_NOT_PROTECTED_OUTPUT:{entrypoint['task_id']}:{path}")
+    task05 = [entrypoint for entrypoint in manifest["next_task_entrypoints"] if entrypoint["task_id"] == "TASK-05"]
+    if len(task05) != 1:
+        errors.append("TASK05_ENTRYPOINT_COUNT_INVALID")
+    elif len(outputs_by_path.get(task05[0]["path"], [])) == 1:
+        _validate_reference_entrypoint(root / task05[0]["path"], manifest, root, errors)
+
+
+def _validate_reference_entrypoint(
+    reference_path: Path,
+    handoff: dict[str, Any],
+    root: Path,
+    errors: list[str],
+) -> None:
+    try:
+        reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        errors.append(f"REFERENCE_MANIFEST_UNREADABLE:{error}")
+        return
+    if reference.get("data_origin") != "synthetic":
+        errors.append("REFERENCE_MANIFEST_NOT_SYNTHETIC")
+    artifacts = reference.get("artifacts")
+    if not isinstance(artifacts, list):
+        errors.append("REFERENCE_ARTIFACTS_INVALID")
+        return
+    expected_files = {
+        "study_protocol.json",
+        "questionnaire_definition.json",
+        "participant_profile.json",
+        "consent_receipt.json",
+        "stimulus_catalog.json",
+        "assignment.json",
+        "presentation_event.json",
+        "ratings.jsonl",
+        "quality_decision.json",
+    }
+    declared_files = {artifact.get("path") for artifact in artifacts if isinstance(artifact, dict)}
+    if declared_files != expected_files:
+        errors.append(
+            f"REFERENCE_ARTIFACT_SET_MISMATCH:missing={sorted(expected_files - declared_files)}:extra={sorted(declared_files - expected_files)}"
+        )
+        return
+    top_outputs = {artifact["path"]: artifact for artifact in handoff["outputs"]}
+    loaded: dict[str, list[dict[str, Any]]] = {}
+    reference_root = reference_path.parent.resolve()
+    for artifact in artifacts:
+        relative = Path(artifact["path"])
+        target = (reference_root / relative).resolve()
+        if relative.is_absolute() or not target.is_relative_to(reference_root):
+            errors.append(f"REFERENCE_ARTIFACT_PATH_UNSAFE:{artifact['path']}")
+            continue
+        repo_path = target.relative_to(root).as_posix()
+        top_artifact = top_outputs.get(repo_path)
+        if top_artifact is None:
+            errors.append(f"REFERENCE_ARTIFACT_NOT_PROTECTED_OUTPUT:{artifact['path']}")
+            continue
+        if not target.is_file() or target.is_symlink():
+            errors.append(f"REFERENCE_ARTIFACT_MISSING:{artifact['path']}")
+            continue
+        actual_sha256 = _sha256_file(target)
+        actual_count = _record_count(target)
+        for source, expected in (("reference", artifact), ("output", top_artifact)):
+            if expected["sha256"] != actual_sha256:
+                errors.append(f"REFERENCE_{source.upper()}_HASH_MISMATCH:{artifact['path']}")
+            if expected["record_count"] != actual_count:
+                errors.append(f"REFERENCE_{source.upper()}_COUNT_MISMATCH:{artifact['path']}")
+        validation_schema = top_artifact.get("validation_schema")
+        if validation_schema is None or Path(validation_schema).name != artifact.get("schema"):
+            errors.append(f"REFERENCE_SCHEMA_BINDING_MISMATCH:{artifact['path']}")
+        try:
+            loaded[artifact["path"]] = _read_records(target)
+        except (OSError, json.JSONDecodeError, ValueError) as error:
+            errors.append(f"REFERENCE_ARTIFACT_UNREADABLE:{artifact['path']}:{error}")
+    if set(loaded) != expected_files:
+        return
+    protocol = loaded["study_protocol.json"][0]
+    questionnaire = loaded["questionnaire_definition.json"][0]
+    profile = loaded["participant_profile.json"][0]
+    consent = loaded["consent_receipt.json"][0]
+    catalog = loaded["stimulus_catalog.json"][0]
+    assignment = loaded["assignment.json"][0]
+    event = loaded["presentation_event.json"][0]
+    ratings = loaded["ratings.jsonl"]
+    quality = loaded["quality_decision.json"][0]
+    study_id = protocol.get("study_id")
+    for label, record in (
+        ("questionnaire", questionnaire),
+        ("profile", profile),
+        ("consent", consent),
+        ("catalog", catalog),
+        ("assignment", assignment),
+        ("presentation", event),
+        ("quality", quality),
+    ):
+        if record.get("study_id") != study_id:
+            errors.append(f"REFERENCE_STUDY_ID_MISMATCH:{label}")
+    if any(rating.get("study_id") != study_id for rating in ratings):
+        errors.append("REFERENCE_STUDY_ID_MISMATCH:ratings")
+    if protocol.get("synthetic_only") is not True or catalog.get("data_origin") != "synthetic" or any(
+        record.get("data_origin") != "synthetic"
+        for record in (profile, consent, assignment, event, quality, *ratings)
+    ):
+        errors.append("REFERENCE_SYNTHETIC_ONLY_MISMATCH")
+    if consent.get("participant_id") != profile.get("participant_id"):
+        errors.append("REFERENCE_CONSENT_PARTICIPANT_MISMATCH")
+    if assignment.get("participant_id") != profile.get("participant_id"):
+        errors.append("REFERENCE_ASSIGNMENT_PARTICIPANT_MISMATCH")
+    if quality.get("participant_id") != profile.get("participant_id"):
+        errors.append(f"REFERENCE_QUALITY_PARTICIPANT_MISMATCH:{quality.get('participant_id')}")
+    if consent.get("protocol_version") != protocol.get("protocol_version"):
+        errors.append("REFERENCE_CONSENT_PROTOCOL_VERSION_MISMATCH")
+    if consent.get("questionnaire_version") != questionnaire.get("questionnaire_version"):
+        errors.append("REFERENCE_CONSENT_QUESTIONNAIRE_VERSION_MISMATCH")
+    if assignment.get("protocol_version") != protocol.get("protocol_version"):
+        errors.append("REFERENCE_ASSIGNMENT_PROTOCOL_VERSION_MISMATCH")
+    if assignment.get("questionnaire_version") != questionnaire.get("questionnaire_version"):
+        errors.append("REFERENCE_ASSIGNMENT_QUESTIONNAIRE_VERSION_MISMATCH")
+    semantic_errors = validate_deidentified_bundle({
+        "profiles": [profile],
+        "consents": [consent],
+        "assignments": [assignment],
+        "presentations": [event],
+        "ratings": ratings,
+        "quality_decisions": [quality],
+    }, catalog_items=catalog["items"], questionnaire_items=questionnaire["items"])
+    errors.extend(f"REFERENCE_{error}" for error in semantic_errors)
+
+
 def _producer_role(path: str) -> str:
     if path == "pyproject.toml":
         return "entrypoint"
@@ -471,6 +620,7 @@ def _input_snapshots(root: Path) -> list[dict[str, Any]]:
 
 def _external_outputs(root: Path) -> list[dict[str, Any]]:
     specs = [
+    ("questionnaire_entrypoint", "configs/questionnaire_v1.json", "public_code_or_schema", "1.0.0", "schema/questionnaire_definition.schema.json"),
         ("dry_run_summary", f"{REFERENCE_ROOT.as_posix()}/dry_run_1000_seed_a.json", "synthetic_fixture", "1.0.0", None),
         ("dry_run_summary", f"{REFERENCE_ROOT.as_posix()}/dry_run_1000_seed_b.json", "synthetic_fixture", "1.0.0", None),
         ("power_scenarios", f"{REFERENCE_ROOT.as_posix()}/power_scenarios.json", "synthetic_fixture", "1.0.0", None),
@@ -480,10 +630,11 @@ def _external_outputs(root: Path) -> list[dict[str, Any]]:
         ("schema_gap_and_privacy", "docs/cross_cultural_experiment_data_contract_zh.md", "public_code_or_schema", "1.0.0", None),
         ("experiment_protocol", "docs/cross_cultural_experiment_protocol_zh.md", "public_code_or_schema", "1.0.0", None),
         ("template_manifest", "data/templates/experiment_system_v1/reference_manifest.json", "synthetic_fixture", "1.0.0", None),
+        ("reference_manifest", f"{REFERENCE_ROOT.as_posix()}/records/reference_manifest.json", "synthetic_fixture", "1.0.0", None),
     ]
     record_schemas = {
         "assignment.json": ("assignment", "1.0.0", "schema/experiment_assignment.schema.json"),
-        "consent_receipt.json": ("consent_receipt", "1.0.0", "schema/consent_receipt.schema.json"),
+        "consent_receipt.json": ("consent_receipt", "1.1.0", "schema/consent_receipt.schema.json"),
         "participant_profile.json": ("participant_profile", "1.0.0", "schema/participant_profile.schema.json"),
         "presentation_event.json": ("presentation_event", "1.0.0", "schema/presentation_event.schema.json"),
         "quality_decision.json": ("quality_decision", "1.0.0", "schema/quality_decision.schema.json"),

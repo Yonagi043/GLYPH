@@ -23,11 +23,11 @@
       "asset_sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b",
       "condition": "visual_blind",
       "is_anchor": false,
-      "presentation_id": "presentation_1f299d12cc8f262cd8cde2b4",
+      "presentation_id": "presentation_da070bef55e877f52c6eab8b",
       "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
-      "stimulus_id": "stim_task03_kana_03",
+      "stimulus_id": "stim_task03_kana_02",
       "trial_index": 1,
-      "work_id": "work_task03_kana_03",
+      "work_id": "work_task03_kana_02",
       "writing_system": "kana"
     },
     {
@@ -35,11 +35,11 @@
       "asset_sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b",
       "condition": "visual_blind",
       "is_anchor": false,
-      "presentation_id": "presentation_0657c9d4d8a05566ac2d1d6f",
+      "presentation_id": "presentation_93cab868cb3f4890d7bb001f",
       "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
-      "stimulus_id": "stim_task03_hangul_04",
+      "stimulus_id": "stim_task03_hangul_02",
       "trial_index": 2,
-      "work_id": "work_task03_hangul_04",
+      "work_id": "work_task03_hangul_02",
       "writing_system": "hangul"
     },
     {
@@ -71,11 +71,11 @@
       "asset_sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b",
       "condition": "visual_blind",
       "is_anchor": false,
-      "presentation_id": "presentation_2b8bde028d582fb39ffdc0d3",
+      "presentation_id": "presentation_b3829ffde6e8b2bfb32da0f9",
       "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
-      "stimulus_id": "stim_task03_kana_04",
+      "stimulus_id": "stim_task03_kana_03",
       "trial_index": 5,
-      "work_id": "work_task03_kana_04",
+      "work_id": "work_task03_kana_03",
       "writing_system": "kana"
     },
     {
@@ -83,11 +83,11 @@
       "asset_sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b",
       "condition": "visual_blind",
       "is_anchor": false,
-      "presentation_id": "presentation_de2f0e00a772138d48a48d47",
+      "presentation_id": "presentation_afdf84ae08cf7e59cf7f75c3",
       "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
-      "stimulus_id": "stim_task03_hangul_02",
+      "stimulus_id": "stim_task03_hangul_03",
       "trial_index": 6,
-      "work_id": "work_task03_hangul_02",
+      "work_id": "work_task03_hangul_03",
       "writing_system": "hangul"
     },
     {
@@ -107,11 +107,11 @@
       "asset_sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b",
       "condition": "visual_blind",
       "is_anchor": false,
-      "presentation_id": "presentation_8b345033f37b7e44f607c133",
+      "presentation_id": "presentation_6ceca9304e56c916e2368dc7",
       "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
-      "stimulus_id": "stim_task03_han_03",
+      "stimulus_id": "stim_task03_han_02",
       "trial_index": 8,
-      "work_id": "work_task03_han_03",
+      "work_id": "work_task03_han_02",
       "writing_system": "han"
     }
   ]
