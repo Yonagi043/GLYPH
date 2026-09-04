@@ -1,0 +1,890 @@
+{
+  "blocked_human_gates": [
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-ETHICS.json",
+      "gate_id": "GATE-ETHICS",
+      "module_id": "experiment",
+      "reasons": [
+        "No ethics approval or approved data-management, withdrawal, retention and deletion procedure."
+      ],
+      "scope": "TASK-03",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-EXPERIMENT-RUNTIME.json",
+      "gate_id": "GATE-EXPERIMENT-RUNTIME",
+      "module_id": "experiment",
+      "reasons": [
+        "A maintained experiment library or equivalent independent browser timing validation is required before a real pilot."
+      ],
+      "scope": "TASK-03",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/fixtures/han_style_system/reference_handoff_v1/gates/GATE-EXPERT.json",
+      "gate_id": "GATE-EXPERT",
+      "module_id": "han_style",
+      "reasons": [
+        "No real expert review was requested or collected."
+      ],
+      "scope": "TASK-04",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/fixtures/visual_measurements/reference_handoff_v2/GATE-EXPERT.json",
+      "gate_id": "GATE-EXPERT",
+      "module_id": "vision",
+      "reasons": [
+        "Two independent visual or type-domain reviewers have not reviewed fixture face validity and cross-script failure modes."
+      ],
+      "scope": "TASK-02",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-FORMAL-STIMULI.json",
+      "gate_id": "GATE-FORMAL-STIMULI",
+      "module_id": "experiment",
+      "reasons": [
+        "TASK-01 formal stimulus entrypoint is blocked; only an open engineering fixture is allowed."
+      ],
+      "scope": "TASK-03",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-HISTORY.json",
+      "gate_id": "GATE-HISTORY",
+      "module_id": "assets",
+      "reasons": [
+        "large tracked assets require a user-selected history strategy"
+      ],
+      "scope": "TASK-01",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-PARTICIPANTS.json",
+      "gate_id": "GATE-PARTICIPANTS",
+      "module_id": "experiment",
+      "reasons": [
+        "Recruitment, compensation, quotas, stopping rules and model-based sample size are not approved."
+      ],
+      "scope": "TASK-03",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-RELEASE.json",
+      "gate_id": "GATE-RELEASE",
+      "module_id": "assets",
+      "reasons": [
+        "formal rights and human curation gates are not passed"
+      ],
+      "scope": "TASK-01",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "formal_release",
+      "evidence_path": "docs/joint_analysis_protocol_zh.md",
+      "gate_id": "GATE-RELEASE",
+      "module_id": "workbench",
+      "reasons": [
+        "Synthetic inputs and unresolved human gates mechanically block formal release."
+      ],
+      "scope": "system",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-RIGHTS.json",
+      "gate_id": "GATE-RIGHTS",
+      "module_id": "assets",
+      "reasons": [
+        "licence pages and redistribution permissions are unverified"
+      ],
+      "scope": "TASK-01",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/fixtures/han_style_system/reference_handoff_v1/gates/GATE-RIGHTS.json",
+      "gate_id": "GATE-RIGHTS",
+      "module_id": "han_style",
+      "reasons": [
+        "No historical or modern typeface asset has TASK-04 formal-use approval."
+      ],
+      "scope": "TASK-04",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-TERMS.json",
+      "gate_id": "GATE-TERMS",
+      "module_id": "assets",
+      "reasons": [
+        "official terms, authentication, cost, and data flow have not been reviewed"
+      ],
+      "scope": "TASK-01",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/fixtures/han_style_system/reference_handoff_v1/gates/GATE-TERMS.json",
+      "gate_id": "GATE-TERMS",
+      "module_id": "han_style",
+      "reasons": [
+        "No restricted download, login, licence acceptance, or paid access was reviewed."
+      ],
+      "scope": "TASK-04",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "real_social_input",
+      "evidence_path": "docs/workbench_local_ops_zh.md",
+      "gate_id": "GATE-TERMS",
+      "module_id": "social",
+      "reasons": [
+        "No real request, terms acceptance, credential use or paid access was approved."
+      ],
+      "scope": "real_platform_collection",
+      "status": "blocked"
+    },
+    {
+      "blocked_object": "pilot_and_formal_release",
+      "evidence_path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-TRANSLATION.json",
+      "gate_id": "GATE-TRANSLATION",
+      "module_id": "experiment",
+      "reasons": [
+        "English, Japanese and Korean drafts lack human committee review, back-translation and cognitive interviews."
+      ],
+      "scope": "TASK-03",
+      "status": "blocked"
+    }
+  ],
+  "contract_versions": {
+    "analysis_plan": "1.0.0",
+    "analysis_run": "1.1.0",
+    "catalog": "1.0.0",
+    "coordinated_backup": "1.0.0",
+    "gate_decision": "1.0.0",
+    "handoff_import": "1.0.0",
+    "module_descriptor": "1.0.0",
+    "operations": "persistent-v1",
+    "release_candidate": "1.0.0",
+    "social_validated_export": "social-export-package-v1",
+    "workbench_handoff": "1.0.0"
+  },
+  "created_at": "2026-09-04T16:20:06Z",
+  "data_boundaries": [
+    {
+      "allowed": true,
+      "classification": "synthetic",
+      "reason": "Allowed only for local engineering, demo audit and reproducibility checks.",
+      "reason_code": "SYNTHETIC_DEMO_ONLY"
+    },
+    {
+      "allowed": false,
+      "classification": "synthetic",
+      "reason": "Synthetic ratings and evidence cannot support formal research release.",
+      "reason_code": "FORMAL_RELEASE_FORBIDDEN"
+    },
+    {
+      "allowed": false,
+      "classification": "participant_pii",
+      "reason": "Identity maps and participant PII are outside the workbench contract.",
+      "reason_code": "PII_NOT_IMPORTED"
+    },
+    {
+      "allowed": false,
+      "classification": "social_raw_payload",
+      "reason": "Only validated export pointers and hashes enter the catalog.",
+      "reason_code": "RAW_PLATFORM_PAYLOAD_NOT_IMPORTED"
+    },
+    {
+      "allowed": false,
+      "classification": "restricted_asset",
+      "reason": "Catalog stores only source-owned pointers and classifications.",
+      "reason_code": "RESTRICTED_ASSET_NOT_COPIED"
+    },
+    {
+      "allowed": false,
+      "classification": "wp2_context",
+      "reason": "WP2 remains hypothesis/context unless a preregistered exposure operation exists.",
+      "reason_code": "NARRATIVE_NOT_PARTICIPANT_EXPOSURE"
+    }
+  ],
+  "handoff_schema_version": "1.0.0",
+  "implementation_commit": "c80f146151abf252f4f17b881e3cad9a205b8239",
+  "input_handoffs": [
+    {
+      "compatible": true,
+      "module_id": "assets",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+      "producer_commit": "f89daec0e5e1f2df216a8e18c551d81f9954032f",
+      "readiness": {
+        "engineering_ready": true,
+        "pilot_ready": false,
+        "research_validated": false
+      },
+      "schema_version": "2.0.0",
+      "sha256": "acc193134495401b9a026aab0e7a866d7f15202b9b865db0d73d6f689bd1bdab",
+      "task_id": "TASK-01"
+    },
+    {
+      "compatible": true,
+      "module_id": "vision",
+      "path": "data/fixtures/visual_measurements/reference_handoff_v2/handoff_manifest.json",
+      "producer_commit": "e3fc34883a0a2ec6ff30fbd56dd950d7c7fd2306",
+      "readiness": {
+        "engineering_ready": true,
+        "pilot_ready": false,
+        "research_validated": false
+      },
+      "schema_version": "1.1.0",
+      "sha256": "d039330f7aceb12d3a3620c99bdb2749dfaf51421b97df606ee0c87a10446ba8",
+      "task_id": "TASK-02"
+    },
+    {
+      "compatible": true,
+      "module_id": "experiment",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/handoff_manifest.json",
+      "producer_commit": "2048fa9866eb8cedc58b7399958331eae5f4325e",
+      "readiness": {
+        "engineering_ready": true,
+        "pilot_ready": false,
+        "research_validated": false
+      },
+      "schema_version": "2.0.0",
+      "sha256": "cbc05b928e7dad5a0e4e12c0b0788ed6af98267169ec3232a16764081b68636c",
+      "task_id": "TASK-03"
+    },
+    {
+      "compatible": true,
+      "module_id": "han_style",
+      "path": "data/fixtures/han_style_system/reference_handoff_v1/handoff_manifest.json",
+      "producer_commit": "cecdf3325f8701b5e4125d35811ed58b6580564d",
+      "readiness": {
+        "engineering_ready": true,
+        "pilot_ready": false,
+        "research_validated": false
+      },
+      "schema_version": "1.1.0",
+      "sha256": "803c8c5b97fce3fc521ee4944a16e6a4834bd6a769a397845d9c9b96fc233fbe",
+      "task_id": "TASK-04"
+    }
+  ],
+  "interfaces": {
+    "commands": [
+      "uv run glyph-workbench serve --catalog-database CATALOG --social-database SOCIAL",
+      "uv run glyph-workbench import-handoff PACKAGE --catalog-database CATALOG --social-database SOCIAL",
+      "uv run glyph-workbench run-system-fixture --catalog-database CATALOG --social-database SOCIAL",
+      "uv run glyph-workbench export-demo ANALYSIS_RUN_ID --catalog-database CATALOG --social-database SOCIAL",
+      "uv run glyph-workbench backup --catalog-database CATALOG --social-database SOCIAL",
+      "uv run glyph-workbench restore-drill BACKUP_ID --catalog-database CATALOG --social-database SOCIAL"
+    ],
+    "read_endpoints": [
+      "/api/overview",
+      "/api/modules",
+      "/api/views/{module}",
+      "/api/analysis",
+      "/api/audit",
+      "/api/evidence/{entity_id}",
+      "/api/health",
+      "/api/operations"
+    ],
+    "storage_ownership": [
+      "Workbench owns only catalog metadata, snapshots, release candidates and audit events.",
+      "Social owns its v17 database and canonical validated exports.",
+      "Assets, vision, experiment and Han modules own their domain records and write operations."
+    ],
+    "write_endpoints": [
+      "/api/actions/initialize",
+      "/api/actions/import-handoff",
+      "/api/actions/export-demo",
+      "/api/actions/check-formal-release",
+      "/api/actions/backup",
+      "/api/actions/restore-drill",
+      "/api/operations/analysis-fixture",
+      "/api/operations/system-fixture",
+      "/api/operations/{operation_id}/cancel",
+      "/api/operations/{operation_id}/resume"
+    ]
+  },
+  "known_limitations": [
+    "No real participant rating, approved expert review, formal-use asset or releasable social evidence was imported.",
+    "WP3 is blocked because all experiment conditions resolve to one source stimulus.",
+    "WP4 remains instance_level_only because independent exemplars and GATE-EXPERT are absent.",
+    "The fixture OrderedModel does not replace the preregistered crossed ordinal hierarchy for real research.",
+    "Operation recovery is local to the workbench catalog and still requires an explicit resume after an interrupted process."
+  ],
+  "maintenance_responsibility": [
+    "Module owners maintain domain schemas, service APIs, exports and database migrations.",
+    "Workbench maintainers update compatibility rules only with versioned handoff contracts and tests.",
+    "Human approvers own rights, history, ethics, participants, translation, expert, terms and release decisions."
+  ],
+  "module_compatibility": [
+    {
+      "compatible": true,
+      "conclusion": "Validated by the upstream native handoff validator and producer ancestry.",
+      "contract_versions": {
+        "asset_candidate": "1.0.0",
+        "ecological_stimulus": "2.0.0",
+        "handoff_manifest": "2.0.0",
+        "rights_evidence": "2.0.0",
+        "shared": "1.1.0",
+        "source": "1.1.0-compatible",
+        "stimulus": "1.1.0"
+      },
+      "handoff_schema_version": "2.0.0",
+      "input_manifest": "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+      "input_sha256": "acc193134495401b9a026aab0e7a866d7f15202b9b865db0d73d6f689bd1bdab",
+      "module_id": "assets",
+      "module_version": "1.0.0",
+      "readiness": {
+        "engineering_ready": true,
+        "pilot_ready": false,
+        "research_validated": false
+      }
+    },
+    {
+      "compatible": true,
+      "conclusion": "Validated by the upstream native handoff validator and producer ancestry.",
+      "contract_versions": {
+        "consent_receipt": "1.1.0",
+        "experiment_assignment": "1.0.0",
+        "experiment_handoff_manifest": "2.0.0",
+        "experiment_rating": "2.0.0",
+        "experiment_stimulus_catalog": "1.0.0",
+        "participant_profile": "1.0.0",
+        "presentation_event": "1.0.0",
+        "quality_decision": "1.0.0",
+        "questionnaire_definition": "1.0.0",
+        "study_protocol": "1.0.0"
+      },
+      "handoff_schema_version": "2.0.0",
+      "input_manifest": "data/releases/task03_cross_cultural_experiment_v1/handoff_manifest.json",
+      "input_sha256": "cbc05b928e7dad5a0e4e12c0b0788ed6af98267169ec3232a16764081b68636c",
+      "module_id": "experiment",
+      "module_version": "1.0.0",
+      "readiness": {
+        "engineering_ready": true,
+        "pilot_ready": false,
+        "research_validated": false
+      }
+    },
+    {
+      "compatible": true,
+      "conclusion": "Validated by the upstream native handoff validator and producer ancestry.",
+      "contract_versions": {
+        "expert_review": "1.1.0",
+        "han_adapter_record": "1.1.0",
+        "han_character_mapping": "1.0.0",
+        "han_glyph_instance": "1.0.0",
+        "han_handoff_manifest": "1.1.0",
+        "han_knowledge_claim": "1.1.0",
+        "han_review_item": "1.1.0",
+        "han_review_package": "1.1.0",
+        "han_stimulus_candidate": "1.1.0",
+        "han_style_concept": "1.0.0",
+        "han_style_trust_root": "1.0.0"
+      },
+      "handoff_schema_version": "1.1.0",
+      "input_manifest": "data/fixtures/han_style_system/reference_handoff_v1/handoff_manifest.json",
+      "input_sha256": "803c8c5b97fce3fc521ee4944a16e6a4834bd6a769a397845d9c9b96fc233fbe",
+      "module_id": "han_style",
+      "module_version": "1.1.0",
+      "readiness": {
+        "engineering_ready": true,
+        "pilot_ready": false,
+        "research_validated": false
+      }
+    },
+    {
+      "compatible": true,
+      "conclusion": "Public validated-export/service adapter; no private tables or second scheduler.",
+      "contract_versions": {
+        "social_database": "17",
+        "social_observation": "0.2.0"
+      },
+      "handoff_schema_version": "validated-export-v17",
+      "input_manifest": null,
+      "input_sha256": null,
+      "module_id": "social",
+      "module_version": "sqlite-v17",
+      "readiness": {
+        "engineering_ready": true,
+        "pilot_ready": false,
+        "research_validated": false
+      }
+    },
+    {
+      "compatible": true,
+      "conclusion": "Validated by the upstream native handoff validator and producer ancestry.",
+      "contract_versions": {
+        "expert_gate": "1.0.0",
+        "feature_registry": "2.0.1",
+        "handoff": "1.1.0",
+        "long_measurement": "1.0.0",
+        "visual_v1": "1.1.0-compatible"
+      },
+      "handoff_schema_version": "1.1.0",
+      "input_manifest": "data/fixtures/visual_measurements/reference_handoff_v2/handoff_manifest.json",
+      "input_sha256": "d039330f7aceb12d3a3620c99bdb2749dfaf51421b97df606ee0c87a10446ba8",
+      "module_id": "vision",
+      "module_version": "visual_measurements_v2.0.1",
+      "readiness": {
+        "engineering_ready": true,
+        "pilot_ready": false,
+        "research_validated": false
+      }
+    },
+    {
+      "compatible": true,
+      "conclusion": "TASK-05 catalog, analysis, workbench, release and operations contracts.",
+      "contract_versions": {
+        "catalog": "1.0.0",
+        "module_descriptor": "1.0.0"
+      },
+      "handoff_schema_version": "1.0.0",
+      "input_manifest": null,
+      "input_sha256": null,
+      "module_id": "workbench",
+      "module_version": "0.1.0",
+      "readiness": {
+        "engineering_ready": true,
+        "pilot_ready": false,
+        "research_validated": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "analysis_plan",
+      "path": "configs/joint_analysis_plan_v1.json",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "3297031a1923a7467a9b63d4c8debb4ecced265b373e3faf5a7a2acc95cdff71"
+    },
+    {
+      "classification": "open_fixture",
+      "logical_type": "system_fixture",
+      "path": "data/fixtures/system_e2e/generator_config.json",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "c25e36eaba641eaa5cd2350507db398f94c141b96b40f2b9413fdf8ecaf10905"
+    },
+    {
+      "classification": "metadata_only",
+      "logical_type": "browser_acceptance",
+      "path": "data/fixtures/system_e2e/browser_acceptance.json",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "d4e350e3e6abe70b4c2d6ac76921cb4a1e86e748f1b8ec7851d26611c6539ea7"
+    },
+    {
+      "classification": "metadata_only",
+      "logical_type": "failure_injection",
+      "path": "data/fixtures/system_e2e/failure_injection_report.json",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "60c74768525369ccd84c04a64d7b6bbd30927508b2deba70a6155e4d9c7325a9"
+    },
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "module_descriptor_schema",
+      "path": "schema/workbench_module_descriptor.schema.json",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "87f0ae5e6b50a9f46d720c7ca1cc13019c10445f60da895f50404f75ac135d55"
+    },
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "analysis_plan_schema",
+      "path": "schema/analysis_plan.schema.json",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "a4e6a337aedeccb09723f46f0991d43f29d5136baa099b850e46251a1043e5da"
+    },
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "analysis_run_schema",
+      "path": "schema/analysis_run.schema.json",
+      "record_count": 1,
+      "schema_version": "1.1.0",
+      "sha256": "c6b15c32b4052ee52c2693f9f2736a7979f47771a363a094425de5644ac1b1b0"
+    },
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "gate_decision_schema",
+      "path": "schema/gate_decision.schema.json",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "6ce4dc6d8fed5441e247f332978d145ed175ea9fe619bf7647c97a7eed0209f5"
+    },
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "release_candidate_schema",
+      "path": "schema/release_candidate.schema.json",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "b8feac7734a4e3c99d2dc4836766282da36ce6be735fed740fcf2f0620118410"
+    },
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "system_fixture_schema",
+      "path": "schema/system_fixture.schema.json",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "6e9dd44da9a457265a1772ab46993f6f9f8f1b2928e3e0b79780dfef3b17faef"
+    },
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "social_export_package_schema",
+      "path": "schema/social_export_package.schema.json",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "e4b4ca31172977af4df28ffe981321a205b2b211991af07d3ace6462d3e513fb"
+    },
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "workbench_handoff_schema",
+      "path": "schema/workbench_handoff_manifest.schema.json",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "b6eaabe5c776aa39c2621509716d8b8dfc8edc5cced86346a8b62f87aa7df2c4"
+    },
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "joint_analysis_protocol",
+      "path": "docs/joint_analysis_protocol_zh.md",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "f27e32b8614f67aacf9c154ede730252f4d96905a654c697dcd89e7867d9381e"
+    },
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "local_operations",
+      "path": "docs/workbench_local_ops_zh.md",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "e66f641194d3a96b424253d8bcfac437d458bcc7ce50efa3efa1e275581ed82b"
+    },
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "workbench_web_entrypoint",
+      "path": "src/glyph_features/workbench/static/index.html",
+      "record_count": 1,
+      "schema_version": null,
+      "sha256": "5e63d31a96b0f2a2b52ce1d10edcf3d946fa98b2c02ee812524292a2323e53bd"
+    },
+    {
+      "classification": "public_code_or_schema",
+      "logical_type": "task_report",
+      "path": "data/releases/task05_joint_workbench_v1/TASK_05_REPORT_zh.md",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "a6fbfd7954b6d75b357e74f1a15d8aec650b750ad0d4b5329e0fd59d7907f8fd"
+    }
+  ],
+  "producer_provenance": {
+    "aggregate_sha256": "b0b05923d2b8dfa7df879b55c03d910f48c8797c338e837c8940e9eaa7e1b5fe",
+    "files": [
+      {
+        "path": "configs/joint_analysis_plan_v1.json",
+        "role": "config",
+        "sha256": "3297031a1923a7467a9b63d4c8debb4ecced265b373e3faf5a7a2acc95cdff71"
+      },
+      {
+        "path": "data/fixtures/system_e2e/browser_acceptance.json",
+        "role": "fixture",
+        "sha256": "d4e350e3e6abe70b4c2d6ac76921cb4a1e86e748f1b8ec7851d26611c6539ea7"
+      },
+      {
+        "path": "data/fixtures/system_e2e/failure_injection_report.json",
+        "role": "fixture",
+        "sha256": "60c74768525369ccd84c04a64d7b6bbd30927508b2deba70a6155e4d9c7325a9"
+      },
+      {
+        "path": "data/fixtures/system_e2e/generator_config.json",
+        "role": "fixture",
+        "sha256": "c25e36eaba641eaa5cd2350507db398f94c141b96b40f2b9413fdf8ecaf10905"
+      },
+      {
+        "path": "docs/joint_analysis_protocol_zh.md",
+        "role": "documentation",
+        "sha256": "f27e32b8614f67aacf9c154ede730252f4d96905a654c697dcd89e7867d9381e"
+      },
+      {
+        "path": "docs/workbench_local_ops_zh.md",
+        "role": "documentation",
+        "sha256": "e66f641194d3a96b424253d8bcfac437d458bcc7ce50efa3efa1e275581ed82b"
+      },
+      {
+        "path": "pyproject.toml",
+        "role": "dependency_lock",
+        "sha256": "87485364bc2c6a9c120e2f9fbfefaea7e905deef77719acd12baced3d338238f"
+      },
+      {
+        "path": "runtime.lock.json",
+        "role": "dependency_lock",
+        "sha256": "9891beac53dcaf9665dc3c5f6e25a586129afdea07fd6be6bcd52a4e13f668cd"
+      },
+      {
+        "path": "schema/analysis_plan.schema.json",
+        "role": "schema",
+        "sha256": "a4e6a337aedeccb09723f46f0991d43f29d5136baa099b850e46251a1043e5da"
+      },
+      {
+        "path": "schema/analysis_run.schema.json",
+        "role": "schema",
+        "sha256": "c6b15c32b4052ee52c2693f9f2736a7979f47771a363a094425de5644ac1b1b0"
+      },
+      {
+        "path": "schema/gate_decision.schema.json",
+        "role": "schema",
+        "sha256": "6ce4dc6d8fed5441e247f332978d145ed175ea9fe619bf7647c97a7eed0209f5"
+      },
+      {
+        "path": "schema/release_candidate.schema.json",
+        "role": "schema",
+        "sha256": "b8feac7734a4e3c99d2dc4836766282da36ce6be735fed740fcf2f0620118410"
+      },
+      {
+        "path": "schema/social_export_package.schema.json",
+        "role": "schema",
+        "sha256": "e4b4ca31172977af4df28ffe981321a205b2b211991af07d3ace6462d3e513fb"
+      },
+      {
+        "path": "schema/system_fixture.schema.json",
+        "role": "schema",
+        "sha256": "6e9dd44da9a457265a1772ab46993f6f9f8f1b2928e3e0b79780dfef3b17faef"
+      },
+      {
+        "path": "schema/workbench_handoff_manifest.schema.json",
+        "role": "schema",
+        "sha256": "b6eaabe5c776aa39c2621509716d8b8dfc8edc5cced86346a8b62f87aa7df2c4"
+      },
+      {
+        "path": "schema/workbench_module_descriptor.schema.json",
+        "role": "schema",
+        "sha256": "87f0ae5e6b50a9f46d720c7ca1cc13019c10445f60da895f50404f75ac135d55"
+      },
+      {
+        "path": "src/glyph_features/workbench/__init__.py",
+        "role": "source",
+        "sha256": "ebc30396ebc53f42526dd4e93d3a25e8213c5a6bf052533e4028676a67381897"
+      },
+      {
+        "path": "src/glyph_features/workbench/analysis/__init__.py",
+        "role": "source",
+        "sha256": "9afd9b5729cfb6f668acce9c5d0ee4f0bf54ed6cb04acae77f55889cb50b2c2d"
+      },
+      {
+        "path": "src/glyph_features/workbench/analysis/engine.py",
+        "role": "source",
+        "sha256": "523b3800413bb6f93b3da26fc5ab43d78a7f5e394172f5a5db1cdff004dad865"
+      },
+      {
+        "path": "src/glyph_features/workbench/app.py",
+        "role": "entrypoint",
+        "sha256": "a24438c0c5b7c007c1fd510c6ee4ff337930e977bb5551a0c9040d48d25f8712"
+      },
+      {
+        "path": "src/glyph_features/workbench/assembly.py",
+        "role": "source",
+        "sha256": "bcfd2b8da292ea8371ea11e99d284895eef0de6a216dc937422a8914c41cd2fb"
+      },
+      {
+        "path": "src/glyph_features/workbench/backups.py",
+        "role": "source",
+        "sha256": "019ef5dcc4db82fbbdfd3b90815fab9a1c56e60d0956a7a746a2aec18de896f7"
+      },
+      {
+        "path": "src/glyph_features/workbench/catalog.py",
+        "role": "source",
+        "sha256": "7ad989e8a69b71226e05146a056364bf72ceae9ff7a9e17b72099ae49385ce8d"
+      },
+      {
+        "path": "src/glyph_features/workbench/cli.py",
+        "role": "entrypoint",
+        "sha256": "d678871fb82a1b73d1d368a5cba6fe731b6ae2022dbc47f0c5c0c224c40cd68d"
+      },
+      {
+        "path": "src/glyph_features/workbench/gates.py",
+        "role": "source",
+        "sha256": "adadf4d091d0a0e4d83b8e5ebbd170b7a82fde9a552b47cee2c22017d44715e9"
+      },
+      {
+        "path": "src/glyph_features/workbench/handoff.py",
+        "role": "source",
+        "sha256": "735d1ce5f768f984e9d900c93f50820589959d0f55727c602d722cf84c822a0c"
+      },
+      {
+        "path": "src/glyph_features/workbench/handoff_import.py",
+        "role": "source",
+        "sha256": "9baaf09f6beab3b00613a6e1317a8d21cdf72eeca609b41671f21ae7f01cbfae"
+      },
+      {
+        "path": "src/glyph_features/workbench/handoffs.py",
+        "role": "source",
+        "sha256": "975ca731eff572abea16c545d97b1f5e198e6ff9a86c0b43acdf2995079b3a23"
+      },
+      {
+        "path": "src/glyph_features/workbench/joins.py",
+        "role": "source",
+        "sha256": "6f34ebbd56a5fc963c592c6eae5b8f8439e3f0a90de43f861afb63442c00e2d1"
+      },
+      {
+        "path": "src/glyph_features/workbench/modules.py",
+        "role": "source",
+        "sha256": "f71783caecac3951785ada8b438fc0bc4f2b55e27c50d965bd642ea13635d4b7"
+      },
+      {
+        "path": "src/glyph_features/workbench/operations.py",
+        "role": "source",
+        "sha256": "8821b9c75c31b5e5e1e981fd3575c9a96d8cdfca9434c9b06c0be6b9e4856dae"
+      },
+      {
+        "path": "src/glyph_features/workbench/releases.py",
+        "role": "source",
+        "sha256": "0ceb94794c7d92e0ddb1eedf53ed31100cf726c3b7196d75de0e46a95f168f80"
+      },
+      {
+        "path": "src/glyph_features/workbench/service.py",
+        "role": "source",
+        "sha256": "14c8d37ecbd83cee1e292645b75658fa3f8920339aa7dcbdbeb70851b551486e"
+      },
+      {
+        "path": "src/glyph_features/workbench/snapshots.py",
+        "role": "source",
+        "sha256": "d3f9c00c5cd29cc06ac315f101d9900687f3b12349fa2fd4a7b5794b4b8b3496"
+      },
+      {
+        "path": "src/glyph_features/workbench/social_adapter.py",
+        "role": "source",
+        "sha256": "b882db630fdb1620632b8f82af570e18eb0f8993b7824d80cccb37243a522d95"
+      },
+      {
+        "path": "src/glyph_features/workbench/static/app.js",
+        "role": "source",
+        "sha256": "ed86a08db34e95a4b4160eeec8725bd06b2bf2f30433e56a90ffa8e8557ff4e6"
+      },
+      {
+        "path": "src/glyph_features/workbench/static/index.html",
+        "role": "source",
+        "sha256": "5e63d31a96b0f2a2b52ce1d10edcf3d946fa98b2c02ee812524292a2323e53bd"
+      },
+      {
+        "path": "src/glyph_features/workbench/static/styles.css",
+        "role": "source",
+        "sha256": "f748a3005e45d864a684f9bdacc90b8905ddf118cac11cb8c31bb5e51d9b2756"
+      },
+      {
+        "path": "tests/test_workbench.py",
+        "role": "test",
+        "sha256": "2b20155c5479a7bde4bcf1052ab5be583f1cee512cf0d076756c951b336ba659"
+      },
+      {
+        "path": "tools/validate_task05_handoff.py",
+        "role": "source",
+        "sha256": "10e7598549cae5f2bdc52b0ad44e3e663fd95bc341c84818f9e8cec0301b4b3b"
+      },
+      {
+        "path": "uv.lock",
+        "role": "dependency_lock",
+        "sha256": "c9f99bdac027733780b4c31516225bf7598baa066e7113ca7197efd3dbc9b760"
+      }
+    ],
+    "implementation_commit": "c80f146151abf252f4f17b881e3cad9a205b8239",
+    "producer_snapshot_matches_commit": true,
+    "working_tree_state_at_generation": "clean"
+  },
+  "producer_version": "0.1.0",
+  "quality_gates": [
+    {
+      "evidence": "Four native validators and Git ancestry checks passed.",
+      "gate_id": "HANDOFF_COMPATIBILITY",
+      "status": "passed"
+    },
+    {
+      "evidence": "384 analysis units, validated WP2 export, audit package and restart persistence passed.",
+      "gate_id": "SYNTHETIC_E2E",
+      "status": "passed"
+    },
+    {
+      "evidence": "Desktop/mobile navigation, drilldown, operations and leakage checks passed.",
+      "gate_id": "BROWSER_ACCEPTANCE",
+      "status": "passed"
+    },
+    {
+      "evidence": "Both databases restored to new paths and tampering was rejected.",
+      "gate_id": "BACKUP_RESTORE",
+      "status": "passed"
+    },
+    {
+      "evidence": "Synthetic and unresolved human gates produced machine-readable blockers.",
+      "gate_id": "FORMAL_RELEASE",
+      "status": "blocked"
+    }
+  ],
+  "readiness": {
+    "engineering_ready": true,
+    "pilot_ready": false,
+    "research_validated": false
+  },
+  "task_id": "TASK-05",
+  "validation_evidence": {
+    "backup_restore": {
+      "evidence_path": "tests/test_workbench.py",
+      "sha256": "2b20155c5479a7bde4bcf1052ab5be583f1cee512cf0d076756c951b336ba659",
+      "status": "passed",
+      "summary": "Coordinated manifest, temporary restore and tamper rejection passed."
+    },
+    "browser": {
+      "evidence_path": "data/fixtures/system_e2e/browser_acceptance.json",
+      "sha256": "d4e350e3e6abe70b4c2d6ac76921cb4a1e86e748f1b8ec7851d26611c6539ea7",
+      "status": "passed",
+      "summary": "Eight views passed desktop/mobile screenshot, interaction, overflow and leakage checks."
+    },
+    "commands": [
+      {
+        "command": "uv run --frozen pytest -q tests/test_workbench.py",
+        "result": "TASK-05 focused suite passed.",
+        "status": "passed"
+      },
+      {
+        "command": "uv run --frozen pytest -q",
+        "result": "Repository suite passed.",
+        "status": "passed"
+      },
+      {
+        "command": "uv lock --check",
+        "result": "Dependency lock is current.",
+        "status": "passed"
+      },
+      {
+        "command": "node --check src/glyph_features/workbench/static/app.js",
+        "result": "Workbench JavaScript parsed successfully.",
+        "status": "passed"
+      }
+    ],
+    "failure_injection": {
+      "evidence_path": "data/fixtures/system_e2e/failure_injection_report.json",
+      "sha256": "60c74768525369ccd84c04a64d7b6bbd30927508b2deba70a6155e4d9c7325a9",
+      "status": "passed",
+      "summary": "Join, database, storage, CSRF, bind, overwrite, release and operation failures closed safely."
+    },
+    "system_e2e": {
+      "evidence_path": "tests/test_workbench.py",
+      "sha256": "2b20155c5479a7bde4bcf1052ab5be583f1cee512cf0d076756c951b336ba659",
+      "status": "passed",
+      "summary": "System fixture, restart persistence, audit export and formal-release blocking passed."
+    }
+  }
+}
