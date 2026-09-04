@@ -1,0 +1,11 @@
+{
+  "assignment_count": 4,
+  "errors": [],
+  "max_group_stimulus_exposure_spread": 1,
+  "max_stimulus_position_spread": 1,
+  "study_id": "study_cross_cultural_v1",
+  "summary_sha256": "649eba9479a9415eddb187d19634a8ee0ec4ed6cdc413c3fa8b3f67b31a2b892",
+  "trial_count": 32,
+  "unique_presentation_count": 32,
+  "valid": true
+}

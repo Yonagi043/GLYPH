@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "study_cross_cultural_v1",
+  "protocol_version": "1.0.0",
+  "title": "GLYPH cross-cultural visual perception engineering protocol",
+  "status": "engineering_fixture_frozen",
+  "synthetic_only": true,
+  "research_questions": [
+    "How do native-script experience and stimulus writing system interact for aesthetic, premium, modern and trustworthy ratings?",
+    "How much association remains after preregistered familiarity, recognition, visual clarity and training controls?",
+    "Do blind visual ratings differ from a separately preregistered labelled condition in a future protocol version?"
+  ],
+  "hypotheses": [
+    {
+      "hypothesis_id": "H1",
+      "statement": "Native-script experience may interact with stimulus writing system for each primary outcome.",
+      "estimand": "Average native-script by stimulus-script interaction on the latent ordinal response scale.",
+      "analysis_class": "confirmatory"
+    },
+    {
+      "hypothesis_id": "H2",
+      "statement": "Recognition, familiarity and visual clarity may partially account for script-associated rating differences.",
+      "estimand": "Change in preregistered script contrasts after adding recognition, familiarity and visual-clarity covariates.",
+      "analysis_class": "confirmatory"
+    },
+    {
+      "hypothesis_id": "H3",
+      "statement": "Design, typography and calligraphy training may moderate selected rating contrasts.",
+      "estimand": "Training by stimulus-script interaction with multiplicity control.",
+      "analysis_class": "exploratory"
+    }
+  ],
+  "design": {
+    "presentation_condition": "visual_blind",
+    "target_script_groups": ["latin", "han", "kana", "hangul"],
+    "block_size": 8,
+    "anchor_count": 2,
+    "max_consecutive_same_script": 1
+  },
+  "outcomes": {
+    "primary": ["aesthetic", "premium", "modern", "trustworthy"],
+    "secondary": ["visual_clarity", "recognition", "unfamiliarity", "brand_fit"]
+  },
+  "sampling_plan": {
+    "quota_basis": "self_reported_native_scripts_not_nationality",
+    "power_scenarios": [
+      {"standardized_effect": 0.1, "participant_icc": 0.1, "stimulus_icc": 0.1},
+      {"standardized_effect": 0.2, "participant_icc": 0.2, "stimulus_icc": 0.2},
+      {"standardized_effect": 0.3, "participant_icc": 0.3, "stimulus_icc": 0.3},
+      {"standardized_effect": 0.2, "participant_icc": 0.4, "stimulus_icc": 0.4}
+    ],
+    "sample_size_status": "scenario_only_pending_participant_gate"
+  },
+  "randomization": {
+    "algorithm": "balanced_incomplete_block_v1",
+    "seed_namespace": "task03-cross-cultural-v1",
+    "balance_tolerance": 1,
+    "resume_policy": "persist_assignment_and_resume_next_unsubmitted_presentation"
+  },
+  "exclusion_rules": {
+    "version": "1.0.0",
+    "outcome_blind": true,
+    "rules": [
+      {"code": "CONSENT_MISSING", "criterion": "No valid consent receipt exists.", "action": "flag_preserve_raw"},
+      {"code": "INELIGIBLE", "criterion": "The approved age or eligibility threshold is not met.", "action": "flag_preserve_raw"},
+      {"code": "INCOMPLETE", "criterion": "Fewer than six of eight assigned presentations have valid responses.", "action": "flag_preserve_raw"},
+      {"code": "ATTENTION_FAILED", "criterion": "The non-cultural attention check is failed.", "action": "flag_preserve_raw"},
+      {"code": "TOO_FAST", "criterion": "At least half of valid presentations are below the frozen 350 ms lower bound.", "action": "flag_preserve_raw"},
+      {"code": "STRAIGHTLINING", "criterion": "All non-missing primary ratings are identical across at least six presentations.", "action": "flag_preserve_raw"},
+      {"code": "VIEWPORT_UNUSABLE", "criterion": "At least half of presentations use a viewport below 320 by 480 CSS pixels.", "action": "flag_preserve_raw"},
+      {"code": "ASSET_FAILURE", "criterion": "Any expected asset is missing or fails SHA-256 verification.", "action": "flag_preserve_raw"},
+      {"code": "LANGUAGE_NOT_UNDERSTOOD", "criterion": "The participant reports not understanding the questionnaire language.", "action": "flag_preserve_raw"},
+      {"code": "BACKGROUND_MISSING", "criterion": "Required native-script or proficiency variables are absent.", "action": "flag_preserve_raw"}
+    ]
+  },
+  "analysis_plan": {
+    "primary_model": "ordinal_mixed_effects",
+    "participant_effect": "random_intercept",
+    "stimulus_effect": "random_intercept",
+    "interaction": "native_script_x_stimulus_script",
+    "multiple_comparisons": "Holm correction within each preregistered outcome family",
+    "missingness": "preserve_reason_never_zero_impute",
+    "confirmatory_frozen": true
+  },
+  "measurement_invariance": {
+    "required_before_cross_language_comparison": true,
+    "sequence": ["configural", "metric", "scalar"],
+    "current_status": "not_tested_no_real_participants"
+  },
+  "human_gates": {
+    "GATE-ETHICS": "blocked",
+    "GATE-PARTICIPANTS": "blocked",
+    "GATE-TRANSLATION": "blocked"
+  },
+  "created_at": "2026-09-04T00:00:00Z"
+}

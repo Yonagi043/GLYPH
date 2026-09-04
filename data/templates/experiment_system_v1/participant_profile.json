@@ -1,0 +1,53 @@
+{
+  "age_band": "25_34",
+  "created_at": "2026-09-04T00:00:00Z",
+  "cross_cultural_exposure": "moderate",
+  "data_origin": "synthetic",
+  "education_level": "prefer_not_to_say",
+  "language_understood": true,
+  "mother_tongues": [
+    {
+      "bcp47": "en",
+      "dominance": "primary"
+    }
+  ],
+  "native_scripts": [
+    "latin"
+  ],
+  "participant_id": "synp_reference_001",
+  "questionnaire_language": "en",
+  "region_category": "prefer_not_to_say",
+  "schema_version": "1.0.0",
+  "script_proficiencies": [
+    {
+      "exposure_frequency": 4,
+      "reading": 4,
+      "script": "latin",
+      "writing": 4
+    },
+    {
+      "exposure_frequency": 4,
+      "reading": 4,
+      "script": "han",
+      "writing": 4
+    },
+    {
+      "exposure_frequency": 4,
+      "reading": 4,
+      "script": "kana",
+      "writing": 4
+    },
+    {
+      "exposure_frequency": 4,
+      "reading": 4,
+      "script": "hangul",
+      "writing": 4
+    }
+  ],
+  "study_id": "study_cross_cultural_v1",
+  "training": {
+    "calligraphy": "none",
+    "design": "none",
+    "typography": "none"
+  }
+}

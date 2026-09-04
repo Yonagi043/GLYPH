@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH experiment stimulus catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "study_id", "data_origin", "source_handoff", "items"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "study_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "data_origin": { "const": "synthetic" },
+    "source_handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "handoff_schema_version", "path", "sha256", "strict_validation"],
+      "properties": {
+        "task_id": { "const": "TASK-01" },
+        "handoff_schema_version": { "const": "2.0.0" },
+        "path": { "type": "string", "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "strict_validation": { "const": "passed" }
+      }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["stimulus_id", "source_stimulus_id", "work_id", "writing_system", "is_anchor", "asset", "rights_tier", "release_status", "blind_metadata", "data_origin"],
+        "properties": {
+          "stimulus_id": { "$ref": "shared.schema.json#/$defs/stimulusId" },
+          "source_stimulus_id": { "$ref": "shared.schema.json#/$defs/stimulusId" },
+          "work_id": { "$ref": "shared.schema.json#/$defs/id" },
+          "writing_system": { "type": "string", "enum": ["latin", "han", "kana", "hangul"] },
+          "is_anchor": { "type": "boolean" },
+          "asset": { "$ref": "shared.schema.json#/$defs/assetRef" },
+          "rights_tier": { "const": "open" },
+          "release_status": { "const": "fixture_only" },
+          "blind_metadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["award_hidden", "source_hidden", "brand_hidden", "filename_hidden"],
+            "properties": {
+              "award_hidden": { "const": true },
+              "source_hidden": { "const": true },
+              "brand_hidden": { "const": true },
+              "filename_hidden": { "const": true }
+            }
+          },
+          "data_origin": { "const": "synthetic" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH TASK-03 experiment handoff manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "handoff_schema_version",
+    "task_id",
+    "producer_version",
+    "implementation_commit",
+    "contract_compatibility",
+    "producer_provenance",
+    "created_at",
+    "readiness",
+    "contract_versions",
+    "input_snapshots",
+    "outputs",
+    "quality_gates",
+    "known_limitations",
+    "blocked_human_gates",
+    "next_task_entrypoints",
+    "integration_requests"
+  ],
+  "properties": {
+    "handoff_schema_version": { "const": "2.0.0" },
+    "task_id": { "const": "TASK-03" },
+    "producer_version": { "const": "1.0.0" },
+    "implementation_commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "contract_compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["previous_version", "backward_compatible", "reason"],
+      "properties": {
+        "previous_version": { "type": "null" },
+        "backward_compatible": { "const": false },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "producer_provenance": { "$ref": "#/$defs/producerProvenance" },
+    "created_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engineering_ready", "pilot_ready", "research_validated"],
+      "properties": {
+        "engineering_ready": { "type": "boolean" },
+        "pilot_ready": { "const": false },
+        "research_validated": { "const": false }
+      }
+    },
+    "contract_versions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "input_snapshots": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "quality_gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/gateStatus" }
+    },
+    "known_limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "blocked_human_gates": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gate_id", "status", "packet_path", "reasons"],
+        "properties": {
+          "gate_id": {
+            "type": "string",
+            "enum": ["GATE-ETHICS", "GATE-PARTICIPANTS", "GATE-TRANSLATION", "GATE-FORMAL-STIMULI", "GATE-EXPERIMENT-RUNTIME"]
+          },
+          "status": { "const": "blocked" },
+          "packet_path": { "$ref": "#/$defs/repoPath" },
+          "reasons": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "next_task_entrypoints": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "status", "path", "notes"],
+        "properties": {
+          "task_id": { "type": "string", "enum": ["TASK-04", "TASK-05"] },
+          "status": { "type": "string", "enum": ["fixture_only", "blocked", "metadata_only"] },
+          "path": { "$ref": "#/$defs/repoPath" },
+          "notes": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "integration_requests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target", "status", "reason"],
+        "properties": {
+          "target": { "$ref": "#/$defs/repoPath" },
+          "status": { "type": "string", "enum": ["included_in_implementation", "pending_downstream"] },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "repoPath": {
+      "type": "string",
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "producerProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base_commit", "working_tree_state", "producer_snapshot_matches_base", "aggregate_sha256", "files"],
+      "properties": {
+        "base_commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "working_tree_state": { "type": "string", "enum": ["clean", "dirty"] },
+        "producer_snapshot_matches_base": { "const": true },
+        "aggregate_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "path", "sha256"],
+            "properties": {
+              "role": { "type": "string", "enum": ["entrypoint", "dependency_lock", "config", "schema", "producer_source", "test", "documentation", "fixture"] },
+              "path": { "$ref": "#/$defs/repoPath" },
+              "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+            }
+          }
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logical_type", "path", "sha256", "record_count", "privacy_level", "schema_version", "validation_schema"],
+      "properties": {
+        "logical_type": { "type": "string", "minLength": 1 },
+        "path": { "$ref": "#/$defs/repoPath" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "record_count": { "type": "integer", "minimum": 0 },
+        "privacy_level": { "type": "string", "enum": ["upstream_open_fixture", "synthetic_fixture", "public_code_or_schema", "local_validation_evidence", "blocked_human_gate"] },
+        "schema_version": { "type": ["string", "null"] },
+        "validation_schema": { "anyOf": [{ "$ref": "#/$defs/repoPath" }, { "type": "null" }] }
+      }
+    },
+    "gateStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_id", "status", "evidence"],
+      "properties": {
+        "gate_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["passed", "fixture_only", "needs_review", "blocked"] },
+        "evidence": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

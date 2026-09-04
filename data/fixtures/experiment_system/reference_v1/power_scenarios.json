@@ -1,0 +1,53 @@
+{
+  "alpha_two_sided": 0.05,
+  "limitations": [
+    "Effect sizes are hypothetical planning inputs, not observed GLYPH effects.",
+    "Crossed participant/stimulus clustering is approximated and must be replaced by model-based simulation before recruitment.",
+    "Multiplicity, attrition, measurement non-invariance and quota availability require separate sensitivity analyses."
+  ],
+  "method": "normal_approximation_with_crossed_clustering_design_effect",
+  "scenario_total_range": [
+    2812,
+    11744
+  ],
+  "scenarios": [
+    {
+      "design_effect": 1.87,
+      "participant_icc": 0.1,
+      "required_per_group_approx": 2936,
+      "required_total_approx": 11744,
+      "standardized_effect": 0.1,
+      "stimulus_icc": 0.1,
+      "trials_per_participant": 8
+    },
+    {
+      "design_effect": 2.88,
+      "participant_icc": 0.2,
+      "required_per_group_approx": 1131,
+      "required_total_approx": 4524,
+      "standardized_effect": 0.2,
+      "stimulus_icc": 0.2,
+      "trials_per_participant": 8
+    },
+    {
+      "design_effect": 4.03,
+      "participant_icc": 0.3,
+      "required_per_group_approx": 703,
+      "required_total_approx": 2812,
+      "standardized_effect": 0.3,
+      "stimulus_icc": 0.3,
+      "trials_per_participant": 8
+    },
+    {
+      "design_effect": 5.32,
+      "participant_icc": 0.4,
+      "required_per_group_approx": 2088,
+      "required_total_approx": 8352,
+      "standardized_effect": 0.2,
+      "stimulus_icc": 0.4,
+      "trials_per_participant": 8
+    }
+  ],
+  "status": "planning_scenarios_not_approved_sample_size",
+  "target_power": 0.8
+}

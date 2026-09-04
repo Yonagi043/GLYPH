@@ -1,0 +1,350 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "study_cross_cultural_v1",
+  "questionnaire_version": "1.0.0",
+  "source_language": "zh-Hans",
+  "supported_languages": ["zh-Hans", "en", "ja", "ko"],
+  "status": "draft_unreviewed",
+  "modules": [
+    "information_consent",
+    "eligibility",
+    "language_scripts",
+    "training_exposure",
+    "device_practice",
+    "visual_ratings",
+    "recognition",
+    "quality",
+    "optional_feedback",
+    "completion_withdrawal"
+  ],
+  "scale_definitions": {
+    "likert_1_7": {
+      "minimum": 1,
+      "maximum": 7,
+      "missing_codes": ["not_applicable", "refused"],
+      "anchors": {
+        "zh-Hans": {"low": "完全不", "mid": "中立", "high": "非常", "not_applicable": "不适用/无法判断", "refused": "不愿回答"},
+        "en": {"low": "Not at all", "mid": "Neutral", "high": "Very much", "not_applicable": "Not applicable / cannot judge", "refused": "Prefer not to answer"},
+        "ja": {"low": "まったくそう思わない", "mid": "どちらでもない", "high": "非常にそう思う", "not_applicable": "該当しない／判断できない", "refused": "回答しない"},
+        "ko": {"low": "전혀 그렇지 않다", "mid": "보통이다", "high": "매우 그렇다", "not_applicable": "해당 없음 / 판단할 수 없음", "refused": "응답하지 않음"}
+      }
+    }
+  },
+  "items": [
+    {
+      "item_id": "item_study_information",
+      "module": "information_consent",
+      "construct": "study_information",
+      "response_type": "information",
+      "option_set": null,
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "本研究比较不同文字视觉形式的感知。当前版本仅用于合成工程测试，不收集真人数据。", "review_status": "source_draft"},
+        "en": {"text": "This study compares perceptions of visual forms across writing systems. This version is for synthetic engineering tests only and does not collect real-person data.", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "本研究は異なる文字体系の視覚形式に対する知覚を比較します。現在の版は合成工学テスト専用で、実在する参加者のデータは収集しません。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "이 연구는 문자 체계별 시각적 형태에 대한 인식을 비교합니다. 현재 버전은 합성 엔지니어링 테스트 전용이며 실제 참여자 데이터를 수집하지 않습니다.", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_consent",
+      "module": "information_consent",
+      "construct": "consent",
+      "response_type": "consent",
+      "option_set": "consent",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "我已阅读研究信息，并同意按所示条件参加。", "review_status": "source_draft"},
+        "en": {"text": "I have read the study information and agree to participate under the stated conditions.", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "研究情報を読み、記載された条件で参加することに同意します。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "연구 정보를 읽었으며 명시된 조건에 따라 참여하는 데 동의합니다.", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_age_eligible",
+      "module": "eligibility",
+      "construct": "age_eligibility",
+      "response_type": "single_choice",
+      "option_set": "yes_no",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "你是否达到经伦理批准的最低参与年龄？", "review_status": "source_draft"},
+        "en": {"text": "Do you meet the minimum participation age approved by ethics review?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "倫理審査で承認された最低参加年齢に達していますか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "윤리 심의에서 승인된 최소 참여 연령을 충족합니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_language_understood",
+      "module": "eligibility",
+      "construct": "questionnaire_language_comprehension",
+      "response_type": "single_choice",
+      "option_set": "yes_no",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "你是否能够充分理解当前问卷语言？", "review_status": "source_draft"},
+        "en": {"text": "Can you understand the current questionnaire language well enough?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "現在の質問票の言語を十分に理解できますか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "현재 설문 언어를 충분히 이해할 수 있습니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_mother_tongues",
+      "module": "language_scripts",
+      "construct": "mother_tongues",
+      "response_type": "multi_choice",
+      "option_set": "languages",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "请选择你的母语；可多选，并另行标注主要语言。", "review_status": "source_draft"},
+        "en": {"text": "Select your mother tongue(s); you may select more than one and separately mark the primary language.", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "母語を選択してください。複数選択でき、主要言語は別に示します。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "모국어를 선택하십시오. 여러 개를 선택할 수 있으며 주 언어는 별도로 표시합니다.", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_native_scripts",
+      "module": "language_scripts",
+      "construct": "native_scripts",
+      "response_type": "multi_choice",
+      "option_set": "scripts",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "请选择你从小熟练使用的文字系统；可多选。", "review_status": "source_draft"},
+        "en": {"text": "Select the writing system(s) you have used proficiently since childhood; multiple selections are allowed.", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "幼少期から習熟して使用している文字体系を選択してください。複数選択できます。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "어릴 때부터 능숙하게 사용한 문자 체계를 선택하십시오. 복수 선택이 가능합니다.", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_script_proficiency",
+      "module": "language_scripts",
+      "construct": "script_reading_writing_exposure",
+      "response_type": "single_choice",
+      "option_set": "proficiency_1_7",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "请分别评价你对拉丁、汉字、假名和韩文的阅读、书写与接触频率。", "review_status": "source_draft"},
+        "en": {"text": "Rate reading, writing and exposure frequency separately for Latin, Han, Kana and Hangul.", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "ラテン文字、漢字、仮名、ハングルについて、読む力、書く力、接触頻度を別々に評価してください。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "라틴, 한자, 가나, 한글 각각에 대해 읽기, 쓰기, 노출 빈도를 평가하십시오.", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_design_training",
+      "module": "training_exposure",
+      "construct": "design_typography_training",
+      "response_type": "single_choice",
+      "option_set": "training",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "你的设计或字体排印训练程度是？", "review_status": "source_draft"},
+        "en": {"text": "What is your level of design or typography training?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "デザインまたはタイポグラフィの訓練経験はどの程度ですか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "디자인 또는 타이포그래피 교육 수준은 어느 정도입니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_calligraphy_training",
+      "module": "training_exposure",
+      "construct": "calligraphy_training",
+      "response_type": "single_choice",
+      "option_set": "training",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "你的书法或文字艺术训练程度是？", "review_status": "source_draft"},
+        "en": {"text": "What is your level of calligraphy or lettering-arts training?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "書道または文字芸術の訓練経験はどの程度ですか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "서예 또는 레터링 예술 교육 수준은 어느 정도입니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_device_ready",
+      "module": "device_practice",
+      "construct": "device_calibration",
+      "response_type": "single_choice",
+      "option_set": "yes_no",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "图像是否完整可见，且屏幕亮度与环境适合观看？", "review_status": "source_draft"},
+        "en": {"text": "Is the image fully visible, with screen brightness and surroundings suitable for viewing?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "画像全体が見え、画面の明るさと周囲の環境は観察に適していますか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "이미지 전체가 보이며 화면 밝기와 주변 환경이 관찰에 적합합니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_practice_instruction",
+      "module": "device_practice",
+      "construct": "practice",
+      "response_type": "information",
+      "option_set": null,
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "练习题只用于熟悉操作，不进入分析。请根据第一印象作答。", "review_status": "source_draft"},
+        "en": {"text": "The practice item is only for learning the controls and is not analyzed. Respond from your first impression.", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "練習項目は操作に慣れるためだけのもので、分析には含めません。第一印象で回答してください。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "연습 문항은 조작에 익숙해지기 위한 것이며 분석에 포함되지 않습니다. 첫인상에 따라 응답하십시오.", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_aesthetic",
+      "module": "visual_ratings",
+      "construct": "aesthetic",
+      "response_type": "likert_1_7",
+      "option_set": "rating_1_7_na",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "整体上，这个视觉形式美观吗？", "review_status": "source_draft"},
+        "en": {"text": "Overall, is this visual form aesthetically pleasing?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "全体として、この視覚形式は美しいですか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "전반적으로 이 시각적 형태가 아름답습니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_premium",
+      "module": "visual_ratings",
+      "construct": "premium",
+      "response_type": "likert_1_7",
+      "option_set": "rating_1_7_na",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "这个视觉形式给人高级、精致的感觉吗？", "review_status": "source_draft"},
+        "en": {"text": "Does this visual form feel premium and refined?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "この視覚形式から高級で洗練された印象を受けますか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "이 시각적 형태가 고급스럽고 세련된 느낌을 줍니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_modern",
+      "module": "visual_ratings",
+      "construct": "modern",
+      "response_type": "likert_1_7",
+      "option_set": "rating_1_7_na",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "这个视觉形式给人现代的感觉吗？", "review_status": "source_draft"},
+        "en": {"text": "Does this visual form feel modern?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "この視覚形式から現代的な印象を受けますか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "이 시각적 형태가 현대적인 느낌을 줍니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_trustworthy",
+      "module": "visual_ratings",
+      "construct": "trustworthy",
+      "response_type": "likert_1_7",
+      "option_set": "rating_1_7_na",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "如果用于品牌，这个视觉形式给人可信的感觉吗？", "review_status": "source_draft"},
+        "en": {"text": "If used for a brand, does this visual form feel trustworthy?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "ブランドに使われた場合、この視覚形式は信頼できる印象を与えますか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "브랜드에 사용된다면 이 시각적 형태가 신뢰감을 줍니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_visual_clarity",
+      "module": "visual_ratings",
+      "construct": "visual_clarity",
+      "response_type": "likert_1_7",
+      "option_set": "rating_1_7_na",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "不考虑是否认识文字，这个视觉形式的轮廓和结构清楚吗？", "review_status": "source_draft"},
+        "en": {"text": "Regardless of whether you recognize the writing, are the form's contours and structure visually clear?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "文字を読めるかどうかにかかわらず、この形式の輪郭と構造は視覚的に明瞭ですか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "문자를 알아볼 수 있는지와 관계없이 형태의 윤곽과 구조가 시각적으로 명확합니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_recognition",
+      "module": "recognition",
+      "construct": "recognition",
+      "response_type": "likert_1_7",
+      "option_set": "rating_1_7_na",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "你能读出或识别这个文字内容吗？", "review_status": "source_draft"},
+        "en": {"text": "Can you read or recognize the written content?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "この文字内容を読んだり認識したりできますか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "이 문자 내용을 읽거나 알아볼 수 있습니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_unfamiliarity",
+      "module": "recognition",
+      "construct": "unfamiliarity",
+      "response_type": "likert_1_7",
+      "option_set": "rating_1_7_na",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "这个视觉形式对你来说陌生吗？", "review_status": "source_draft"},
+        "en": {"text": "Does this visual form feel unfamiliar to you?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "この視覚形式はあなたにとって馴染みがありませんか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "이 시각적 형태가 낯설게 느껴집니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_brand_fit",
+      "module": "recognition",
+      "construct": "brand_fit",
+      "response_type": "likert_1_7",
+      "option_set": "rating_1_7_na",
+      "required": false,
+      "translations": {
+        "zh-Hans": {"text": "仅在页面提供冻结品类场景时：这个视觉形式适合该品牌品类吗？", "review_status": "source_draft"},
+        "en": {"text": "Only when a frozen category context is shown: does this visual form fit that brand category?", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "固定されたカテゴリー文脈が表示された場合のみ、この視覚形式はそのブランドカテゴリーに適していますか。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "고정된 범주 맥락이 제시된 경우에만, 이 시각적 형태가 해당 브랜드 범주에 적합합니까?", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_attention_shape",
+      "module": "quality",
+      "construct": "attention",
+      "response_type": "single_choice",
+      "option_set": "attention_shape",
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "注意力检查：请选择页面中显示的简单形状；不要求识别任何文字或文化知识。", "review_status": "source_draft"},
+        "en": {"text": "Attention check: select the simple shape shown on the page; no writing-system or cultural knowledge is required.", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "注意確認：ページに表示された単純な図形を選んでください。文字や文化の知識は必要ありません。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "주의력 확인: 페이지에 표시된 단순한 도형을 선택하십시오. 문자나 문화 지식은 필요하지 않습니다.", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_optional_feedback",
+      "module": "optional_feedback",
+      "construct": "questionnaire_feedback",
+      "response_type": "optional_text",
+      "option_set": null,
+      "required": false,
+      "translations": {
+        "zh-Hans": {"text": "可选：哪些题目难以理解？请勿填写姓名、联系方式或其他身份信息。", "review_status": "source_draft"},
+        "en": {"text": "Optional: which items were hard to understand? Do not enter names, contact details or other identifying information.", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "任意：理解しにくい項目はありましたか。氏名、連絡先、その他の個人識別情報は入力しないでください。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "선택 사항: 이해하기 어려운 문항이 있었습니까? 이름, 연락처 또는 기타 식별 정보를 입력하지 마십시오.", "review_status": "translated_draft_unreviewed"}
+      }
+    },
+    {
+      "item_id": "item_completion_withdrawal",
+      "module": "completion_withdrawal",
+      "construct": "completion_and_withdrawal",
+      "response_type": "information",
+      "option_set": null,
+      "required": true,
+      "translations": {
+        "zh-Hans": {"text": "完成后将显示去标识参与者编号和经批准的撤回说明；联系与补偿记录由独立受限系统保存。", "review_status": "source_draft"},
+        "en": {"text": "After completion, a deidentified participant code and approved withdrawal instructions will be shown; contact and compensation records are held in a separate restricted system.", "review_status": "translated_draft_unreviewed"},
+        "ja": {"text": "完了後、匿名化された参加者コードと承認済みの撤回方法が表示されます。連絡先と謝礼記録は別の制限システムで保管されます。", "review_status": "translated_draft_unreviewed"},
+        "ko": {"text": "완료 후 비식별 참여자 코드와 승인된 철회 안내가 표시됩니다. 연락처와 보상 기록은 별도의 제한된 시스템에 보관됩니다.", "review_status": "translated_draft_unreviewed"}
+      }
+    }
+  ],
+  "translation_workflow": {
+    "machine_translation_claimed_reviewed": false,
+    "back_translation": "not_started",
+    "committee_review": "not_started",
+    "cognitive_interviews": "not_started",
+    "change_policy": "wording_change_requires_new_questionnaire_version"
+  }
+}

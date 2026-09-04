@@ -1,0 +1,10 @@
+{
+  "age_eligible": true,
+  "consent_version": "1.0.0",
+  "data_origin": "synthetic",
+  "participant_id": "synp_reference_001",
+  "recorded_at": "2026-09-04T00:00:00Z",
+  "schema_version": "1.0.0",
+  "status": "consented",
+  "study_id": "study_cross_cultural_v1"
+}

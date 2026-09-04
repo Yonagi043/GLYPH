@@ -1,0 +1,366 @@
+{
+  "data_origin": "synthetic",
+  "items": [
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": true,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_latin_01",
+      "work_id": "work_task03_latin_01",
+      "writing_system": "latin"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": false,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_latin_02",
+      "work_id": "work_task03_latin_02",
+      "writing_system": "latin"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": false,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_latin_03",
+      "work_id": "work_task03_latin_03",
+      "writing_system": "latin"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": false,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_latin_04",
+      "work_id": "work_task03_latin_04",
+      "writing_system": "latin"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": true,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_han_01",
+      "work_id": "work_task03_han_01",
+      "writing_system": "han"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": false,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_han_02",
+      "work_id": "work_task03_han_02",
+      "writing_system": "han"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": false,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_han_03",
+      "work_id": "work_task03_han_03",
+      "writing_system": "han"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": false,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_han_04",
+      "work_id": "work_task03_han_04",
+      "writing_system": "han"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": true,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_kana_01",
+      "work_id": "work_task03_kana_01",
+      "writing_system": "kana"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": false,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_kana_02",
+      "work_id": "work_task03_kana_02",
+      "writing_system": "kana"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": false,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_kana_03",
+      "work_id": "work_task03_kana_03",
+      "writing_system": "kana"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": false,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_kana_04",
+      "work_id": "work_task03_kana_04",
+      "writing_system": "kana"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": true,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_hangul_01",
+      "work_id": "work_task03_hangul_01",
+      "writing_system": "hangul"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": false,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_hangul_02",
+      "work_id": "work_task03_hangul_02",
+      "writing_system": "hangul"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": false,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_hangul_03",
+      "work_id": "work_task03_hangul_03",
+      "writing_system": "hangul"
+    },
+    {
+      "asset": {
+        "byte_size": 10819,
+        "mime_type": "image/png",
+        "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+        "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+      },
+      "blind_metadata": {
+        "award_hidden": true,
+        "brand_hidden": true,
+        "filename_hidden": true,
+        "source_hidden": true
+      },
+      "data_origin": "synthetic",
+      "is_anchor": false,
+      "release_status": "fixture_only",
+      "rights_tier": "open",
+      "source_stimulus_id": "stim_eco_ed82ad5985adf0287b9a",
+      "stimulus_id": "stim_task03_hangul_04",
+      "work_id": "work_task03_hangul_04",
+      "writing_system": "hangul"
+    }
+  ],
+  "schema_version": "1.0.0",
+  "source_handoff": {
+    "handoff_schema_version": "2.0.0",
+    "path": "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+    "sha256": "acc193134495401b9a026aab0e7a866d7f15202b9b865db0d73d6f689bd1bdab",
+    "strict_validation": "passed",
+    "task_id": "TASK-01"
+  },
+  "study_id": "study_cross_cultural_v1"
+}

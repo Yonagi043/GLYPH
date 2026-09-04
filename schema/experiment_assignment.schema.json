@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH experiment assignment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "assignment_id", "study_id", "protocol_version", "questionnaire_version", "participant_id", "data_origin", "participant_group", "block_id", "seed_sha256", "assignment_probability", "quota_snapshot", "trials", "status", "resume_next_trial", "created_at"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "assignment_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "study_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "protocol_version": { "const": "1.0.0" },
+    "questionnaire_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "participant_id": { "type": "string" },
+    "data_origin": { "type": "string", "enum": ["synthetic", "real"] },
+    "participant_group": { "type": "string", "enum": ["latin", "han", "kana", "hangul", "multiscript"] },
+    "block_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "seed_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "assignment_probability": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+    "quota_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["group_sequence", "group_assignment_count_before"],
+      "properties": {
+        "group_sequence": { "type": "integer", "minimum": 0 },
+        "group_assignment_count_before": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "trials": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["presentation_id", "trial_index", "stimulus_id", "source_stimulus_id", "work_id", "writing_system", "is_anchor", "asset_path", "asset_sha256", "condition"],
+        "properties": {
+          "presentation_id": { "$ref": "shared.schema.json#/$defs/id" },
+          "trial_index": { "type": "integer", "minimum": 1 },
+          "stimulus_id": { "$ref": "shared.schema.json#/$defs/stimulusId" },
+          "source_stimulus_id": { "$ref": "shared.schema.json#/$defs/stimulusId" },
+          "work_id": { "$ref": "shared.schema.json#/$defs/id" },
+          "writing_system": { "type": "string", "enum": ["latin", "han", "kana", "hangul"] },
+          "is_anchor": { "type": "boolean" },
+          "asset_path": { "type": "string", "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+          "asset_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "condition": { "const": "visual_blind" }
+        }
+      }
+    },
+    "status": { "type": "string", "enum": ["assigned", "in_progress", "completed", "withdrawn"] },
+    "resume_next_trial": { "type": "integer", "minimum": 1 },
+    "created_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "data_origin": { "const": "synthetic" } }, "required": ["data_origin"] },
+      "then": { "properties": { "participant_id": { "pattern": "^synp_[a-z0-9_-]{4,63}$" } } },
+      "else": { "properties": { "participant_id": { "pattern": "^p_[A-Za-z0-9_-]{2,63}$" } } }
+    }
+  ]
+}

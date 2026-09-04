@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH multilingual questionnaire definition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "study_id", "questionnaire_version", "source_language", "supported_languages", "status", "modules", "scale_definitions", "items", "translation_workflow"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "study_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "questionnaire_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "source_language": { "const": "zh-Hans" },
+    "supported_languages": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": { "type": "string", "enum": ["zh-Hans", "en", "ja", "ko"] }
+    },
+    "status": { "const": "draft_unreviewed" },
+    "modules": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["information_consent", "eligibility", "language_scripts", "training_exposure", "device_practice", "visual_ratings", "recognition", "quality", "optional_feedback", "completion_withdrawal"]
+      }
+    },
+    "scale_definitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["likert_1_7"],
+      "properties": {
+        "likert_1_7": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minimum", "maximum", "missing_codes", "anchors"],
+          "properties": {
+            "minimum": { "const": 1 },
+            "maximum": { "const": 7 },
+            "missing_codes": {
+              "type": "array",
+              "minItems": 2,
+              "uniqueItems": true,
+              "items": { "type": "string", "enum": ["not_applicable", "refused"] }
+            },
+            "anchors": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["zh-Hans", "en", "ja", "ko"],
+              "properties": {
+                "zh-Hans": { "$ref": "#/$defs/anchors" },
+                "en": { "$ref": "#/$defs/anchors" },
+                "ja": { "$ref": "#/$defs/anchors" },
+                "ko": { "$ref": "#/$defs/anchors" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "translation_workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["machine_translation_claimed_reviewed", "back_translation", "committee_review", "cognitive_interviews", "change_policy"],
+      "properties": {
+        "machine_translation_claimed_reviewed": { "const": false },
+        "back_translation": { "const": "not_started" },
+        "committee_review": { "const": "not_started" },
+        "cognitive_interviews": { "const": "not_started" },
+        "change_policy": { "const": "wording_change_requires_new_questionnaire_version" }
+      }
+    }
+  },
+  "$defs": {
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_id", "module", "construct", "response_type", "option_set", "required", "translations"],
+      "properties": {
+        "item_id": { "type": "string", "pattern": "^item_[a-z0-9_]{2,63}$" },
+        "module": { "type": "string", "enum": ["information_consent", "eligibility", "language_scripts", "training_exposure", "device_practice", "visual_ratings", "recognition", "quality", "optional_feedback", "completion_withdrawal"] },
+        "construct": { "type": "string", "minLength": 1 },
+        "response_type": { "type": "string", "enum": ["information", "consent", "single_choice", "multi_choice", "likert_1_7", "optional_text"] },
+        "option_set": {
+          "type": ["string", "null"],
+          "enum": ["consent", "yes_no", "languages", "scripts", "proficiency_1_7", "training", "rating_1_7_na", "attention_shape", null]
+        },
+        "required": { "type": "boolean" },
+        "translations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["zh-Hans", "en", "ja", "ko"],
+          "properties": {
+            "zh-Hans": { "$ref": "#/$defs/translation" },
+            "en": { "$ref": "#/$defs/translation" },
+            "ja": { "$ref": "#/$defs/translation" },
+            "ko": { "$ref": "#/$defs/translation" }
+          }
+        }
+      }
+    },
+    "translation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "review_status"],
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "review_status": { "type": "string", "enum": ["source_draft", "translated_draft_unreviewed", "human_reviewed"] }
+      }
+    },
+    "anchors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["low", "mid", "high", "not_applicable", "refused"],
+      "properties": {
+        "low": { "type": "string", "minLength": 1 },
+        "mid": { "type": "string", "minLength": 1 },
+        "high": { "type": "string", "minLength": 1 },
+        "not_applicable": { "type": "string", "minLength": 1 },
+        "refused": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
