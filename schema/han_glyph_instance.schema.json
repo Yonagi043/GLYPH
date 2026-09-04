@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH Han glyph instance record",
+  "description": "One glyph in one source, work, font, or generated fixture. It is not a style concept or historical claim.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "glyph_instance_id",
+    "data_origin",
+    "mapping_id",
+    "style_id",
+    "work_id",
+    "font_id",
+    "source_id",
+    "source_locator",
+    "asset_id",
+    "representation_asset_ids",
+    "acquisition_type",
+    "parent_glyph_instance_id",
+    "exemplar_cluster_id",
+    "variable_axes",
+    "static_instance_sha256",
+    "rights_tier",
+    "release_tier",
+    "identity_status",
+    "attribution_status",
+    "structure",
+    "structure_qc",
+    "historical_claim_ids",
+    "expert_review_status",
+    "notes"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "glyph_instance_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "data_origin": { "type": "string", "enum": ["source_record", "generated_fixture"] },
+    "mapping_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "style_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "work_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "font_id": {
+      "anyOf": [
+        { "$ref": "shared.schema.json#/$defs/id" },
+        { "type": "null" }
+      ]
+    },
+    "source_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "source_locator": { "type": "string", "minLength": 1 },
+    "asset_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "representation_asset_ids": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["original", "A_layout", "B_shape", "B_shape_mask", "C_ink"],
+      "properties": {
+        "original": { "$ref": "shared.schema.json#/$defs/id" },
+        "A_layout": {
+          "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
+        },
+        "B_shape": {
+          "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
+        },
+        "B_shape_mask": {
+          "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
+        },
+        "C_ink": {
+          "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
+        }
+      }
+    },
+    "acquisition_type": {
+      "type": "string",
+      "enum": ["historical_source", "expert_tracing", "digital_font", "generated_fixture"]
+    },
+    "parent_glyph_instance_id": {
+      "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
+    },
+    "exemplar_cluster_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "variable_axes": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "static_instance_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "rights_tier": {
+      "type": "string",
+      "enum": ["open", "research_local_only", "metadata_only", "blocked_unknown"]
+    },
+    "release_tier": {
+      "type": "string",
+      "enum": ["metadata_only", "fixture_only", "research_local_only", "release_candidate"]
+    },
+    "identity_status": {
+      "type": "string",
+      "enum": ["pending", "evidence_supported", "disputed", "rejected", "synthetic_fixture", "unmapped"]
+    },
+    "attribution_status": {
+      "type": "string",
+      "enum": ["pending", "evidence_supported", "disputed", "rejected", "synthetic_fixture"]
+    },
+    "structure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["annotation_status", "components", "contour_asset_id", "mask_asset_id", "notes"],
+      "properties": {
+        "annotation_status": { "type": "string", "enum": ["unannotated", "candidate", "human_verified", "synthetic_fixture"] },
+        "components": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "contour_asset_id": {
+          "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
+        },
+        "mask_asset_id": {
+          "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
+        },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "structure_qc": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "failure_codes"],
+      "properties": {
+        "status": { "type": "string", "enum": ["pending", "passed", "failed", "needs_review", "fixture_only"] },
+        "failure_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "GLYPH_IDENTITY_UNVERIFIED",
+              "GLYPH_STYLE_UNVERIFIED",
+              "GLYPH_FALLBACK_DETECTED",
+              "GLYPH_MISSING_CHARACTER",
+              "GLYPH_STRUCTURE_UNVERIFIED",
+              "GLYPH_ASSET_INVALID",
+              "GLYPH_RIGHTS_BLOCKED",
+              "GLYPH_SYNTHETIC_FIXTURE"
+            ]
+          }
+        }
+      }
+    },
+    "historical_claim_ids": {
+      "type": "array",
+      "items": { "$ref": "shared.schema.json#/$defs/id" },
+      "uniqueItems": true
+    },
+    "expert_review_status": {
+      "type": "string",
+      "enum": ["unreviewed", "in_review", "passed", "conflicted", "failed", "needs_revision"]
+    },
+    "notes": { "type": ["string", "null"] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "acquisition_type": { "const": "generated_fixture" } }, "required": ["acquisition_type"] },
+      "then": {
+        "properties": {
+          "data_origin": { "const": "generated_fixture" },
+          "release_tier": { "const": "fixture_only" },
+          "identity_status": { "const": "synthetic_fixture" },
+          "attribution_status": { "const": "synthetic_fixture" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "acquisition_type": { "const": "digital_font" } }, "required": ["acquisition_type"] },
+      "then": {
+        "required": ["font_id", "static_instance_sha256"],
+        "properties": {
+          "font_id": { "$ref": "shared.schema.json#/$defs/id" },
+          "static_instance_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "release_tier": { "const": "release_candidate" } }, "required": ["release_tier"] },
+      "then": {
+        "properties": {
+          "identity_status": { "const": "evidence_supported" },
+          "attribution_status": { "const": "evidence_supported" },
+          "expert_review_status": { "const": "passed" }
+        }
+      }
+    }
+  ]
+}

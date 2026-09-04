@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH Han character mapping record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mapping_id",
+    "content_set_id",
+    "display_text",
+    "normalized_text",
+    "unicode_codepoints",
+    "unit_count",
+    "mapping_kind",
+    "related_forms",
+    "mapping_status",
+    "source_ids",
+    "human_review_status",
+    "notes"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "mapping_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "content_set_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "display_text": { "type": "string", "minLength": 1 },
+    "normalized_text": { "type": "string", "minLength": 1 },
+    "unicode_codepoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^U\\+[0-9A-F]{4,6}$" }
+    },
+    "unit_count": { "type": "integer", "minimum": 1 },
+    "mapping_kind": {
+      "type": "string",
+      "enum": ["exact_unicode", "simplified_traditional", "historical_variant", "related_form", "unmapped"]
+    },
+    "related_forms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["text", "unicode_codepoints", "relation", "source_id", "status"],
+        "properties": {
+          "text": { "type": "string", "minLength": 1 },
+          "unicode_codepoints": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "pattern": "^U\\+[0-9A-F]{4,6}$" }
+          },
+          "relation": {
+            "type": "string",
+            "enum": ["simplified_form", "traditional_form", "historical_variant", "semantic_relative", "unknown"]
+          },
+          "source_id": { "$ref": "shared.schema.json#/$defs/id" },
+          "status": { "type": "string", "enum": ["candidate", "human_verified", "rejected", "unmapped"] }
+        }
+      }
+    },
+    "mapping_status": { "type": "string", "enum": ["protocol_defined", "evidence_supported", "pending", "unmapped"] },
+    "source_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "shared.schema.json#/$defs/id" },
+      "uniqueItems": true
+    },
+    "human_review_status": { "type": "string", "enum": ["pending", "passed", "failed", "needs_revision"] },
+    "notes": { "type": ["string", "null"] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "mapping_kind": { "const": "unmapped" } }, "required": ["mapping_kind"] },
+      "then": { "properties": { "mapping_status": { "const": "unmapped" } } }
+    }
+  ]
+}

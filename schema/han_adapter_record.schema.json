@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH TASK-04 adapter record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "adapter_id",
+    "source_task",
+    "target_system",
+    "target_contract",
+    "style_id",
+    "candidate_id",
+    "stimulus_id",
+    "data_origin",
+    "status",
+    "blocking_reasons",
+    "assumptions",
+    "payload"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "adapter_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "source_task": { "type": "string", "const": "TASK-04" },
+    "target_system": { "type": "string", "enum": ["TASK-01", "TASK-02", "TASK-03", "WP2"] },
+    "target_contract": { "type": "string", "minLength": 1 },
+    "style_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "candidate_id": {
+      "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
+    },
+    "stimulus_id": {
+      "anyOf": [{ "$ref": "shared.schema.json#/$defs/stimulusId" }, { "type": "null" }]
+    },
+    "data_origin": { "type": "string", "enum": ["source_record", "synthetic_fixture", "registry_projection"] },
+    "status": { "type": "string", "enum": ["ready", "fixture_only", "blocked"] },
+    "blocking_reasons": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "assumptions": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "payload": { "type": "object", "additionalProperties": true }
+  }
+}

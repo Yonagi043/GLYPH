@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH TASK-04 Han style handoff manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "handoff_schema_version",
+    "task_id",
+    "producer_version",
+    "starting_checkpoint",
+    "implementation_commit",
+    "producer_provenance",
+    "created_at",
+    "readiness",
+    "contract_versions",
+    "input_snapshots",
+    "outputs",
+    "review_summary",
+    "inference_readiness",
+    "quality_gates",
+    "known_limitations",
+    "blocked_human_gates",
+    "next_task_entrypoints"
+  ],
+  "properties": {
+    "handoff_schema_version": { "type": "string", "const": "1.0.0" },
+    "task_id": { "type": "string", "const": "TASK-04" },
+    "producer_version": { "type": "string", "const": "1.0.0" },
+    "starting_checkpoint": { "$ref": "#/$defs/gitCommit" },
+    "implementation_commit": { "$ref": "#/$defs/gitCommit" },
+    "producer_provenance": { "$ref": "#/$defs/producerProvenance" },
+    "created_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engineering_ready", "pilot_ready", "research_validated"],
+      "properties": {
+        "engineering_ready": { "type": "boolean" },
+        "pilot_ready": { "type": "boolean" },
+        "research_validated": { "type": "boolean" }
+      }
+    },
+    "contract_versions": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "input_snapshots": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "review_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject_count",
+        "synthetic_review_count",
+        "real_review_count",
+        "fixture_status",
+        "formal_status"
+      ],
+      "properties": {
+        "subject_count": { "type": "integer", "minimum": 0 },
+        "synthetic_review_count": { "type": "integer", "minimum": 0 },
+        "real_review_count": { "type": "integer", "minimum": 0 },
+        "fixture_status": { "$ref": "#/$defs/readinessStatus" },
+        "formal_status": { "$ref": "#/$defs/readinessStatus" }
+      }
+    },
+    "inference_readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_independent_exemplars_for_category",
+        "formal_pilot_candidate_count",
+        "task01_assigned_stimulus_count",
+        "instance_level_candidate_count",
+        "category_level_candidate_count",
+        "default_scope"
+      ],
+      "properties": {
+        "minimum_independent_exemplars_for_category": { "type": "integer", "minimum": 1 },
+        "formal_pilot_candidate_count": { "type": "integer", "minimum": 0 },
+        "task01_assigned_stimulus_count": { "type": "integer", "minimum": 0 },
+        "instance_level_candidate_count": { "type": "integer", "minimum": 0 },
+        "category_level_candidate_count": { "type": "integer", "minimum": 0 },
+        "default_scope": { "type": "string", "enum": ["instance_level_only", "category_candidate"] }
+      }
+    },
+    "quality_gates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/gateStatus" }
+    },
+    "known_limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "blocked_human_gates": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gate_id", "status", "packet_path", "reasons"],
+        "properties": {
+          "gate_id": { "type": "string", "enum": ["GATE-EXPERT", "GATE-RIGHTS", "GATE-TERMS"] },
+          "status": { "type": "string", "const": "blocked" },
+          "packet_path": { "type": "string", "minLength": 1 },
+          "reasons": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "next_task_entrypoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target_system", "status", "path", "notes"],
+        "properties": {
+          "target_system": { "type": "string", "enum": ["TASK-01", "TASK-02", "TASK-03", "WP2", "TASK-05"] },
+          "status": { "type": "string", "enum": ["ready", "fixture_only", "blocked", "metadata_only"] },
+          "path": { "type": "string", "minLength": 1 },
+          "notes": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "gitCommit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "readinessStatus": {
+      "type": "string",
+      "enum": ["passed", "failed", "conflicted", "needs_revision", "blocked", "not_applicable"]
+    },
+    "producerProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_commit",
+        "working_tree_state_at_export",
+        "snapshot_matches_commit",
+        "aggregate_sha256",
+        "files"
+      ],
+      "properties": {
+        "implementation_commit": { "$ref": "#/$defs/gitCommit" },
+        "working_tree_state_at_export": { "type": "string", "const": "clean" },
+        "snapshot_matches_commit": { "type": "boolean", "const": true },
+        "aggregate_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "path", "sha256"],
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": ["entrypoint", "dependency_lock", "config", "schema", "producer_source"]
+              },
+              "path": { "type": "string", "minLength": 1 },
+              "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+            }
+          }
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logical_type",
+        "path",
+        "sha256",
+        "record_count",
+        "rights_or_privacy_level",
+        "schema_version",
+        "implementation_bound"
+      ],
+      "properties": {
+        "logical_type": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "record_count": { "type": "integer", "minimum": 0 },
+        "rights_or_privacy_level": {
+          "type": "string",
+          "enum": ["open_fixture", "metadata_only", "public_code_or_schema"]
+        },
+        "schema_version": { "type": ["string", "null"] },
+        "implementation_bound": { "type": "boolean" }
+      }
+    },
+    "gateStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_id", "status", "evidence"],
+      "properties": {
+        "gate_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["passed", "fixture_only", "needs_review", "blocked"] },
+        "evidence": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

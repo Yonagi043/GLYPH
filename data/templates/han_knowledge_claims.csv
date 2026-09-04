@@ -1,0 +1,1 @@
+claim_id,claim_domain,claim_type,subject_type,subject_id,relation,object_id,object_value,source_id,source_locator,evidence_span,original_language_bcp47,translation_text,translation_language_bcp47,translation_review_status,evidence_grade,confidence,uncertainty,extraction_method,verification_status,human_reviewer_id,stance

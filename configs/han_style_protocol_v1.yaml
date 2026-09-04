@@ -1,0 +1,60 @@
+{
+  "protocol_version": "han_style_v1.0.0",
+  "starting_checkpoint": "af3820836a6ffa92c63016b0e308f624f9b42db0",
+  "schema_versions": {
+    "han_style_concept": "1.0.0",
+    "han_character_mapping": "1.0.0",
+    "han_glyph_instance": "1.0.0",
+    "han_knowledge_claim": "1.0.0",
+    "expert_review": "1.0.0",
+    "han_stimulus_candidate": "1.0.0",
+    "han_adapter_record": "1.0.0",
+    "han_handoff_manifest": "1.0.0"
+  },
+  "reference_fixture_root": "data/fixtures/han_style_system",
+  "reference_run_root": "data/fixtures/han_style_system/reference_run_v1",
+  "protocol_document_path": "docs/han_style_knowledge_protocol_zh.md",
+  "template_paths": [
+    "data/templates/han_knowledge_claims.csv",
+    "data/templates/han_expert_reviews.csv"
+  ],
+  "target_style_codes": ["small_seal", "clerical", "regular", "running", "cursive", "song", "sans", "slender_gold"],
+  "content_sets_path": "data/fixtures/content_sets.csv",
+  "task01": {
+    "handoff_path": "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+    "sources_path": "data/fixtures/asset_system/reference_handoff_v1/sources.jsonl",
+    "asset_candidates_path": "data/fixtures/asset_system/reference_handoff_v1/fixture/asset_candidates.jsonl",
+    "rights_evidence_path": "data/fixtures/asset_system/reference_handoff_v1/rights_evidence.jsonl"
+  },
+  "review": {
+    "minimum_independent_reviews": 2,
+    "rubric_dimensions": [
+      "character_identity",
+      "style_or_font_attribution",
+      "structure",
+      "stroke_logic",
+      "historical_fidelity",
+      "source_fidelity",
+      "experimental_suitability",
+      "inference_scope"
+    ],
+    "real_review_gate": "GATE-EXPERT"
+  },
+  "stimuli": {
+    "render_profiles": ["bbox_height_matched", "ink_area_matched"],
+    "minimum_independent_exemplars_for_category": 3,
+    "label_conditions": ["blind", "contextual"],
+    "formal_stimulus_owner": "TASK-01"
+  },
+  "adapters": {
+    "TASK-02": "written-contract-2026-09-04",
+    "TASK-03": "written-contract-2026-09-04",
+    "WP2": "social-object-map-0.1.0"
+  },
+  "release_policy": {
+    "no_overwrite": true,
+    "synthetic_review_cannot_satisfy_expert_gate": true,
+    "unknown_rights_block": true,
+    "task04_cannot_assign_stimulus_id": true
+  }
+}
