@@ -1,0 +1,15 @@
+{
+  "blockers": [
+    "English, Japanese and Korean drafts lack human committee review, back-translation and cognitive interviews."
+  ],
+  "gate_id": "GATE-TRANSLATION",
+  "prohibited_actions": [
+    "real recruitment",
+    "real response collection",
+    "formal analysis",
+    "public release"
+  ],
+  "required_decision": "Explicit human approval with versioned local evidence; never auto-unlock.",
+  "schema_version": "1.0.0",
+  "status": "blocked"
+}

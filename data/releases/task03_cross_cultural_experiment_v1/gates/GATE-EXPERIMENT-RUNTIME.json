@@ -1,0 +1,15 @@
+{
+  "blockers": [
+    "A maintained experiment library or equivalent independent browser timing validation is required before a real pilot."
+  ],
+  "gate_id": "GATE-EXPERIMENT-RUNTIME",
+  "prohibited_actions": [
+    "real recruitment",
+    "real response collection",
+    "formal analysis",
+    "public release"
+  ],
+  "required_decision": "Explicit human approval with versioned local evidence; never auto-unlock.",
+  "schema_version": "1.0.0",
+  "status": "blocked"
+}

@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0.0",
+  "created_at": "2026-09-04T06:49:28Z",
+  "implementation_commit": "dff452fbb733763d39c82c61011cabdd631265fd",
+  "specialized_tests": {
+    "command": "uv run --frozen pytest tests/test_experiment_system.py -q",
+    "passed": 35,
+    "exit_code": 0
+  },
+  "full_tests": {
+    "command": "uv run --frozen pytest -q",
+    "passed": 268,
+    "exit_code": 0
+  },
+  "node_check": {
+    "command": "node --check src/glyph_features/experiment_system/static/app.js",
+    "exit_code": 0
+  },
+  "uv_lock_check": {
+    "command": "uv lock --check",
+    "exit_code": 0
+  },
+  "git_diff_check": {
+    "command": "git diff --check",
+    "exit_code": 0
+  },
+  "task01_handoff": {
+    "strategy": "strict validation in an immutable local checkpoint clone",
+    "checkpoint": "af3820836a6ffa92c63016b0e308f624f9b42db0",
+    "valid": true,
+    "failure_count": 0
+  },
+  "assignment_dry_run": {
+    "seed_count": 2,
+    "participants_per_seed": 1000,
+    "assignments_per_seed": 1000,
+    "presentations_per_seed": 8000,
+    "lost_trials": 0,
+    "duplicate_responses": 0,
+    "maximum_exposure_spread": 0,
+    "maximum_position_spread": 1,
+    "required_anchor_count_per_block": 2,
+    "valid": true
+  },
+  "browser_validation": {
+    "passed": true,
+    "languages": 4,
+    "completed_presentations": 8,
+    "completed_ratings": 56,
+    "resume_after_presentations": 4,
+    "mobile_css_viewport": "312x675",
+    "horizontal_overflow_px": 0,
+    "undersized_visible_controls": 0,
+    "integrated_keyboard_driver_limitation_recorded": true
+  },
+  "synthetic_use_gate": {
+    "engineering_fixture_record_count": 56,
+    "formal_analysis_exit_code": 2,
+    "release_exit_code": 2,
+    "blocked_code": "SYNTHETIC_FORMAL_EXPORT_FORBIDDEN",
+    "blocked_outputs_absent": true
+  },
+  "security_scan": {
+    "forbidden_files_clean": true,
+    "credentials_clean": true,
+    "pii_clean": true,
+    "real_records_clean": true,
+    "persona_records_clean": true,
+    "absolute_paths_clean": true
+  },
+  "readiness": {
+    "engineering_ready": true,
+    "pilot_ready": false,
+    "research_validated": false
+  }
+}

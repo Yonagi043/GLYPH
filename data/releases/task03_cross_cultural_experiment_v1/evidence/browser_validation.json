@@ -1,0 +1,149 @@
+{
+  "schema_version": "1.0.0",
+  "created_at": "2026-09-04T06:43:13Z",
+  "passed": true,
+  "scope": "synthetic_engineering_only",
+  "service": {
+    "host": "127.0.0.1",
+    "port": 8023,
+    "study_id": "study_cross_cultural_v1",
+    "synthetic_only": true,
+    "real_collection_locked": true,
+    "fresh_database_counts": {
+      "assignments": 0,
+      "presentations": 0,
+      "ratings": 0
+    }
+  },
+  "checks": {
+    "practice_isolation": {
+      "status": "passed",
+      "before": {
+        "assignments": 0,
+        "presentations": 0,
+        "ratings": 0
+      },
+      "after_practice": {
+        "assignments": 1,
+        "presentations": 0,
+        "ratings": 0
+      }
+    },
+    "complete_eight_trial_flow": {
+      "status": "passed",
+      "submission_http_status": 200,
+      "final_counts": {
+        "assignments": 1,
+        "presentations": 8,
+        "ratings": 56
+      },
+      "completion_heading_present": true
+    },
+    "mid_session_resume": {
+      "status": "passed",
+      "resume_after_presentations": 4,
+      "participant_id_stable": true,
+      "counts_unchanged_by_reload": true,
+      "completed_state_persisted_after_reload": true
+    },
+    "four_language_interface": {
+      "status": "passed",
+      "languages": [
+        "zh-Hans",
+        "en",
+        "ja",
+        "ko"
+      ],
+      "headings_nonempty": true,
+      "horizontal_overflow_px_each": 0,
+      "translation_draft_notice_visible": true
+    },
+    "blind_metadata": {
+      "status": "passed",
+      "forbidden_trial_fields_absent": [
+        "asset_path",
+        "writing_system",
+        "work_id",
+        "source_stimulus_id",
+        "award",
+        "filename"
+      ]
+    },
+    "desktop": {
+      "status": "passed",
+      "css_viewport": {
+        "width": 1024,
+        "height": 720
+      },
+      "device_pixel_ratio": 1.25,
+      "horizontal_overflow_px": 0
+    },
+    "mobile": {
+      "status": "passed",
+      "css_viewport": {
+        "width": 312,
+        "height": 675
+      },
+      "device_pixel_ratio": 1.25,
+      "horizontal_overflow_px": 0,
+      "undersized_visible_controls": 0,
+      "progress_counters_single_line": true
+    },
+    "rendered_asset": {
+      "status": "passed",
+      "natural_width": 512,
+      "natural_height": 512,
+      "sampled_distinct_rgba_colors": 132,
+      "browser_sha256_verified_before_display": true
+    },
+    "console_and_page_errors": {
+      "status": "passed",
+      "count": 0
+    },
+    "keyboard_accessibility": {
+      "status": "passed_by_native_structure_and_focus",
+      "native_buttons_focusable": true,
+      "native_inputs_have_labels": true,
+      "focus_visible_style_present": true,
+      "minimum_visible_target_px": 44,
+      "integrated_driver_key_injection": "not_available",
+      "observed_driver_events": {
+        "keydown": 0,
+        "keyup": 0,
+        "click": 0
+      },
+      "dom_native_activation_used_for_flow": true
+    }
+  },
+  "screenshots": [
+    {
+      "path": "desktop_intro.png",
+      "pixel_width": 1280,
+      "pixel_height": 900,
+      "sha256": "26e9e1870c8b7c4e207640920bffcc0d445ef3fa2cd364925733acd3c510615e"
+    },
+    {
+      "path": "desktop_trial.png",
+      "pixel_width": 1280,
+      "pixel_height": 900,
+      "sha256": "3eba1fdd684a9c2275bc255daf871dfeed587169be54d97ec66c96071b1eda3a"
+    },
+    {
+      "path": "mobile_trial.png",
+      "pixel_width": 390,
+      "pixel_height": 844,
+      "effective_css_viewport": "312x675",
+      "sha256": "fb50cbc2890e3cda1c5de145c828a5db6a1197d14be0ed447be46c1f71ae151d"
+    }
+  ],
+  "limitations": [
+    "The integrated browser driver focused native controls but injected no keyboard events; this is recorded separately from application behavior.",
+    "Browser timing is engineering telemetry, not a validated measurement runtime.",
+    "All human, formal-stimulus, translation, participant, and experiment-runtime gates remain blocked."
+  ],
+  "readiness": {
+    "engineering_ready": true,
+    "pilot_ready": false,
+    "research_validated": false
+  }
+}

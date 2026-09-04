@@ -1,0 +1,744 @@
+{
+  "blocked_human_gates": [
+    {
+      "gate_id": "GATE-ETHICS",
+      "packet_path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-ETHICS.json",
+      "reasons": [
+        "No ethics approval or approved data-management, withdrawal, retention and deletion procedure."
+      ],
+      "status": "blocked"
+    },
+    {
+      "gate_id": "GATE-PARTICIPANTS",
+      "packet_path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-PARTICIPANTS.json",
+      "reasons": [
+        "Recruitment, compensation, quotas, stopping rules and model-based sample size are not approved."
+      ],
+      "status": "blocked"
+    },
+    {
+      "gate_id": "GATE-TRANSLATION",
+      "packet_path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-TRANSLATION.json",
+      "reasons": [
+        "English, Japanese and Korean drafts lack human committee review, back-translation and cognitive interviews."
+      ],
+      "status": "blocked"
+    },
+    {
+      "gate_id": "GATE-FORMAL-STIMULI",
+      "packet_path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-FORMAL-STIMULI.json",
+      "reasons": [
+        "TASK-01 formal stimulus entrypoint is blocked; only an open engineering fixture is allowed."
+      ],
+      "status": "blocked"
+    },
+    {
+      "gate_id": "GATE-EXPERIMENT-RUNTIME",
+      "packet_path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-EXPERIMENT-RUNTIME.json",
+      "reasons": [
+        "A maintained experiment library or equivalent independent browser timing validation is required before a real pilot."
+      ],
+      "status": "blocked"
+    }
+  ],
+  "contract_compatibility": {
+    "backward_compatible": false,
+    "previous_version": null,
+    "reason": "First TASK-03 handoff; experiment_rating 2.0 is parallel to, not a silent replacement for, human_rating."
+  },
+  "contract_versions": {
+    "consent_receipt": "1.0.0",
+    "experiment_assignment": "1.0.0",
+    "experiment_handoff_manifest": "2.0.0",
+    "experiment_rating": "2.0.0",
+    "experiment_stimulus_catalog": "1.0.0",
+    "participant_profile": "1.0.0",
+    "presentation_event": "1.0.0",
+    "quality_decision": "1.0.0",
+    "questionnaire_definition": "1.0.0",
+    "study_protocol": "1.0.0"
+  },
+  "created_at": "2026-09-04T06:49:28Z",
+  "handoff_schema_version": "2.0.0",
+  "implementation_commit": "dff452fbb733763d39c82c61011cabdd631265fd",
+  "input_snapshots": [
+    {
+      "logical_type": "task01_handoff",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+      "privacy_level": "upstream_open_fixture",
+      "record_count": 1,
+      "schema_version": "2.0.0",
+      "sha256": "acc193134495401b9a026aab0e7a866d7f15202b9b865db0d73d6f689bd1bdab",
+      "validation_schema": "schema/handoff_manifest.schema.json"
+    },
+    {
+      "logical_type": "study_protocol",
+      "path": "configs/cross_cultural_study_v1.json",
+      "privacy_level": "public_code_or_schema",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "3681ca7e2050b270df04023e0c122a94919958f84f49d7498cd6482217f4d5f8",
+      "validation_schema": "schema/study_protocol.schema.json"
+    },
+    {
+      "logical_type": "questionnaire_definition",
+      "path": "configs/questionnaire_v1.json",
+      "privacy_level": "public_code_or_schema",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "0d5a00eebfb6d1a6e5fe8ab26495061b26f5751048fc82f750c5034a737a7dca",
+      "validation_schema": "schema/questionnaire_definition.schema.json"
+    }
+  ],
+  "integration_requests": [
+    {
+      "reason": "Registers glyph-experiment and packages the experiment_system static browser assets; downstream integration must preserve these shared entrypoints.",
+      "status": "included_in_implementation",
+      "target": "pyproject.toml"
+    }
+  ],
+  "known_limitations": [
+    "Only the TASK-01 open synthetic fixture is presented; no formal stimulus is pilot-ready.",
+    "Translations are drafts without committee review, back-translation or cognitive interviews.",
+    "Power figures are assumption scenarios, not an approved sample size.",
+    "The browser runtime has engineering checks but no mature-library or independent timing validation for real research.",
+    "No real participant, recruitment, contact, compensation, withdrawal or retention workflow was exercised."
+  ],
+  "next_task_entrypoints": [
+    {
+      "notes": "Use stable item/condition definitions; expert terminology requires a separate reviewed block.",
+      "path": "configs/questionnaire_v1.json",
+      "status": "metadata_only",
+      "task_id": "TASK-04"
+    },
+    {
+      "notes": "Consume only deidentified schema-valid synthetic fixtures and preserve the formal-use block.",
+      "path": "data/fixtures/experiment_system/reference_v1/records/reference_manifest.json",
+      "status": "fixture_only",
+      "task_id": "TASK-05"
+    }
+  ],
+  "outputs": [
+    {
+      "logical_type": "assignment_audit",
+      "path": "data/fixtures/experiment_system/reference_v1/blocks/assignment_audit.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "72e6af68929ebc2b7247636ffd9211f5cb8ea11228031ff262dcbdc10c0208d3",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "assignments",
+      "path": "data/fixtures/experiment_system/reference_v1/blocks/assignments.jsonl",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 4,
+      "schema_version": "1.0.0",
+      "sha256": "f3fca0087a898caec58cf0cc9bb578c668d57705f48d208761245ce5b27514a1",
+      "validation_schema": "schema/experiment_assignment.schema.json"
+    },
+    {
+      "logical_type": "stimulus_catalog",
+      "path": "data/fixtures/experiment_system/reference_v1/blocks/stimulus_catalog.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "2e1ad6e42cb2c1e8c29586ef933e80f975e40042b7443368d754f8096bcaec4f",
+      "validation_schema": "schema/experiment_stimulus_catalog.schema.json"
+    },
+    {
+      "logical_type": "dry_run_summary",
+      "path": "data/fixtures/experiment_system/reference_v1/dry_run_1000_seed_a.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "1c6be4627169e0533e53efab07a434e970b66f0b9c3a36f658ae3540ee4f339a",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "dry_run_summary",
+      "path": "data/fixtures/experiment_system/reference_v1/dry_run_1000_seed_b.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "cd8ea49cbf2ac410557260dab4616e808da303da0015c03057b29c80ddc37fca",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "power_scenarios",
+      "path": "data/fixtures/experiment_system/reference_v1/power_scenarios.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "bcee0357deca5e93043af2e5af79507e5e23e218404704c5c8294fe75b42a98a",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "assignment",
+      "path": "data/fixtures/experiment_system/reference_v1/records/assignment.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "a2d7514a7a73ad5d4e07612aa37cf6b8724cf80500fdea2294c53a9f6f4f95a1",
+      "validation_schema": "schema/experiment_assignment.schema.json"
+    },
+    {
+      "logical_type": "consent_receipt",
+      "path": "data/fixtures/experiment_system/reference_v1/records/consent_receipt.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "85a527bc00673aafdc87e1a3d09ce1c30e1ced2c9c41f997a88d8e807c07a6f0",
+      "validation_schema": "schema/consent_receipt.schema.json"
+    },
+    {
+      "logical_type": "participant_profile",
+      "path": "data/fixtures/experiment_system/reference_v1/records/participant_profile.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "f0a375e01d6bb32b3604d1368d5f30c38ff1bc50e61bb40054e450133a67f5a5",
+      "validation_schema": "schema/participant_profile.schema.json"
+    },
+    {
+      "logical_type": "presentation_event",
+      "path": "data/fixtures/experiment_system/reference_v1/records/presentation_event.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "8daa9eeffae943d2bf5f666b08c7846480c376580679a36d1b2906dec5d38dfa",
+      "validation_schema": "schema/presentation_event.schema.json"
+    },
+    {
+      "logical_type": "quality_decision",
+      "path": "data/fixtures/experiment_system/reference_v1/records/quality_decision.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "09a23d12c766e93058f83eca405e1168a64225c937e13953fbdd98a8ba982be6",
+      "validation_schema": "schema/quality_decision.schema.json"
+    },
+    {
+      "logical_type": "questionnaire_definition",
+      "path": "data/fixtures/experiment_system/reference_v1/records/questionnaire_definition.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "8ac285e5e361230f29b45b45ec758a05529e2a8299691982e56dce2413539ba4",
+      "validation_schema": "schema/questionnaire_definition.schema.json"
+    },
+    {
+      "logical_type": "experiment_ratings",
+      "path": "data/fixtures/experiment_system/reference_v1/records/ratings.jsonl",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 7,
+      "schema_version": "2.0.0",
+      "sha256": "10f56de9e627fbfb482bdcfa0e322ded70fd758925633f70e1166cc2bc946a15",
+      "validation_schema": "schema/experiment_rating.schema.json"
+    },
+    {
+      "logical_type": "stimulus_catalog",
+      "path": "data/fixtures/experiment_system/reference_v1/records/stimulus_catalog.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "2e1ad6e42cb2c1e8c29586ef933e80f975e40042b7443368d754f8096bcaec4f",
+      "validation_schema": "schema/experiment_stimulus_catalog.schema.json"
+    },
+    {
+      "logical_type": "study_protocol",
+      "path": "data/fixtures/experiment_system/reference_v1/records/study_protocol.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "c44a9aa6df5665f6c16808a8e02ef308b09a67d40e368ac7b6262af0cd50be9b",
+      "validation_schema": "schema/study_protocol.schema.json"
+    },
+    {
+      "logical_type": "task_report",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/TASK_03_REPORT_zh.md",
+      "privacy_level": "public_code_or_schema",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "90a92017d86ec51e1753ad1db1675b73b9f61408064ed452bc1ea7b6813d10c9",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "checksums",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/checksums.sha256",
+      "privacy_level": "local_validation_evidence",
+      "record_count": 12,
+      "schema_version": null,
+      "sha256": "1ef89a3b4b7baad403a0b6e2696f8271061277696495f89600d3a45cced82b70",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "browser_validation",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/evidence/browser_validation.json",
+      "privacy_level": "local_validation_evidence",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "18503e166779bcc639eb0509dd1170262be32dad408b18806a2b8005d4864d7c",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "browser_screenshot",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/evidence/desktop_intro.png",
+      "privacy_level": "local_validation_evidence",
+      "record_count": 1,
+      "schema_version": null,
+      "sha256": "26e9e1870c8b7c4e207640920bffcc0d445ef3fa2cd364925733acd3c510615e",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "browser_screenshot",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/evidence/desktop_trial.png",
+      "privacy_level": "local_validation_evidence",
+      "record_count": 1,
+      "schema_version": null,
+      "sha256": "3eba1fdd684a9c2275bc255daf871dfeed587169be54d97ec66c96071b1eda3a",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "browser_screenshot",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/evidence/mobile_trial.png",
+      "privacy_level": "local_validation_evidence",
+      "record_count": 1,
+      "schema_version": null,
+      "sha256": "fb50cbc2890e3cda1c5de145c828a5db6a1197d14be0ed447be46c1f71ae151d",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "validation_summary",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/evidence/validation_summary.json",
+      "privacy_level": "local_validation_evidence",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "427b7feb2b2194dfda9362693548510f21322cd499d49146d76d62dd589c5fa7",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "gate_packet",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-ETHICS.json",
+      "privacy_level": "blocked_human_gate",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "78239ddcbd17170d1af739fe348798e96fe6d708dd4764eb244283c411fc772f",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "gate_packet",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-EXPERIMENT-RUNTIME.json",
+      "privacy_level": "blocked_human_gate",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "a30e8d65f60da6fd4e5d483eac633a4890b6a41803b9237ab3b320384baa646c",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "gate_packet",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-FORMAL-STIMULI.json",
+      "privacy_level": "blocked_human_gate",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "bab2781f44f2a24a3584a0d2a33b6d98856a784fc20d552ca52a3de68d541b03",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "gate_packet",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-PARTICIPANTS.json",
+      "privacy_level": "blocked_human_gate",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "b59d35d8f2640847224cd0a13bc5225104368862e8237d28b8e38f962fe180f6",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "gate_packet",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/gates/GATE-TRANSLATION.json",
+      "privacy_level": "blocked_human_gate",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "05060d694a6b66176b20e6aa53fb9f8b87266711686f428df3c188ab19356d88",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "integration_requests",
+      "path": "data/releases/task03_cross_cultural_experiment_v1/integration_requests.json",
+      "privacy_level": "public_code_or_schema",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "3bb308acd1cb64299f5a693497462465f72d0400f8d9a54d97d8e2137eddbd42",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "template_manifest",
+      "path": "data/templates/experiment_system_v1/reference_manifest.json",
+      "privacy_level": "synthetic_fixture",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "4ec4eab84a0ec33c9a571d465e4855a513a6f559a12bdc6dae3c9cd484d6baed",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "schema_gap_and_privacy",
+      "path": "docs/cross_cultural_experiment_data_contract_zh.md",
+      "privacy_level": "public_code_or_schema",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "df207e502a06c19faaf568b4e68a12c22a9fe0de8e0dea7bb3765f167334bc29",
+      "validation_schema": null
+    },
+    {
+      "logical_type": "experiment_protocol",
+      "path": "docs/cross_cultural_experiment_protocol_zh.md",
+      "privacy_level": "public_code_or_schema",
+      "record_count": 1,
+      "schema_version": "1.0.0",
+      "sha256": "417aef877edd556f5eec92f1389ec6c5306f739e4ad25a37f7219267502ae419",
+      "validation_schema": null
+    }
+  ],
+  "producer_provenance": {
+    "aggregate_sha256": "4f643d17cedbdf28ed2154a3a6cb745a6e75b1c0f41f85b67df21a63ea53e5ce",
+    "base_commit": "dff452fbb733763d39c82c61011cabdd631265fd",
+    "files": [
+      {
+        "path": "configs/cross_cultural_study_v1.json",
+        "role": "config",
+        "sha256": "3681ca7e2050b270df04023e0c122a94919958f84f49d7498cd6482217f4d5f8"
+      },
+      {
+        "path": "configs/questionnaire_v1.json",
+        "role": "config",
+        "sha256": "0d5a00eebfb6d1a6e5fe8ab26495061b26f5751048fc82f750c5034a737a7dca"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/REFERENCE_NOTES.md",
+        "role": "fixture",
+        "sha256": "9a74ae370c44a48a9784e679d2c74aaf9162ea3888138112b458159bc2622381"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/blocks/assignment_audit.json",
+        "role": "fixture",
+        "sha256": "72e6af68929ebc2b7247636ffd9211f5cb8ea11228031ff262dcbdc10c0208d3"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/blocks/assignments.jsonl",
+        "role": "fixture",
+        "sha256": "f3fca0087a898caec58cf0cc9bb578c668d57705f48d208761245ce5b27514a1"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/blocks/stimulus_catalog.json",
+        "role": "fixture",
+        "sha256": "2e1ad6e42cb2c1e8c29586ef933e80f975e40042b7443368d754f8096bcaec4f"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/dry_run_1000_seed_a.json",
+        "role": "fixture",
+        "sha256": "1c6be4627169e0533e53efab07a434e970b66f0b9c3a36f658ae3540ee4f339a"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/dry_run_1000_seed_b.json",
+        "role": "fixture",
+        "sha256": "cd8ea49cbf2ac410557260dab4616e808da303da0015c03057b29c80ddc37fca"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/power_scenarios.json",
+        "role": "fixture",
+        "sha256": "bcee0357deca5e93043af2e5af79507e5e23e218404704c5c8294fe75b42a98a"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/records/assignment.json",
+        "role": "fixture",
+        "sha256": "a2d7514a7a73ad5d4e07612aa37cf6b8724cf80500fdea2294c53a9f6f4f95a1"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/records/consent_receipt.json",
+        "role": "fixture",
+        "sha256": "85a527bc00673aafdc87e1a3d09ce1c30e1ced2c9c41f997a88d8e807c07a6f0"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/records/participant_profile.json",
+        "role": "fixture",
+        "sha256": "f0a375e01d6bb32b3604d1368d5f30c38ff1bc50e61bb40054e450133a67f5a5"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/records/presentation_event.json",
+        "role": "fixture",
+        "sha256": "8daa9eeffae943d2bf5f666b08c7846480c376580679a36d1b2906dec5d38dfa"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/records/quality_decision.json",
+        "role": "fixture",
+        "sha256": "09a23d12c766e93058f83eca405e1168a64225c937e13953fbdd98a8ba982be6"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/records/questionnaire_definition.json",
+        "role": "fixture",
+        "sha256": "8ac285e5e361230f29b45b45ec758a05529e2a8299691982e56dce2413539ba4"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/records/ratings.jsonl",
+        "role": "fixture",
+        "sha256": "10f56de9e627fbfb482bdcfa0e322ded70fd758925633f70e1166cc2bc946a15"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/records/reference_manifest.json",
+        "role": "fixture",
+        "sha256": "2c9d6c2ed13f395274bfe3fdcd7d8bd86d950802dca4248fdd116927957246bc"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/records/stimulus_catalog.json",
+        "role": "fixture",
+        "sha256": "2e1ad6e42cb2c1e8c29586ef933e80f975e40042b7443368d754f8096bcaec4f"
+      },
+      {
+        "path": "data/fixtures/experiment_system/reference_v1/records/study_protocol.json",
+        "role": "fixture",
+        "sha256": "c44a9aa6df5665f6c16808a8e02ef308b09a67d40e368ac7b6262af0cd50be9b"
+      },
+      {
+        "path": "data/templates/experiment_system_v1/TEMPLATE_NOTES.md",
+        "role": "fixture",
+        "sha256": "38a051890d89f96900e9e9b613b541b715633c0792db63d838e0b9fbc0ac70d6"
+      },
+      {
+        "path": "data/templates/experiment_system_v1/assignment.json",
+        "role": "fixture",
+        "sha256": "956b609dbfc8f0912619d37a1953b9699dc0613fb5cd03257f402af3c4a4e287"
+      },
+      {
+        "path": "data/templates/experiment_system_v1/consent_receipt.json",
+        "role": "fixture",
+        "sha256": "85a527bc00673aafdc87e1a3d09ce1c30e1ced2c9c41f997a88d8e807c07a6f0"
+      },
+      {
+        "path": "data/templates/experiment_system_v1/participant_profile.json",
+        "role": "fixture",
+        "sha256": "f0a375e01d6bb32b3604d1368d5f30c38ff1bc50e61bb40054e450133a67f5a5"
+      },
+      {
+        "path": "data/templates/experiment_system_v1/presentation_event.json",
+        "role": "fixture",
+        "sha256": "25df4cc3ad6219e679398b3a445da9334ddd32ec879cd92f81d39ae657354c4d"
+      },
+      {
+        "path": "data/templates/experiment_system_v1/quality_decision.json",
+        "role": "fixture",
+        "sha256": "0e2d2ef74e6eb3e1b5e9ff1a7001b6a7ed041f40f36d6b7f688831e421b97bbb"
+      },
+      {
+        "path": "data/templates/experiment_system_v1/questionnaire_definition.json",
+        "role": "fixture",
+        "sha256": "8ac285e5e361230f29b45b45ec758a05529e2a8299691982e56dce2413539ba4"
+      },
+      {
+        "path": "data/templates/experiment_system_v1/ratings.jsonl",
+        "role": "fixture",
+        "sha256": "fc7b767ee610cf47a2fc4cdf7a02f97e94678ac93026806cbd84513811511a74"
+      },
+      {
+        "path": "data/templates/experiment_system_v1/reference_manifest.json",
+        "role": "fixture",
+        "sha256": "4ec4eab84a0ec33c9a571d465e4855a513a6f559a12bdc6dae3c9cd484d6baed"
+      },
+      {
+        "path": "data/templates/experiment_system_v1/stimulus_catalog.json",
+        "role": "fixture",
+        "sha256": "2e1ad6e42cb2c1e8c29586ef933e80f975e40042b7443368d754f8096bcaec4f"
+      },
+      {
+        "path": "data/templates/experiment_system_v1/study_protocol.json",
+        "role": "fixture",
+        "sha256": "c44a9aa6df5665f6c16808a8e02ef308b09a67d40e368ac7b6262af0cd50be9b"
+      },
+      {
+        "path": "docs/cross_cultural_experiment_data_contract_zh.md",
+        "role": "documentation",
+        "sha256": "df207e502a06c19faaf568b4e68a12c22a9fe0de8e0dea7bb3765f167334bc29"
+      },
+      {
+        "path": "docs/cross_cultural_experiment_protocol_zh.md",
+        "role": "documentation",
+        "sha256": "417aef877edd556f5eec92f1389ec6c5306f739e4ad25a37f7219267502ae419"
+      },
+      {
+        "path": "pyproject.toml",
+        "role": "entrypoint",
+        "sha256": "7099bb2c03d205df5cc0a1ccd5da9e4f8db28ff993ea38aab093e97452537b43"
+      },
+      {
+        "path": "schema/consent_receipt.schema.json",
+        "role": "schema",
+        "sha256": "88902dd5e8ad8e84cae6556b9f49874da68467232c94a2c57037ae3d2535f4cf"
+      },
+      {
+        "path": "schema/experiment_assignment.schema.json",
+        "role": "schema",
+        "sha256": "e7afa4474eb87b1fcef92bad4b89c9bc2f00b5da0cc4a8340a5e13e4bd70feab"
+      },
+      {
+        "path": "schema/experiment_handoff_manifest.schema.json",
+        "role": "schema",
+        "sha256": "44b0cbd8e2dcdb4f1f72eb68e8d656d29f7821f5fc6b7199588e4125ee91d89a"
+      },
+      {
+        "path": "schema/experiment_rating.schema.json",
+        "role": "schema",
+        "sha256": "f024da2abe64ed7e48f568809ee68dbba0ccbca7af24f43488ca5a8fced2c397"
+      },
+      {
+        "path": "schema/experiment_stimulus_catalog.schema.json",
+        "role": "schema",
+        "sha256": "bbb073c439929fcc3547a8907f2a4809e063c1343f56b173d251448a0f894704"
+      },
+      {
+        "path": "schema/participant_profile.schema.json",
+        "role": "schema",
+        "sha256": "404f82d9895cee34b84377ef10d10571d7a2ee9c0adae6adf7b6547abefe970e"
+      },
+      {
+        "path": "schema/presentation_event.schema.json",
+        "role": "schema",
+        "sha256": "3ad47e6de14f988d530a8941fe869e742175eb3ddbe221779cf1271e73e9ad1e"
+      },
+      {
+        "path": "schema/quality_decision.schema.json",
+        "role": "schema",
+        "sha256": "fc506cf5c3389f8114a4d208851f1592bdd0ed449154a4447f07f410382cc6b5"
+      },
+      {
+        "path": "schema/questionnaire_definition.schema.json",
+        "role": "schema",
+        "sha256": "7aa2446034922910d2f61f3fcdfe49778bdacc15c11696e72e1fcb264236af86"
+      },
+      {
+        "path": "schema/study_protocol.schema.json",
+        "role": "schema",
+        "sha256": "3fb526c29ddbd418bcc6621b6d6c256a9c2f1bcde367708f53b37d8f3088d523"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/__init__.py",
+        "role": "producer_source",
+        "sha256": "4104faa94c6bfd13f05bb3060f45062387d22e96da0c0d13d75677cd647b68db"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/assignment.py",
+        "role": "producer_source",
+        "sha256": "f6930cbfeabdb3d077ef67876cfc0b1be461abef17a5f67888be30dbc8e4f91d"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/cli.py",
+        "role": "producer_source",
+        "sha256": "deab169e2aa30d857c3186f242828e887f61e9cf1ca50decb55d45b3eec8af11"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/export.py",
+        "role": "producer_source",
+        "sha256": "c2cc14ab4295741e8f9f1351b31ae78092682ea4a9bf2185a75e2b861affae59"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/fixtures.py",
+        "role": "producer_source",
+        "sha256": "248a346c3c55e74ce98079d8758319d3d94d758ccf7b896a06a131defd9b9a77"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/handoff.py",
+        "role": "producer_source",
+        "sha256": "e5b60ce5ef464ad02e5228912bfc067952bae11196223af975680900c2b0aa96"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/power.py",
+        "role": "producer_source",
+        "sha256": "748847dc41ec24b132b9d02e389d371369ba8c1fb513954f93eb5f2e8e6dde46"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/quality.py",
+        "role": "producer_source",
+        "sha256": "71dca38148c14c52fe46c2211b5278b9617e39e6166cb4400cd066403f227617"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/schema.py",
+        "role": "producer_source",
+        "sha256": "31f8de493725ca1a1aca6bdf14f49726a0689fbf4ff7ac83631987f8b90fabdd"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/static/app.js",
+        "role": "producer_source",
+        "sha256": "570b1d296a40f5686895f04b0d67ec966142877e4ff7cfe293d29dc29c15b893"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/static/index.html",
+        "role": "producer_source",
+        "sha256": "dffbfd17fe1e60b4e6e482047202e7c19c90c0e5768a888a6efadba164b75ead"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/static/styles.css",
+        "role": "producer_source",
+        "sha256": "9dbb76248b5037f213d655d8c921dae71e8e6733a30d18167a406df654456779"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/storage.py",
+        "role": "producer_source",
+        "sha256": "23ed7539ed724bf4970d2d5b4332e14162c1172c91db4b14c3d708937f3cff34"
+      },
+      {
+        "path": "src/glyph_features/experiment_system/web.py",
+        "role": "producer_source",
+        "sha256": "3b54ebe8b6cb1a6d64427f8ab40f8c1213225b1e2bb8988e567bc16c5832d75c"
+      },
+      {
+        "path": "tests/test_experiment_system.py",
+        "role": "test",
+        "sha256": "f4db391949d1f6302779e71d39daade7299b4f1ed5c16da6f6308739a5198ef0"
+      },
+      {
+        "path": "uv.lock",
+        "role": "dependency_lock",
+        "sha256": "0071d3fed47107d0a1f3b8e23b4057225ea277bd5de0c5d4a1926b7cd63dc5d7"
+      }
+    ],
+    "producer_snapshot_matches_base": true,
+    "working_tree_state": "dirty"
+  },
+  "producer_version": "1.0.0",
+  "quality_gates": [
+    {
+      "evidence": "TASK-01 handoff 2.0 validates; formal stimulus entrypoint remains blocked.",
+      "gate_id": "TASK01_STRICT_HANDOFF",
+      "status": "fixture_only"
+    },
+    {
+      "evidence": "Specialized and full repository tests passed.",
+      "gate_id": "SCHEMA_AND_FOREIGN_KEYS",
+      "status": "passed"
+    },
+    {
+      "evidence": "Two seeds: 8000 unique presentations, zero lost/duplicate, exposure spread 0, position spread 1.",
+      "gate_id": "BIBD_1000",
+      "status": "passed"
+    },
+    {
+      "evidence": "Four-language desktop/mobile automation, pixel, overflow, interaction and completion evidence included.",
+      "gate_id": "BROWSER_DESKTOP_MOBILE",
+      "status": "passed"
+    },
+    {
+      "evidence": "formal_analysis and release are mechanically rejected before file creation.",
+      "gate_id": "SYNTHETIC_FORMAL_USE",
+      "status": "passed"
+    },
+    {
+      "evidence": "Ethics, participant, translation, formal stimulus and runtime gates are blocked.",
+      "gate_id": "HUMAN_PILOT",
+      "status": "blocked"
+    }
+  ],
+  "readiness": {
+    "engineering_ready": true,
+    "pilot_ready": false,
+    "research_validated": false
+  },
+  "task_id": "TASK-03"
+}
