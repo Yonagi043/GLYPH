@@ -43,9 +43,9 @@
     "han_style_concept": "1.0.0",
     "han_style_trust_root": "1.0.0"
   },
-  "created_at": "2026-09-04T08:00:00Z",
+  "created_at": "2026-09-04T09:12:28Z",
   "handoff_schema_version": "1.1.0",
-  "implementation_commit": "dc269966775a4730ebef1865c4c932eb99794b2d",
+  "implementation_commit": "cecdf3325f8701b5e4125d35811ed58b6580564d",
   "inference_readiness": {
     "category_level_candidate_count": 0,
     "default_scope": "instance_level_only",
@@ -373,7 +373,7 @@
       "record_count": 1,
       "rights_or_privacy_level": "public_code_or_schema",
       "schema_version": null,
-      "sha256": "2e3e35de66c9e80ddb22f89d7e8e18b6e855fd2df742f40f392a679b4299e332"
+      "sha256": "62efa2b5d6c72458ae93320efa09709a54b20f292497fff04a022a2cb231afa9"
     },
     {
       "implementation_bound": false,
@@ -382,11 +382,11 @@
       "record_count": 24,
       "rights_or_privacy_level": "metadata_only",
       "schema_version": null,
-      "sha256": "c2422173139a38334274255807b8ef8dc7fb468780804d4327053cf7cdafe6cc"
+      "sha256": "6c04b02bc614fea3cf07ea986919b04a308d6e0b502dcfabcafd17d197e4a201"
     }
   ],
   "producer_provenance": {
-    "aggregate_sha256": "be98ef2037d79fe8678191271c14c5356661718373b52ff192bee9ed04068bf7",
+    "aggregate_sha256": "6edf1afaadc4f06861fe626da2a1f9a370def00d9d0e736f0d8b06075cdf345c",
     "files": [
       {
         "path": "configs/han_style_protocol_v1.yaml",
@@ -511,7 +511,7 @@
       {
         "path": "src/glyph_features/han_style_system/review.py",
         "role": "producer_source",
-        "sha256": "454f7c7e35ebe45d6ba02b670843b9f2039455fdd1bd67055e95305bfe3b1104"
+        "sha256": "5a3e8079fb50dd136ba81b0e6e562db530862cc9cbdc0eac6f3d13af5e739a0f"
       },
       {
         "path": "src/glyph_features/han_style_system/rights.py",
@@ -534,7 +534,7 @@
         "sha256": "0071d3fed47107d0a1f3b8e23b4057225ea277bd5de0c5d4a1926b7cd63dc5d7"
       }
     ],
-    "implementation_commit": "dc269966775a4730ebef1865c4c932eb99794b2d",
+    "implementation_commit": "cecdf3325f8701b5e4125d35811ed58b6580564d",
     "snapshot_matches_commit": true,
     "working_tree_state_at_export": "clean"
   },

@@ -2,7 +2,7 @@
 
 版本：`1.1.0`
 起始 checkpoint：`af3820836a6ffa92c63016b0e308f624f9b42db0`
-implementation commit：`dc269966775a4730ebef1865c4c932eb99794b2d`
+implementation commit：`cecdf3325f8701b5e4125d35811ed58b6580564d`
 
 ## 完成范围
 
