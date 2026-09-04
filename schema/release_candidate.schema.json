@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH workbench release candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "release_candidate_id", "analysis_run_id", "purpose", "status", "data_origin", "formal_blockers", "formal_release_eligible", "created_at"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "release_candidate_id": { "type": "string", "pattern": "^release_[a-f0-9]{24}$" },
+    "analysis_run_id": { "type": "string", "pattern": "^analysis_[a-f0-9]{24}$" },
+    "purpose": { "enum": ["demo_export", "formal_release"] },
+    "status": { "enum": ["demo_ready", "blocked", "release_candidate", "released"] },
+    "data_origin": { "enum": ["synthetic", "real"] },
+    "formal_blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "scope", "message"],
+        "properties": {
+          "code": { "type": "string", "pattern": "^[A-Z0-9_:-]+$" },
+          "gate_id": { "type": "string", "pattern": "^GATE-[A-Z0-9-]+$" },
+          "scope": { "type": "string", "minLength": 1 },
+          "message": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "formal_release_eligible": { "type": "boolean" },
+    "created_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "formal_release_eligible": { "const": true } }, "required": ["formal_release_eligible"] },
+      "then": { "properties": { "formal_blockers": { "maxItems": 0 } } }
+    },
+    {
+      "if": { "properties": { "data_origin": { "const": "synthetic" } }, "required": ["data_origin"] },
+      "then": { "properties": { "formal_release_eligible": { "const": false } } }
+    }
+  ]
+}

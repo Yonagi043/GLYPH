@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0.0",
+  "status": "passed",
+  "run_at": "2026-09-04T10:58:19Z",
+  "tool": "VS Code integrated Playwright",
+  "server": {
+    "origin": "http://127.0.0.1:8025",
+    "scheduler_started": false,
+    "database_classification": "temporary_synthetic_fixture"
+  },
+  "viewports": [
+    {
+      "name": "desktop",
+      "requested_width": 1440,
+      "requested_height": 1000,
+      "page_overflow_x": false,
+      "screenshot_captured": true
+    },
+    {
+      "name": "mobile",
+      "requested_width": 390,
+      "requested_height": 844,
+      "effective_content_width": 300,
+      "page_overflow_x": false,
+      "screenshot_captured": true
+    }
+  ],
+  "views": [
+    "overview",
+    "assets",
+    "vision",
+    "experiment",
+    "social",
+    "han_style",
+    "analysis",
+    "audit"
+  ],
+  "checks": {
+    "all_views_loaded": true,
+    "persistent_demo_label": true,
+    "console_errors": 0,
+    "failed_requests": 0,
+    "page_level_horizontal_overflow": false,
+    "tables_scroll_only_inside_containers": true,
+    "evidence_drilldown_operational": true,
+    "formal_release_returned_blocked": true,
+    "coordinated_backup_operational": true,
+    "temporary_restore_operational": true,
+    "keyboard_enter_and_escape_operational": true,
+    "operation_submit_operational": true,
+    "operation_cancel_operational": true,
+    "operation_resume_control_visible": true,
+    "persistent_action_controls_reenabled": true,
+    "api_absolute_path_leaks": 0,
+    "api_secret_value_leaks": 0
+  },
+  "supplemental_operation_smoke": {
+    "run_at": "2026-09-04T11:44:04Z",
+    "origin": "http://127.0.0.1:8045",
+    "database_classification": "temporary_synthetic_fixture",
+    "scheduler_started": false,
+    "submission_http_status": 202,
+    "cancel_http_status": 200,
+    "operation_kind": "system_fixture",
+    "observed_statuses": [
+      "queued",
+      "running",
+      "cancel_requested",
+      "canceled"
+    ],
+    "final_stage": "canceled",
+    "attempts": 1,
+    "resume_control_visible": true,
+    "persistent_refresh_control_enabled": true,
+    "persistent_health_control_enabled": true,
+    "console_errors": 0,
+    "desktop_screenshot_captured": true,
+    "mobile_requested_width": 300,
+    "mobile_effective_content_width": 228,
+    "mobile_page_overflow_x": false,
+    "mobile_screenshot_captured": true
+  },
+  "notes": [
+    "Desktop and mobile screenshots were inspected in the integrated browser and are not release artifacts.",
+    "All long tables used bounded horizontal containers on mobile.",
+    "The strict CSP rejected the initial inline effect positioning; the final implementation uses a native meter and produced zero console errors.",
+    "The final operation smoke verified that persistent controls recover from the busy state after successful actions."
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "data_origin": "synthetic",
+  "seed": 20260904,
+  "participant_count": 24,
+  "item_id": "item_aesthetic",
+  "construct": "aesthetic",
+  "rating_scale": "likert_1_7",
+  "task03_catalog_path": "data/fixtures/experiment_system/reference_v1/records/stimulus_catalog.json",
+  "visual_measurements_path": "data/fixtures/visual_measurements/reference_run_v2/measurements.jsonl",
+  "generation_model": {
+    "baseline": 4,
+    "native_match_effect": 1,
+    "deterministic_noise": [-1, 0, 0, 0, 1]
+  }
+}

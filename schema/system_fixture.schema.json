@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH deterministic system E2E fixture generator",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "data_origin", "seed", "participant_count", "item_id", "construct", "rating_scale", "task03_catalog_path", "visual_measurements_path", "generation_model"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "data_origin": { "const": "synthetic" },
+    "seed": { "type": "integer", "minimum": 0 },
+    "participant_count": { "type": "integer", "minimum": 16, "maximum": 200 },
+    "item_id": { "type": "string", "pattern": "^item_[a-z0-9_]+$" },
+    "construct": { "enum": ["aesthetic", "premium", "modern", "trustworthy", "visual_clarity", "recognition", "unfamiliarity"] },
+    "rating_scale": { "const": "likert_1_7" },
+    "task03_catalog_path": { "type": "string", "pattern": "^data/fixtures/" },
+    "visual_measurements_path": { "type": "string", "pattern": "^data/fixtures/" },
+    "generation_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "native_match_effect", "deterministic_noise"],
+      "properties": {
+        "baseline": { "type": "integer", "minimum": 1, "maximum": 7 },
+        "native_match_effect": { "type": "integer", "minimum": -3, "maximum": 3 },
+        "deterministic_noise": { "type": "array", "minItems": 2, "items": { "type": "integer" } }
+      }
+    }
+  }
+}

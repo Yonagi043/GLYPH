@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0.0",
+  "status": "passed",
+  "data_origin": "synthetic",
+  "cases": [
+    {
+      "failure": "unexpected_many_to_many_join",
+      "expected": "UNEXPECTED_MANY_TO_MANY",
+      "evidence": "tests/test_workbench.py::test_join_and_narrative_guards_fail_closed"
+    },
+    {
+      "failure": "narrative_without_exposure_operationalization",
+      "expected": "NARRATIVE_EXPOSURE_NOT_OPERATIONALIZED",
+      "evidence": "tests/test_workbench.py::test_join_and_narrative_guards_fail_closed"
+    },
+    {
+      "failure": "catalog_and_social_database_alias",
+      "expected": "DATABASE_ROLES_MUST_BE_DISTINCT",
+      "evidence": "tests/test_workbench.py::test_workbench_never_migrates_or_aliases_social_database"
+    },
+    {
+      "failure": "production_social_database_target",
+      "expected": "PRODUCTION_SOCIAL_DATABASE_FORBIDDEN",
+      "evidence": "tests/test_workbench.py::test_workbench_never_migrates_or_aliases_social_database"
+    },
+    {
+      "failure": "existing_database_for_synthetic_social_fixture",
+      "expected": "SOCIAL_FIXTURE_REQUIRES_NEW_DATABASE",
+      "evidence": "tests/test_workbench.py::test_social_export_adapter_rejects_reusing_an_existing_database"
+    },
+    {
+      "failure": "coordinated_backup_component_tamper",
+      "expected": "COORDINATED_COMPONENT_CHECKSUM_MISMATCH",
+      "evidence": "tests/test_workbench.py::test_coordinated_restore_rejects_component_tampering"
+    },
+    {
+      "failure": "demo_export_overwrite",
+      "expected": "DEMO_EXPORT_NO_OVERWRITE",
+      "evidence": "tests/test_workbench.py::test_demo_audit_package_is_complete_labeled_and_no_overwrite"
+    },
+    {
+      "failure": "synthetic_formal_release",
+      "expected": "FORMAL_RELEASE_BLOCKED",
+      "evidence": "tests/test_workbench.py::test_formal_release_is_mechanically_blocked_while_demo_remains_labeled"
+    },
+    {
+      "failure": "cross_origin_or_missing_csrf_write",
+      "expected": "HTTP 403",
+      "evidence": "tests/test_workbench.py::test_workbench_api_is_local_csrf_guarded_and_path_bounded"
+    },
+    {
+      "failure": "external_web_binding",
+      "expected": "EXTERNAL_BIND_REQUIRES_SEPARATE_APPROVAL",
+      "evidence": "tests/test_workbench.py::test_cli_rejects_external_binding_before_starting_server"
+    },
+    {
+      "failure": "backup_storage_write_failure",
+      "expected": "partial coordinated bundle removed",
+      "evidence": "tests/test_workbench.py::test_coordinated_backup_cleans_partial_bundle_on_storage_failure"
+    },
+    {
+      "failure": "database_locked_or_unavailable",
+      "expected": "HTTP 503 DATABASE_BUSY_OR_UNAVAILABLE without internal detail",
+      "evidence": "tests/test_workbench.py::test_database_failure_returns_stable_error_without_internal_detail"
+    },
+    {
+      "failure": "long_operation_cancellation_and_recovery",
+      "expected": "canceled is never completed; resume preserves completed stage context",
+      "evidence": "tests/test_workbench.py::test_long_operation_cancel_and_resume_preserves_completed_context"
+    }
+  ]
+}

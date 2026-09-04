@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH workbench module descriptor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "descriptor_schema_version",
+    "module_id",
+    "module_version",
+    "contract_versions",
+    "capabilities",
+    "health",
+    "read_endpoints",
+    "command_endpoints",
+    "handoff_schema_version",
+    "data_classifications",
+    "human_gates",
+    "readiness",
+    "flow_status"
+  ],
+  "properties": {
+    "descriptor_schema_version": { "const": "1.0.0" },
+    "module_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,31}$" },
+    "module_version": { "type": "string", "minLength": 1 },
+    "contract_versions": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$" }
+    },
+    "health": { "enum": ["ready", "degraded", "blocked", "absent"] },
+    "read_endpoints": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "command_endpoints": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "handoff_schema_version": { "type": "string", "minLength": 1 },
+    "data_classifications": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "human_gates": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^GATE-[A-Z0-9-]+$" }
+    },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engineering_ready", "pilot_ready", "research_validated"],
+      "properties": {
+        "engineering_ready": { "type": "boolean" },
+        "pilot_ready": { "type": "boolean" },
+        "research_validated": { "type": "boolean" }
+      }
+    },
+    "flow_status": {
+      "enum": [
+        "absent",
+        "contract_ready",
+        "fixture_validated",
+        "awaiting_rights",
+        "awaiting_expert_review",
+        "awaiting_ethics_or_participants",
+        "real_data_available",
+        "analysis_ready",
+        "analysis_completed",
+        "release_blocked",
+        "release_candidate",
+        "released"
+      ]
+    }
+  }
+}

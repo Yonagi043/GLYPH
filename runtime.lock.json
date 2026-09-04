@@ -15,6 +15,8 @@
     "websockets": {"version": "17.1", "source": "PyPI", "sha256_required": true},
     "APScheduler": {"version": "3.11.0", "source": "PyPI", "sha256_required": true},
     "krippendorff": {"version": "0.8.2", "source": "PyPI", "sha256_required": true},
+    "pandas": {"version": "2.3.3", "source": "PyPI", "sha256_required": true},
+    "statsmodels": {"version": "0.14.5", "source": "PyPI", "sha256_required": true},
     "pytest": {"version": "8.4.1", "source": "PyPI", "sha256_required": true, "scope": "dev"},
     "httpx2": {"version": "2.12.0", "source": "PyPI", "sha256_required": true, "scope": "dev"}
   },

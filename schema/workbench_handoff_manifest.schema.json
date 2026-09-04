@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH TASK-05 system handoff manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "handoff_schema_version",
+    "task_id",
+    "producer_version",
+    "implementation_commit",
+    "created_at",
+    "readiness",
+    "contract_versions",
+    "module_compatibility",
+    "input_handoffs",
+    "outputs",
+    "producer_provenance",
+    "quality_gates",
+    "validation_evidence",
+    "interfaces",
+    "data_boundaries",
+    "blocked_human_gates",
+    "known_limitations",
+    "maintenance_responsibility"
+  ],
+  "properties": {
+    "handoff_schema_version": { "const": "1.0.0" },
+    "task_id": { "const": "TASK-05" },
+    "producer_version": { "const": "0.1.0" },
+    "implementation_commit": { "$ref": "#/$defs/commit" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "readiness": { "$ref": "#/$defs/readiness" },
+    "contract_versions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "module_compatibility": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "module_version",
+          "handoff_schema_version",
+          "input_manifest",
+          "input_sha256",
+          "compatible",
+          "readiness",
+          "contract_versions",
+          "conclusion"
+        ],
+        "properties": {
+          "module_id": { "enum": ["assets", "vision", "experiment", "social", "han_style", "workbench"] },
+          "module_version": { "type": "string", "minLength": 1 },
+          "handoff_schema_version": { "type": ["string", "null"] },
+          "input_manifest": { "type": ["string", "null"] },
+          "input_sha256": {
+            "anyOf": [
+              { "$ref": "#/$defs/sha256" },
+              { "type": "null" }
+            ]
+          },
+          "compatible": { "const": true },
+          "readiness": { "$ref": "#/$defs/readiness" },
+          "contract_versions": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          },
+          "conclusion": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "input_handoffs": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "task_id",
+          "module_id",
+          "path",
+          "sha256",
+          "schema_version",
+          "producer_commit",
+          "compatible",
+          "readiness"
+        ],
+        "properties": {
+          "task_id": { "enum": ["TASK-01", "TASK-02", "TASK-03", "TASK-04"] },
+          "module_id": { "enum": ["assets", "vision", "experiment", "han_style"] },
+          "path": { "$ref": "#/$defs/path" },
+          "sha256": { "$ref": "#/$defs/sha256" },
+          "schema_version": { "type": "string", "minLength": 1 },
+          "producer_commit": { "$ref": "#/$defs/commit" },
+          "compatible": { "const": true },
+          "readiness": { "$ref": "#/$defs/readiness" }
+        }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "producer_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_commit",
+        "working_tree_state_at_generation",
+        "producer_snapshot_matches_commit",
+        "aggregate_sha256",
+        "files"
+      ],
+      "properties": {
+        "implementation_commit": { "$ref": "#/$defs/commit" },
+        "working_tree_state_at_generation": { "const": "clean" },
+        "producer_snapshot_matches_commit": { "const": true },
+        "aggregate_sha256": { "$ref": "#/$defs/sha256" },
+        "files": {
+          "type": "array",
+          "minItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "path", "sha256"],
+            "properties": {
+              "role": { "enum": ["entrypoint", "source", "config", "schema", "dependency_lock", "fixture", "test", "documentation"] },
+              "path": { "$ref": "#/$defs/path" },
+              "sha256": { "$ref": "#/$defs/sha256" }
+            }
+          }
+        }
+      }
+    },
+    "quality_gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gate_id", "status", "evidence"],
+        "properties": {
+          "gate_id": { "type": "string", "pattern": "^[A-Z][A-Z0-9_-]+$" },
+          "status": { "enum": ["passed", "blocked"] },
+          "evidence": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "validation_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system_e2e", "browser", "backup_restore", "failure_injection", "commands"],
+      "properties": {
+        "system_e2e": { "$ref": "#/$defs/validation" },
+        "browser": { "$ref": "#/$defs/validation" },
+        "backup_restore": { "$ref": "#/$defs/validation" },
+        "failure_injection": { "$ref": "#/$defs/validation" },
+        "commands": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["command", "status", "result"],
+            "properties": {
+              "command": { "type": "string", "minLength": 1 },
+              "status": { "const": "passed" },
+              "result": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "interfaces": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commands", "read_endpoints", "write_endpoints", "storage_ownership"],
+      "properties": {
+        "commands": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "read_endpoints": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^/api/" } },
+        "write_endpoints": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^/api/" } },
+        "storage_ownership": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "data_boundaries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["reason_code", "classification", "allowed", "reason"],
+        "properties": {
+          "reason_code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]+$" },
+          "classification": { "type": "string", "minLength": 1 },
+          "allowed": { "type": "boolean" },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "blocked_human_gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gate_id", "module_id", "status", "scope", "blocked_object", "evidence_path", "reasons"],
+        "properties": {
+          "gate_id": { "type": "string", "pattern": "^GATE-[A-Z0-9-]+$" },
+          "module_id": { "enum": ["assets", "vision", "experiment", "social", "han_style", "workbench"] },
+          "status": { "const": "blocked" },
+          "scope": { "type": "string", "minLength": 1 },
+          "blocked_object": { "type": "string", "minLength": 1 },
+          "evidence_path": { "$ref": "#/$defs/path" },
+          "reasons": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "known_limitations": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "maintenance_responsibility": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+  },
+  "$defs": {
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "path": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engineering_ready", "pilot_ready", "research_validated"],
+      "properties": {
+        "engineering_ready": { "type": "boolean" },
+        "pilot_ready": { "type": "boolean" },
+        "research_validated": { "type": "boolean" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logical_type", "path", "sha256", "record_count", "classification", "schema_version"],
+      "properties": {
+        "logical_type": { "type": "string", "minLength": 1 },
+        "path": { "$ref": "#/$defs/path" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "record_count": { "type": "integer", "minimum": 0 },
+        "classification": { "enum": ["open_fixture", "metadata_only", "public_code_or_schema", "synthetic_demo_only"] },
+        "schema_version": { "type": ["string", "null"] }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence_path", "sha256", "summary"],
+      "properties": {
+        "status": { "const": "passed" },
+        "evidence_path": { "$ref": "#/$defs/path" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "summary": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

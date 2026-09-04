@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "plan_joint_fixture_v1",
+  "version": "1.0.0",
+  "status": "preregistered",
+  "research_questions": [
+    "Can the engineering fixture recover the injected native-script match direction without being presented as research evidence?",
+    "Can visual and Han-style claims be withheld when the upstream fixture lacks independent variation?"
+  ],
+  "estimands": [
+    {
+      "estimand_id": "estimand_native_match",
+      "outcome": "aesthetic",
+      "description": "Ordinal association for native-script match in the fully synthetic engineering fixture.",
+      "analysis_class": "engineering_fixture"
+    }
+  ],
+  "outcomes": {
+    "primary": ["aesthetic"],
+    "secondary": ["premium", "visual_clarity"]
+  },
+  "analysis_unit": "participant_x_stimulus_x_item",
+  "inclusion_rules": [
+    "Schema-valid records with data_origin=synthetic and a non-missing response.",
+    "Exactly one row per participant, stimulus and questionnaire item."
+  ],
+  "exclusion_rules": [
+    "Exclude records carrying quality.exclude_from_analysis=true.",
+    "Never combine synthetic and real records in one run."
+  ],
+  "stratification": ["native_script", "stimulus_script"],
+  "contrasts": ["native_script_match versus mismatch"],
+  "model": {
+    "formula": "aesthetic ~ stimulus_script * native_script + participant and stimulus hierarchy",
+    "family": "ordinal",
+    "link": "logit",
+    "backend": "statsmodels.miscmodels.ordinal_model.OrderedModel",
+    "optimizer": "bfgs",
+    "random_effects": ["participant_id", "stimulus_id"],
+    "clusters": ["participant_id", "stimulus_id", "work_id"],
+    "repeated_measures": true,
+    "fixture_approximation": "Ordered fixed-effect contrast plus double-group holdout; crossed ordinal random effects remain required for real research."
+  },
+  "features": {
+    "selection": [
+      {
+        "feature_code": "ink_coverage_ratio",
+        "representation": "B_shape",
+        "normalization_profile": "task01_frozen"
+      },
+      {
+        "feature_code": "symmetry_vertical",
+        "representation": "B_shape",
+        "normalization_profile": "task01_frozen"
+      },
+      {
+        "feature_code": "gray_entropy_ink",
+        "representation": "C_ink",
+        "normalization_profile": "task01_frozen"
+      }
+    ],
+    "selection_timing": "frozen_before_outcomes",
+    "scaling": "training_fold_only",
+    "deprecated_scores_allowed": false
+  },
+  "missingness": [
+    "Preserve missing and not-applicable values; never convert either to zero.",
+    "Report exclusions and missingness by native and stimulus script."
+  ],
+  "multiple_comparisons": "Holm correction within each declared outcome family.",
+  "sensitivity": [
+    "Continuous HC3 approximation is labeled sensitivity-only.",
+    "Repeat feature checks by frozen representation and profile without outcome-driven selection."
+  ],
+  "stopping_rule": "The deterministic fixture uses all generated rows; real-data stopping requires GATE-PARTICIPANTS approval.",
+  "output_boundaries": [
+    "All results are SYNTHETIC / DEMO and cannot support a scientific conclusion.",
+    "WP2 remains a context/hypothesis link and is never assigned as participant exposure.",
+    "WP4 remains instance-level until independent exemplar and expert gates pass."
+  ],
+  "approval_history": [
+    {
+      "status": "fixture_protocol_frozen",
+      "decider_ref": "task05_protocol",
+      "decided_at": "2026-09-04T00:00:00Z"
+    }
+  ],
+  "amendment_history": []
+}
