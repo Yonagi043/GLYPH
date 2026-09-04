@@ -1,0 +1,18 @@
+{
+  "allowed_now": [
+    "local fixture processing"
+  ],
+  "cost": "not_assessed",
+  "data_flow": "No external request, login, upload, payment, or terms acceptance was performed.",
+  "decision_required": "Review official terms, authentication, cost, and data flow before restricted acquisition.",
+  "gate_id": "GATE-TERMS",
+  "official_terms_urls": [],
+  "prohibited_without_approval": [
+    "accept terms",
+    "login",
+    "pay",
+    "submit an access request",
+    "make a restricted download"
+  ],
+  "status": "blocked"
+}

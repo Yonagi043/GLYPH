@@ -1,0 +1,18 @@
+{
+  "allowed_now": [
+    "metadata audit",
+    "hash verification",
+    "open fixture processing"
+  ],
+  "decision_required": "Verify work rights and digital-surrogate or font permissions before formal use or redistribution.",
+  "fixture_policy": "Only the CC0 engineering fixture is included; it is not a historical glyph.",
+  "formal_candidate_count": 0,
+  "gate_id": "GATE-RIGHTS",
+  "prohibited_without_approval": [
+    "download unknown-rights glyph assets",
+    "redistribute restricted scans or fonts",
+    "formal stimulus release"
+  ],
+  "rights_evidence_path": "data/fixtures/asset_system/reference_handoff_v1/rights_evidence.jsonl",
+  "status": "blocked"
+}
