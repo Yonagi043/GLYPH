@@ -550,6 +550,7 @@ def test_analysis_snapshot_is_hash_verified_and_immutable(tmp_path: Path) -> Non
 
 def test_analysis_snapshot_rejects_origin_commit_and_dirty_producer(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     service = WorkbenchService(
         ROOT,
@@ -573,6 +574,17 @@ def test_analysis_snapshot_rejects_origin_commit_and_dirty_producer(
             data_origin="synthetic",
             git_commit="0" * 40,
         )
+
+    original_git_text = snapshot_module._git_text
+
+    def dirty_git_text(
+        root: Path, *arguments: str, error_code: str
+    ) -> str:
+        if arguments and arguments[0] == "status":
+            return "?? injected-dirty-producer"
+        return original_git_text(root, *arguments, error_code=error_code)
+
+    monkeypatch.setattr(snapshot_module, "_git_text", dirty_git_text)
     with pytest.raises(CatalogError, match="SNAPSHOT_GIT_WORKTREE_DIRTY"):
         freeze_analysis_snapshot(**arguments, data_origin="synthetic")
     assert service.catalog.rows("analysis_runs") == []
@@ -1328,8 +1340,8 @@ def test_coordinated_backup_cleans_partial_bundle_on_storage_failure(
 ) -> None:
     catalog_database = tmp_path / "catalog.sqlite3"
     social_database = tmp_path / "social.sqlite3"
-    catalog_database.touch()
-    social_database.touch()
+    Catalog(catalog_database)
+    SocialExportAdapter(social_database).create_fixture_export(tmp_path / "exports")
 
     def fail_catalog_backup(_database: Path, _root: Path) -> dict:
         raise OSError("simulated no space left")
