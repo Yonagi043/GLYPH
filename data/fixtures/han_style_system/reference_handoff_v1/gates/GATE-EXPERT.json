@@ -1,0 +1,21 @@
+{
+  "allowed_now": [
+    "offline fixture review workflow testing"
+  ],
+  "decision_required": "Approve expert recruitment, package transmission, reviewer roles, and handling before any real review.",
+  "gate_id": "GATE-EXPERT",
+  "prohibited_without_approval": [
+    "contact experts",
+    "send review materials",
+    "record synthetic output as expert judgment"
+  ],
+  "real_review_count": 0,
+  "reference_review_package": "data/fixtures/han_style_system/reference_run_v1/review_package",
+  "required_roles": [
+    "history_or_paleography",
+    "calligraphy_or_seal_practice",
+    "type_or_visual_design"
+  ],
+  "status": "blocked",
+  "synthetic_review_count": 2
+}

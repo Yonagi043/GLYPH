@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH Han controlled stimulus candidate",
+  "description": "A TASK-04 candidate request. A non-null stimulus_id must come from TASK-01.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "candidate_id",
+    "data_origin",
+    "candidate_level",
+    "style_id",
+    "glyph_instance_ids",
+    "content_set_id",
+    "work_ids",
+    "font_ids",
+    "exemplar_cluster_ids",
+    "lineage_unit_ids",
+    "render_profile",
+    "representation_asset_ids",
+    "label_conditions",
+    "review_summary",
+    "rights_summary",
+    "mapping_status",
+    "inference_scope",
+    "task01_freeze",
+    "release_status",
+    "stimulus_id",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.1.0" },
+    "candidate_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "data_origin": { "type": "string", "enum": ["source_record", "synthetic_fixture"] },
+    "candidate_level": {
+      "type": "string",
+      "enum": ["historical_source_specimen", "expert_traced_shape", "digital_font_specimen", "controlled_comparison_stimulus", "generated_candidate"]
+    },
+    "style_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "glyph_instance_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "shared.schema.json#/$defs/id" },
+      "uniqueItems": true
+    },
+    "content_set_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "work_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "shared.schema.json#/$defs/id" },
+      "uniqueItems": true
+    },
+    "font_ids": {
+      "type": "array",
+      "items": { "$ref": "shared.schema.json#/$defs/id" },
+      "uniqueItems": true
+    },
+    "exemplar_cluster_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "shared.schema.json#/$defs/id" },
+      "uniqueItems": true
+    },
+    "lineage_unit_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "shared.schema.json#/$defs/id" },
+      "uniqueItems": true
+    },
+    "render_profile": { "type": "string", "enum": ["bbox_height_matched", "ink_area_matched"] },
+    "representation_asset_ids": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["A_layout", "B_shape", "B_shape_mask", "C_ink"],
+      "properties": {
+        "A_layout": { "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }] },
+        "B_shape": { "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }] },
+        "B_shape_mask": { "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }] },
+        "C_ink": { "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }] }
+      }
+    },
+    "label_conditions": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["blind", "contextual"] },
+      "uniqueItems": true
+    },
+    "review_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package_ids", "synthetic_review_count", "real_review_count", "fixture_status", "formal_status", "decision_counts", "fixture_policy_blockers", "formal_policy_blockers", "adjudication_review_ids"],
+      "properties": {
+        "package_ids": { "type": "array", "items": { "$ref": "shared.schema.json#/$defs/id" }, "uniqueItems": true },
+        "synthetic_review_count": { "type": "integer", "minimum": 0 },
+        "real_review_count": { "type": "integer", "minimum": 0 },
+        "fixture_status": { "type": "string", "enum": ["passed", "blocked", "conflicted", "needs_revision", "failed"] },
+        "formal_status": { "type": "string", "enum": ["passed", "blocked", "conflicted", "needs_revision", "failed"] },
+        "decision_counts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+        "fixture_policy_blockers": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "formal_policy_blockers": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "adjudication_review_ids": { "type": "array", "items": { "$ref": "shared.schema.json#/$defs/id" }, "uniqueItems": true }
+      }
+    },
+    "rights_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "rights_tier", "rights_evidence_ids", "permitted_uses", "trust_source", "task01_handoff_sha256", "rights_output_sha256"],
+      "properties": {
+        "status": { "type": "string", "enum": ["passed", "fixture_only", "blocked"] },
+        "rights_tier": { "type": "string", "enum": ["open", "research_local_only", "metadata_only", "blocked_unknown"] },
+        "rights_evidence_ids": { "type": "array", "items": { "$ref": "shared.schema.json#/$defs/id" }, "uniqueItems": true },
+        "permitted_uses": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "trust_source": { "type": "string", "enum": ["task01_handoff", "standalone_untrusted"] },
+        "task01_handoff_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "rights_output_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "mapping_status": { "type": "string", "enum": ["protocol_defined", "evidence_supported", "pending", "unmapped"] },
+    "inference_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "independent_exemplar_count", "minimum_for_category", "blockers"],
+      "properties": {
+        "scope": { "type": "string", "enum": ["instance_level_only", "category_candidate"] },
+        "independent_exemplar_count": { "type": "integer", "minimum": 0 },
+        "minimum_for_category": { "type": "integer", "minimum": 2 },
+        "blockers": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "task01_freeze": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "blockers", "requested_contract"],
+      "properties": {
+        "status": { "type": "string", "enum": ["blocked", "ready_for_request", "requested", "assigned"] },
+        "blockers": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "requested_contract": { "type": "string", "const": "TASK-01 stimulus freeze" }
+      }
+    },
+    "release_status": { "type": "string", "enum": ["blocked", "fixture_only", "eligible_for_task01_freeze", "task01_frozen"] },
+    "stimulus_id": {
+      "anyOf": [{ "$ref": "shared.schema.json#/$defs/stimulusId" }, { "type": "null" }]
+    },
+    "created_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "release_status": { "const": "task01_frozen" } }, "required": ["release_status"] },
+      "then": { "properties": { "stimulus_id": { "$ref": "shared.schema.json#/$defs/stimulusId" }, "task01_freeze": { "properties": { "status": { "const": "assigned" } } } } },
+      "else": { "properties": { "stimulus_id": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "data_origin": { "const": "synthetic_fixture" } }, "required": ["data_origin"] },
+      "then": { "properties": { "candidate_level": { "const": "generated_candidate" }, "release_status": { "const": "fixture_only" } } }
+    }
+  ]
+}

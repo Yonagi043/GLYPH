@@ -1,0 +1,66 @@
+[
+  {
+    "blocking_reasons": [
+      "CANDIDATE_NOT_FREEZE_ELIGIBLE",
+      "CANDIDATE_NOT_SOURCE_RECORD",
+      "CHARACTER_MAPPING_NOT_EVIDENCE_SUPPORTED",
+      "FORMAL_REVIEW_NOT_PASSED",
+      "FORMAL_RIGHTS_NOT_PASSED",
+      "FORMAL_RIGHTS_REQUIRED",
+      "GLYPH_IDENTITY_NOT_EVIDENCE_SUPPORTED",
+      "GLYPH_IDENTITY_SYNTHETIC",
+      "MAPPING_NOT_EVIDENCE_SUPPORTED",
+      "REAL_EXPERT_REVIEWS_REQUIRED",
+      "STRUCTURE_QC_NOT_PASSED",
+      "STYLE_ATTRIBUTION_NOT_EVIDENCE_SUPPORTED",
+      "SYNTHETIC_FIXTURE",
+      "TASK01_FREEZE_STATUS_NOT_READY"
+    ],
+    "candidate_ids": [
+      "han_candidate_6e1bbf8cc520f87d2aeb01f9",
+      "han_candidate_da23040df828548edb69e570"
+    ],
+    "status": "fixture_only",
+    "target_system": "TASK-01"
+  },
+  {
+    "blocking_reasons": [
+      "SYNTHETIC_FIXTURE",
+      "TARGET_IMPLEMENTATION_NOT_AVAILABLE_AT_CHECKPOINT"
+    ],
+    "candidate_ids": [
+      "han_candidate_6e1bbf8cc520f87d2aeb01f9",
+      "han_candidate_da23040df828548edb69e570"
+    ],
+    "status": "fixture_only",
+    "target_system": "TASK-02"
+  },
+  {
+    "blocking_reasons": [
+      "CHARACTER_MAPPING_NOT_EVIDENCE_SUPPORTED",
+      "FORMAL_RIGHTS_REQUIRED",
+      "GLYPH_IDENTITY_NOT_EVIDENCE_SUPPORTED",
+      "GLYPH_IDENTITY_SYNTHETIC",
+      "REAL_EXPERT_REVIEWS_REQUIRED",
+      "STRUCTURE_QC_NOT_PASSED",
+      "STYLE_ATTRIBUTION_NOT_EVIDENCE_SUPPORTED",
+      "SYNTHETIC_FIXTURE",
+      "TARGET_IMPLEMENTATION_NOT_AVAILABLE_AT_CHECKPOINT",
+      "TASK01_STIMULUS_ID_UNASSIGNED"
+    ],
+    "candidate_ids": [
+      "han_candidate_6e1bbf8cc520f87d2aeb01f9",
+      "han_candidate_da23040df828548edb69e570"
+    ],
+    "status": "blocked",
+    "target_system": "TASK-03"
+  },
+  {
+    "blocking_reasons": [
+      "WP2_OBJECT_MAP_EXTENSION_REQUIRED"
+    ],
+    "candidate_ids": [],
+    "status": "blocked",
+    "target_system": "WP2"
+  }
+]

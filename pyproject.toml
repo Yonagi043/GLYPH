@@ -15,6 +15,7 @@ glyph-assets = "glyph_features.asset_system.cli:main"
 glyph-vision = "glyph_features.vision_system.cli:main"
 glyph-vision-legacy = "glyph_features.vision_system.legacy_mvp:main"
 glyph-experiment = "glyph_features.experiment_system.cli:main"
+glyph-han = "glyph_features.han_style_system.cli:main"
 [tool.setuptools.packages.find]
 where = ["src", "."]
 include = ["glyph_features*", "tools*"]

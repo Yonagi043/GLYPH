@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "trust_root_id": "han_style_trust_root_v1",
+  "fixture_reviewers": [
+    {
+      "reviewer_id": "reviewer_fixture_01",
+      "allowed_roles": [
+        "history_or_paleography",
+        "type_or_visual_design"
+      ],
+      "allowed_round_types": [
+        "independent"
+      ]
+    },
+    {
+      "reviewer_id": "reviewer_fixture_02",
+      "allowed_roles": [
+        "calligraphy_or_seal_practice",
+        "type_or_visual_design"
+      ],
+      "allowed_round_types": [
+        "independent"
+      ]
+    },
+    {
+      "reviewer_id": "reviewer_fixture_03",
+      "allowed_roles": [
+        "history_or_paleography",
+        "type_or_visual_design"
+      ],
+      "allowed_round_types": [
+        "adjudication"
+      ]
+    },
+    {
+      "reviewer_id": "reviewer_fixture_adjudicator_01",
+      "allowed_roles": [
+        "history_or_paleography"
+      ],
+      "allowed_round_types": [
+        "adjudication"
+      ]
+    }
+  ],
+  "fixture_local_review_authorizations": [
+    {
+      "authorization_id": "fixture_local_review_authorization_v1",
+      "source_ids": [
+        "source_fixture_c0aa3d66673289a630db02c1"
+      ],
+      "allowed_rights_tiers": [
+        "open",
+        "research_local_only"
+      ],
+      "formal_effect": false
+    }
+  ],
+  "expert_gate_approvals": [],
+  "accepted_review_batches": [],
+  "claim_human_decisions": []
+}

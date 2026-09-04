@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH TASK-04 repository-pinned trust root",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trust_root_id",
+    "fixture_reviewers",
+    "fixture_local_review_authorizations",
+    "expert_gate_approvals",
+    "accepted_review_batches",
+    "claim_human_decisions"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "trust_root_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "fixture_reviewers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["reviewer_id", "allowed_roles", "allowed_round_types"],
+        "properties": {
+          "reviewer_id": { "type": "string", "pattern": "^reviewer_fixture_[A-Za-z0-9_-]+$" },
+          "allowed_roles": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["history_or_paleography", "calligraphy_or_seal_practice", "type_or_visual_design"] },
+            "uniqueItems": true
+          },
+          "allowed_round_types": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["independent", "adjudication"] },
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "fixture_local_review_authorizations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["authorization_id", "source_ids", "allowed_rights_tiers", "formal_effect"],
+        "properties": {
+          "authorization_id": { "$ref": "shared.schema.json#/$defs/id" },
+          "source_ids": { "type": "array", "items": { "$ref": "shared.schema.json#/$defs/id" }, "uniqueItems": true },
+          "allowed_rights_tiers": { "type": "array", "items": { "type": "string", "enum": ["open", "research_local_only"] }, "uniqueItems": true },
+          "formal_effect": { "const": false }
+        }
+      }
+    },
+    "expert_gate_approvals": { "type": "array", "items": { "type": "object" } },
+    "accepted_review_batches": { "type": "array", "items": { "type": "object" } },
+    "claim_human_decisions": { "type": "array", "items": { "type": "object" } }
+  }
+}

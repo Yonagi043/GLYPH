@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH expert review record",
+  "description": "An immutable, pseudonymous review. Synthetic fixture reviews never satisfy GATE-EXPERT.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "review_id",
+    "package_id",
+    "package_version",
+    "source_package_sha256",
+    "review_item_id",
+    "subject_type",
+    "subject_id",
+    "reviewer_id",
+    "reviewer_role",
+    "review_origin",
+    "gate_approval_id",
+    "round",
+    "review_round_type",
+    "independence_attestation",
+    "prior_review_visibility",
+    "dimensions",
+    "overall_decision",
+    "reason_codes",
+    "notes",
+    "reviewed_at",
+    "conflict_review_ids",
+    "supersedes_review_id",
+    "signature_sha256"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.1.0" },
+    "review_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "package_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "package_version": { "type": "string", "const": "1.1.0" },
+    "source_package_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "review_item_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "subject_type": { "type": "string", "enum": ["style_concept", "glyph_instance", "knowledge_claim", "stimulus_candidate"] },
+    "subject_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "reviewer_id": { "type": "string", "pattern": "^reviewer_[A-Za-z0-9_-]{2,63}$" },
+    "reviewer_role": { "type": "string", "enum": ["history_or_paleography", "calligraphy_or_seal_practice", "type_or_visual_design"] },
+    "review_origin": { "type": "string", "enum": ["real_expert", "synthetic_fixture"] },
+    "gate_approval_id": {
+      "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
+    },
+    "round": { "type": "integer", "minimum": 1 },
+    "review_round_type": { "type": "string", "enum": ["independent", "adjudication"] },
+    "independence_attestation": { "type": "boolean" },
+    "prior_review_visibility": { "type": "string", "enum": ["hidden", "visible_for_adjudication"] },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "character_identity",
+        "style_or_font_attribution",
+        "structure",
+        "stroke_logic",
+        "historical_fidelity",
+        "source_fidelity",
+        "experimental_suitability",
+        "inference_scope"
+      ],
+      "properties": {
+        "character_identity": { "$ref": "#/$defs/reviewDecision" },
+        "style_or_font_attribution": { "$ref": "#/$defs/reviewDecision" },
+        "structure": { "$ref": "#/$defs/reviewDecision" },
+        "stroke_logic": { "$ref": "#/$defs/reviewDecision" },
+        "historical_fidelity": { "$ref": "#/$defs/reviewDecision" },
+        "source_fidelity": { "$ref": "#/$defs/reviewDecision" },
+        "experimental_suitability": { "$ref": "#/$defs/reviewDecision" },
+        "inference_scope": { "$ref": "#/$defs/reviewDecision" }
+      }
+    },
+    "overall_decision": { "$ref": "#/$defs/reviewDecision" },
+    "reason_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "CHARACTER_IDENTITY_UNCERTAIN",
+          "VARIANT_MAPPING_UNCERTAIN",
+          "STYLE_ATTRIBUTION_UNCERTAIN",
+          "FALLBACK_OR_MODERNIZATION",
+          "STRUCTURE_OR_STROKE_ERROR",
+          "SOURCE_FIDELITY_INSUFFICIENT",
+          "HISTORICAL_FIDELITY_INSUFFICIENT",
+          "EXPERIMENT_UNSUITABLE",
+          "INSTANCE_LEVEL_ONLY",
+          "OUTSIDE_EXPERTISE",
+          "FIXTURE_ONLY"
+        ]
+      }
+    },
+    "notes": { "type": ["string", "null"] },
+    "reviewed_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" },
+    "conflict_review_ids": {
+      "type": "array",
+      "items": { "$ref": "shared.schema.json#/$defs/id" },
+      "uniqueItems": true
+    },
+    "supersedes_review_id": {
+      "anyOf": [{ "$ref": "shared.schema.json#/$defs/id" }, { "type": "null" }]
+    },
+    "signature_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "$defs": {
+    "reviewDecision": {
+      "type": "string",
+      "enum": ["pass", "fail", "needs_revision", "outside_expertise", "not_applicable"]
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "review_origin": { "const": "real_expert" } }, "required": ["review_origin"] },
+      "then": { "properties": { "gate_approval_id": { "$ref": "shared.schema.json#/$defs/id" } } },
+      "else": { "properties": { "gate_approval_id": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "review_round_type": { "const": "independent" } }, "required": ["review_round_type"] },
+      "then": {
+        "properties": {
+          "independence_attestation": { "const": true },
+          "prior_review_visibility": { "const": "hidden" },
+          "conflict_review_ids": { "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "review_round_type": { "const": "adjudication" } }, "required": ["review_round_type"] },
+      "then": {
+        "properties": {
+          "prior_review_visibility": { "const": "visible_for_adjudication" },
+          "conflict_review_ids": { "minItems": 2 }
+        }
+      }
+    }
+  ]
+}
