@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH ecological image stimulus record",
+  "description": "An immutable stimulus contract for curated ecological images; controlled font stimuli continue to use stimulus.schema.json 1.1.0.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "stimulus_id",
+    "stimulus_kind",
+    "protocol_version",
+    "condition_sha256",
+    "source_id",
+    "work_id",
+    "original_asset_id",
+    "representations",
+    "research_lines",
+    "semantic_status",
+    "content_classification",
+    "presentation",
+    "rights_tier",
+    "rights_evidence_id",
+    "intended_use",
+    "release_status",
+    "qc",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "2.0.0" },
+    "stimulus_id": { "$ref": "shared.schema.json#/$defs/stimulusId" },
+    "stimulus_kind": { "type": "string", "enum": ["ecological_image", "generated_fixture"] },
+    "protocol_version": { "type": "string", "const": "1.0.0" },
+    "condition_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "source_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "work_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "original_asset_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "representations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["A_layout", "B_shape", "B_shape_mask", "C_ink"],
+      "properties": {
+        "A_layout": { "$ref": "#/$defs/representationRef" },
+        "B_shape": { "$ref": "#/$defs/representationRef" },
+        "B_shape_mask": { "$ref": "#/$defs/representationRef" },
+        "C_ink": {
+          "anyOf": [
+            { "$ref": "#/$defs/representationRef" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "research_lines": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "shared.schema.json#/$defs/researchLine" }
+    },
+    "semantic_status": { "$ref": "shared.schema.json#/$defs/semanticStatus" },
+    "content_classification": { "$ref": "asset_candidate.schema.json#/$defs/contentClass" },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["award_metadata_hidden", "source_metadata_hidden", "recommended_viewport_px", "background_rgba"],
+      "properties": {
+        "award_metadata_hidden": { "const": true },
+        "source_metadata_hidden": { "const": true },
+        "recommended_viewport_px": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "integer", "minimum": 1 },
+            { "type": "integer", "minimum": 1 }
+          ],
+          "items": false
+        },
+        "background_rgba": { "$ref": "shared.schema.json#/$defs/rgba" }
+      }
+    },
+    "rights_tier": {
+      "type": "string",
+      "enum": ["open", "research_local_only"]
+    },
+    "rights_evidence_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "intended_use": {
+      "type": "string",
+      "enum": ["engineering_fixture", "research_stimulus_local"]
+    },
+    "release_status": {
+      "type": "string",
+      "enum": ["fixture_only", "research_local_only", "release_candidate", "released"]
+    },
+    "qc": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "review_method", "notes"],
+      "properties": {
+        "status": { "const": "passed" },
+        "review_method": { "type": "string", "enum": ["human", "fixture_protocol"] },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "created_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" }
+  },
+  "$defs": {
+    "representationRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset_id", "asset_role", "asset_ref", "transform_config_sha256"],
+      "properties": {
+        "asset_id": { "$ref": "shared.schema.json#/$defs/id" },
+        "asset_role": { "type": "string", "enum": ["A_layout", "B_shape", "C_ink", "mask"] },
+        "asset_ref": { "$ref": "shared.schema.json#/$defs/assetRef" },
+        "transform_config_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    }
+  }
+}

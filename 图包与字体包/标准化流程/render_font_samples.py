@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 # 每种文字系统的受控样张字符（尽量覆盖字形结构；不含品牌名，避免命题相关语义）
 SAMPLES = {
-    "拉丁文字": "Aa Bb Gg Rр  Handgloves  1234",
+    "拉丁文字": "Aa Bb Gg Rp  Handgloves  1234",
     "汉字":     "永 東 國 龍 鳳  字体审美  0123",
     "韩文":     "가 나 다 라 한글  로고  0123",
     "片假名":   "ア イ ウ エ オ  カタカナ  0123",

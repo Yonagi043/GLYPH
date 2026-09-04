@@ -1,0 +1,122 @@
+{
+  "base_commit": "f89daec0e5e1f2df216a8e18c551d81f9954032f",
+  "config_path": "configs/asset_curation_v1.yaml",
+  "config_sha256": "b6373dd53dc648cecc51a229eae788ac43e855113fa75989b4675e1b5ba069c9",
+  "created_at": "2026-09-04T04:07:50Z",
+  "environment": {
+    "fonttools": "4.55.0",
+    "jsonschema": "4.25.1",
+    "pillow": "11.3.0",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.11.15",
+    "python_implementation": "CPython"
+  },
+  "fixture_sha256": "b1a02565b0cd5b754f92e269f7921ce2426d22bf6c3c7051b2131f9a2bad3fad",
+  "producer_snapshot_matches_base": false,
+  "producer_source_snapshot_sha256": "a633f59b59f477344ed2f3f509663d38a063c98db969353b93d7c025aa4daac9",
+  "protocol_version": "1.0.0",
+  "run_type": "TASK-01_asset_inventory_and_fixture",
+  "source_table_snapshots": [
+    {
+      "award": "DFA",
+      "header": [
+        "award",
+        "year",
+        "file",
+        "url",
+        "bytes",
+        "tier",
+        "project",
+        "company",
+        "page",
+        "fetched"
+      ],
+      "path": "图包与字体包/图包/中文奖项/DFA/sources.csv",
+      "row_count": 80,
+      "row_widths": {
+        "10": 80
+      },
+      "sha256": "b8a448428c6dde032b3d90a4c556645dd56819d2750a5200ade42fde718871e5"
+    },
+    {
+      "award": "Indigo",
+      "header": [
+        "award",
+        "year",
+        "file",
+        "url",
+        "bytes",
+        "category",
+        "sub_category",
+        "title",
+        "creator",
+        "page",
+        "fetched"
+      ],
+      "path": "图包与字体包/图包/国际奖项/Indigo/sources.csv",
+      "row_count": 90,
+      "row_widths": {
+        "11": 90
+      },
+      "sha256": "7a610073752a22529ed0dc7892ffd7f138a8dcfb9b6069e97529208af954f376"
+    },
+    {
+      "award": "WOLDA",
+      "header": [
+        "award",
+        "year",
+        "file",
+        "url",
+        "bytes",
+        "page",
+        "fetched"
+      ],
+      "path": "图包与字体包/图包/国际奖项/WOLDA/sources.csv",
+      "row_count": 90,
+      "row_widths": {
+        "7": 90
+      },
+      "sha256": "964de6fc05f0353b20f9b46aa783555a08746615a3d7fc03987f68a76a465fac"
+    },
+    {
+      "award": "Golden Pin",
+      "header": [
+        "award",
+        "year",
+        "file",
+        "url",
+        "bytes",
+        "work_id",
+        "title",
+        "page",
+        "fetched"
+      ],
+      "path": "图包与字体包/图包/中文奖项/Golden Pin/sources.csv",
+      "row_count": 90,
+      "row_widths": {
+        "9": 90
+      },
+      "sha256": "4528b82f826794eaa3d44e45c36170bddfad3fc99680f7740f443871abb327d1"
+    },
+    {
+      "award": "GDC",
+      "header": [
+        "award",
+        "year",
+        "file",
+        "url",
+        "bytes",
+        "page",
+        "fetched"
+      ],
+      "path": "图包与字体包/图包/中文奖项/GDC/sources.csv",
+      "row_count": 53,
+      "row_widths": {
+        "7": 38,
+        "9": 15
+      },
+      "sha256": "9361bf76d9648e50b208fc40e9c6f64c62d633fd9449521cc8f6b68bad2657b7"
+    }
+  ],
+  "working_tree_state": "dirty"
+}

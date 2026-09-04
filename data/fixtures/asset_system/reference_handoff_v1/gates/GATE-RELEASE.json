@@ -1,0 +1,14 @@
+{
+  "decision_required": "Approve a release candidate only after rights, human curation, QC, and downstream protocol gates pass.",
+  "fixture_path": "data/fixtures/asset_system/reference_handoff_v1/fixture/stimuli.jsonl",
+  "fixture_release_status": "fixture_only",
+  "formal_curation_passed_count": 0,
+  "gate_id": "GATE-RELEASE",
+  "required_gates": [
+    "GATE-RIGHTS",
+    "human_curation",
+    "automated_qc",
+    "GATE-RELEASE"
+  ],
+  "status": "blocked"
+}

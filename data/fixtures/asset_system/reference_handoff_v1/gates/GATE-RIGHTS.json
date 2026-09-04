@@ -1,0 +1,19 @@
+{
+  "allowed_now": [
+    "metadata audit",
+    "local hashing",
+    "open fixture processing"
+  ],
+  "blocked_candidate_count": 388,
+  "decision_required": "Human review of licence evidence and allowed research/redistribution uses.",
+  "evidence_path": "data/fixtures/asset_system/reference_handoff_v1/rights_evidence.jsonl",
+  "gate_id": "GATE-RIGHTS",
+  "prohibited_without_approval": [
+    "public redistribution",
+    "formal stimulus release",
+    "upload to third-party storage"
+  ],
+  "protocol_path": "docs/asset_curation_protocol_zh.md",
+  "review_queue_path": "data/fixtures/asset_system/reference_handoff_v1/review_queue.csv",
+  "status": "blocked"
+}

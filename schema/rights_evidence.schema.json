@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH rights evidence record",
+  "description": "Structured evidence for a source rights tier; automation records evidence but does not make legal judgments.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "rights_evidence_id",
+    "source_id",
+    "checked_at",
+    "checked_by",
+    "basis",
+    "license_status",
+    "rights_tier",
+    "permitted_uses",
+    "license_url",
+    "license_text_or_id",
+    "redistribution_allowed",
+    "page_snapshot",
+    "decision_status",
+    "notes"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "2.0.0" },
+    "rights_evidence_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "source_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "checked_at": { "$ref": "shared.schema.json#/$defs/isoDate" },
+    "checked_by": { "type": "string", "minLength": 1 },
+    "basis": {
+      "type": "string",
+      "enum": ["project_generated_cc0", "explicit_license", "terms_page", "internal_metadata_only", "source_metadata_only", "missing"]
+    },
+    "license_status": {
+      "type": "string",
+      "enum": ["open", "research_only", "permission_required", "unknown"]
+    },
+    "rights_tier": {
+      "type": "string",
+      "enum": ["open", "research_local_only", "metadata_only", "blocked_unknown"]
+    },
+    "permitted_uses": {
+      "type": "array",
+      "uniqueItems": true,
+      "description": "Explicit uses supported by this evidence decision; freeze requires the actual intended use to be present.",
+      "items": {
+        "type": "string",
+        "enum": ["engineering_fixture", "metadata_audit", "public_redistribution", "research_stimulus_local"]
+      }
+    },
+    "license_url": {
+      "anyOf": [
+        { "$ref": "shared.schema.json#/$defs/uri" },
+        { "type": "null" }
+      ]
+    },
+    "license_text_or_id": { "type": ["string", "null"] },
+    "redistribution_allowed": { "type": ["boolean", "null"] },
+    "page_snapshot": {
+      "anyOf": [
+        { "$ref": "shared.schema.json#/$defs/assetRef" },
+        { "type": "null" }
+      ]
+    },
+    "decision_status": { "type": "string", "enum": ["passed", "blocked", "pending_human_review"] },
+    "notes": { "type": ["string", "null"] }
+  }
+}

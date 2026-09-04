@@ -1,0 +1,441 @@
+{
+  "blocked_human_gates": [
+    {
+      "gate_id": "GATE-RIGHTS",
+      "packet_path": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-RIGHTS.json",
+      "reasons": [
+        "licence pages and redistribution permissions are unverified"
+      ],
+      "status": "blocked"
+    },
+    {
+      "gate_id": "GATE-HISTORY",
+      "packet_path": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-HISTORY.json",
+      "reasons": [
+        "large tracked assets require a user-selected history strategy"
+      ],
+      "status": "blocked"
+    },
+    {
+      "gate_id": "GATE-TERMS",
+      "packet_path": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-TERMS.json",
+      "reasons": [
+        "official terms, authentication, cost, and data flow have not been reviewed"
+      ],
+      "status": "blocked"
+    },
+    {
+      "gate_id": "GATE-RELEASE",
+      "packet_path": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-RELEASE.json",
+      "reasons": [
+        "formal rights and human curation gates are not passed"
+      ],
+      "status": "blocked"
+    }
+  ],
+  "contract_compatibility": {
+    "backward_compatible": false,
+    "previous_version": "1.0.0",
+    "reason": "2.0.0 requires a validated producer source snapshot; 1.0.0 recorded only a base commit."
+  },
+  "contract_versions": {
+    "asset_candidate": "1.0.0",
+    "ecological_stimulus": "2.0.0",
+    "handoff_manifest": "2.0.0",
+    "rights_evidence": "2.0.0",
+    "shared": "1.1.0",
+    "source": "1.1.0-compatible",
+    "stimulus": "1.1.0"
+  },
+  "created_at": "2026-09-04T04:07:50Z",
+  "handoff_schema_version": "2.0.0",
+  "input_snapshots": [
+    {
+      "logical_type": "asset_curation_config",
+      "path": "configs/asset_curation_v1.yaml",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": "1.0.0",
+      "sha256": "a6fdf752bc6c91c16e6c6d97d9bafc7018ddc0ae2102a7e616f81377b56955df"
+    },
+    {
+      "logical_type": "open_fixture_source",
+      "path": "data/fixtures/asset_system/open_fixture.pgm",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": null,
+      "sha256": "b1a02565b0cd5b754f92e269f7921ce2426d22bf6c3c7051b2131f9a2bad3fad"
+    },
+    {
+      "logical_type": "legacy_source_table",
+      "path": "图包与字体包/图包/中文奖项/DFA/sources.csv",
+      "record_count": 80,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": null,
+      "sha256": "b8a448428c6dde032b3d90a4c556645dd56819d2750a5200ade42fde718871e5"
+    },
+    {
+      "logical_type": "legacy_source_table",
+      "path": "图包与字体包/图包/国际奖项/Indigo/sources.csv",
+      "record_count": 90,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": null,
+      "sha256": "7a610073752a22529ed0dc7892ffd7f138a8dcfb9b6069e97529208af954f376"
+    },
+    {
+      "logical_type": "legacy_source_table",
+      "path": "图包与字体包/图包/国际奖项/WOLDA/sources.csv",
+      "record_count": 90,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": null,
+      "sha256": "964de6fc05f0353b20f9b46aa783555a08746615a3d7fc03987f68a76a465fac"
+    },
+    {
+      "logical_type": "legacy_source_table",
+      "path": "图包与字体包/图包/中文奖项/Golden Pin/sources.csv",
+      "record_count": 90,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": null,
+      "sha256": "4528b82f826794eaa3d44e45c36170bddfad3fc99680f7740f443871abb327d1"
+    },
+    {
+      "logical_type": "legacy_source_table",
+      "path": "图包与字体包/图包/中文奖项/GDC/sources.csv",
+      "record_count": 53,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": null,
+      "sha256": "9361bf76d9648e50b208fc40e9c6f64c62d633fd9449521cc8f6b68bad2657b7"
+    }
+  ],
+  "known_limitations": [
+    "All 375 award images and 13 font files remain blocked_unknown until human rights review.",
+    "Automated content classes are suggestions; no repository asset has human curation gold.",
+    "The A/B/C stimulus is a generated CC0 fixture and cannot support pilot or research claims.",
+    "No Git history rewrite, external upload, login, terms acceptance, or public release was performed."
+  ],
+  "next_task_entrypoints": [
+    {
+      "notes": "Use A/B/C fixture records and transform config hash only.",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/asset_candidates.jsonl",
+      "status": "fixture_only",
+      "task_id": "TASK-02"
+    },
+    {
+      "notes": "Formal presentable stimuli are unavailable; fixture is synthetic.",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/stimuli.jsonl",
+      "status": "blocked",
+      "task_id": "TASK-03"
+    },
+    {
+      "notes": "Font metadata are available, but rights and expert gates remain blocked.",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/repository_asset_candidates.jsonl",
+      "status": "metadata_only",
+      "task_id": "TASK-04"
+    },
+    {
+      "notes": "Catalog and fixture contracts may be integrated with blocked readiness shown explicitly.",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+      "status": "metadata_only",
+      "task_id": "TASK-05"
+    }
+  ],
+  "outputs": [
+    {
+      "logical_type": "source_catalog",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/sources.jsonl",
+      "record_count": 395,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.1.0-compatible",
+      "sha256": "f180122abae5a829490ab2fb5ffe9495f27e6ac0247f72b2913bce54ca1def94"
+    },
+    {
+      "logical_type": "repository_asset_candidates",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/repository_asset_candidates.jsonl",
+      "record_count": 388,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "7e1e4f1b9a01b050f2ce7bf0b831c9085ee5cb0223724d8d7b2c0dde2d792391"
+    },
+    {
+      "logical_type": "rights_evidence",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/rights_evidence.jsonl",
+      "record_count": 395,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "2.0.0",
+      "sha256": "e9ab54f00970d8be674b77f4e1990b2396f18b4d92f05da32f97b6615f761273"
+    },
+    {
+      "logical_type": "source_migration",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/source_migration.csv",
+      "record_count": 385,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "2e9d432d3c56fe40b299c64f30e0365dae70a3aad8b363930d9b778b7a03e936"
+    },
+    {
+      "logical_type": "source_issues",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/source_issues.csv",
+      "record_count": 68,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "61286e2773390f99f1056cf536bd933af59e26aa78877d1304261820f2856d6f"
+    },
+    {
+      "logical_type": "review_queue",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/review_queue.csv",
+      "record_count": 388,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "bc8f9df09bb71150b623600b343375c5a090c2e94ab6f69f8fe390f1d1cdcc58"
+    },
+    {
+      "logical_type": "inventory_summary",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/inventory_summary.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "72b676ef3034aeb2746b1ad676291005cfa7cd417dac3cd9bbb32bc260dd38d9"
+    },
+    {
+      "logical_type": "run_manifest",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/run_manifest.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "46c5c945fe38d3ae7c533ffacc118808a3f343cf6e72a51c6acdbd0f86d61a87"
+    },
+    {
+      "logical_type": "quality_report",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/quality_report.md",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": null,
+      "sha256": "9bd56536cba9e6104b38b7041baab43575184f6d56a03c84dd5766724893c329"
+    },
+    {
+      "logical_type": "fixture_asset_candidates",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/asset_candidates.jsonl",
+      "record_count": 5,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "e132abc1bc2658315ac89a7d9c7772ac0bf3e510500eb8a8adda2d9c695c01ad"
+    },
+    {
+      "logical_type": "fixture_stimuli",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/stimuli.jsonl",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "2.0.0",
+      "sha256": "a7c49d069effc90ba1d696e38681ff91326edfcfe874c0bf270dac4e368c6f4a"
+    },
+    {
+      "logical_type": "gate_packet",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-RIGHTS.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "0ae62eca4d06b0d2b6464f3aa91c3e7a84ef4a14cb4f7e245c41fc16085a3439"
+    },
+    {
+      "logical_type": "gate_packet",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-HISTORY.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "ab83de9716fce3ca34ab8fd35c6a10a4ee6508692db5439140c46ee5d472cf34"
+    },
+    {
+      "logical_type": "gate_packet",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-TERMS.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "6cb310351f66c0e9d1c1d61ae861ff07ac87031eea932c9062e2ddbe61c24cb4"
+    },
+    {
+      "logical_type": "gate_packet",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-RELEASE.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "9c8ddf11c97048241c12c665c867da55b843bba24addfb9051b3747d81aa587c"
+    },
+    {
+      "logical_type": "checksums",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/checksums.sha256",
+      "record_count": 19,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": null,
+      "sha256": "94fdcbb51c30f4a15ccb5b7ce790d368186143e293659105edc05ba34c90a7a4"
+    },
+    {
+      "logical_type": "fixture_representation",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_6e451135614c28ccf86c714a.A_layout.png",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "09d33c2db0b15601b2f778885e6290be0755ce16c7c6aab126fa5e0d712dee3a"
+    },
+    {
+      "logical_type": "fixture_representation",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+    },
+    {
+      "logical_type": "fixture_representation",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_904a6f00145466ed82ec606f.mask.png",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "90f01a5a1c2d63daa596d0f73050aaf9f3cef00a9bb202318b9148eda59fbd6b"
+    },
+    {
+      "logical_type": "fixture_representation",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_e3d69a8b57fddd8087ffb0f1.C_ink.png",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "09d33c2db0b15601b2f778885e6290be0755ce16c7c6aab126fa5e0d712dee3a"
+    }
+  ],
+  "producer_provenance": {
+    "aggregate_sha256": "a633f59b59f477344ed2f3f509663d38a063c98db969353b93d7c025aa4daac9",
+    "base_commit": "f89daec0e5e1f2df216a8e18c551d81f9954032f",
+    "files": [
+      {
+        "path": "configs/asset_curation_v1.yaml",
+        "role": "config",
+        "sha256": "a6fdf752bc6c91c16e6c6d97d9bafc7018ddc0ae2102a7e616f81377b56955df"
+      },
+      {
+        "path": "pyproject.toml",
+        "role": "entrypoint",
+        "sha256": "f65be03c63383cf1ba794a04b1cf21e1e09de5a273e21bede4005a5513a819c4"
+      },
+      {
+        "path": "runtime.lock.json",
+        "role": "dependency_lock",
+        "sha256": "c6b987aea4fe72fb3e55ade4a0554bb8d20b35373d75c2a33ed9c88423159536"
+      },
+      {
+        "path": "schema/asset_candidate.schema.json",
+        "role": "schema",
+        "sha256": "355b48b69b28d260a0858fc6facc6810f78c966208b4c544c26f6888dc00622c"
+      },
+      {
+        "path": "schema/ecological_stimulus.schema.json",
+        "role": "schema",
+        "sha256": "58e29780bee4c4c038cc334c44d94aaaeddb12ca712f1e54ca45da5ed9e3237a"
+      },
+      {
+        "path": "schema/handoff_manifest.schema.json",
+        "role": "schema",
+        "sha256": "9185452d0af26e0e2b0809b4b69c37f62ba6d606137fde424acfd62d01bff0bd"
+      },
+      {
+        "path": "schema/rights_evidence.schema.json",
+        "role": "schema",
+        "sha256": "037e89f45b76808f29aaefe281e3f54fe89743b2e361c67f7ac28b97f1a535ed"
+      },
+      {
+        "path": "schema/shared.schema.json",
+        "role": "schema",
+        "sha256": "29ff6df513e1ac3e6f6c888cf9b1f8865ddd00cf16c52120c9a905574146c058"
+      },
+      {
+        "path": "schema/source.schema.json",
+        "role": "schema",
+        "sha256": "c44086b4f87a4cd2f5c7dcb6b4740cf01b88a6d474dea05865553e7b7f8cd1b1"
+      },
+      {
+        "path": "src/glyph_features/asset_system/__init__.py",
+        "role": "producer_source",
+        "sha256": "1b89a87ae74939eac05d15d3d5134865726300f94d813bdc67dab1737ffd6ef7"
+      },
+      {
+        "path": "src/glyph_features/asset_system/catalog.py",
+        "role": "producer_source",
+        "sha256": "7a88a35f28441d71a5fe669c562b14268797a7acd34443963eab8e951f0140a3"
+      },
+      {
+        "path": "src/glyph_features/asset_system/cli.py",
+        "role": "producer_source",
+        "sha256": "76430d4c294261788bcb57e8f5bac57bc7745f43ea229f56ff022a3ea2b19f6c"
+      },
+      {
+        "path": "src/glyph_features/asset_system/curation.py",
+        "role": "producer_source",
+        "sha256": "349bf1da5f8db35d985dda87999f50ac3e16a525180be5c7cdfd395b26c3197d"
+      },
+      {
+        "path": "src/glyph_features/asset_system/export.py",
+        "role": "producer_source",
+        "sha256": "bf8cd161d90337612b100048a9bebbb52d58d684f352a79a458de685548384cf"
+      },
+      {
+        "path": "src/glyph_features/asset_system/qc.py",
+        "role": "producer_source",
+        "sha256": "264125e222c27ff6d2486f99f368e3a46953ed40a9f0bc5d05a2b28bdbf9842b"
+      },
+      {
+        "path": "src/glyph_features/asset_system/rights.py",
+        "role": "producer_source",
+        "sha256": "030dfaeff22f1049d81eb964fccc970aca3a232ebed6411abe3203649a53a267"
+      },
+      {
+        "path": "src/glyph_features/asset_system/transform.py",
+        "role": "producer_source",
+        "sha256": "9b2f9d9018bbb15c495a0436bdd13680a04e1267687a591cd2e662c067a01778"
+      }
+    ],
+    "producer_snapshot_matches_base": false,
+    "working_tree_state": "dirty"
+  },
+  "producer_version": "1.0.0",
+  "quality_gates": [
+    {
+      "evidence": "data/fixtures/asset_system/reference_handoff_v1/checksums.sha256",
+      "gate_id": "schema_validation",
+      "status": "passed"
+    },
+    {
+      "evidence": "data/fixtures/asset_system/reference_handoff_v1/inventory_summary.json",
+      "gate_id": "repository_inventory",
+      "status": "passed"
+    },
+    {
+      "evidence": "data/fixtures/asset_system/reference_handoff_v1/fixture/stimuli.jsonl",
+      "gate_id": "fixture_A_B_C",
+      "status": "fixture_only"
+    },
+    {
+      "evidence": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-RIGHTS.json",
+      "gate_id": "formal_rights",
+      "status": "blocked"
+    },
+    {
+      "evidence": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-TERMS.json",
+      "gate_id": "restricted_terms",
+      "status": "blocked"
+    },
+    {
+      "evidence": "data/fixtures/asset_system/reference_handoff_v1/review_queue.csv",
+      "gate_id": "formal_human_curation",
+      "status": "blocked"
+    },
+    {
+      "evidence": "data/fixtures/asset_system/reference_handoff_v1/gates/GATE-RELEASE.json",
+      "gate_id": "public_release",
+      "status": "blocked"
+    }
+  ],
+  "readiness": {
+    "engineering_ready": true,
+    "pilot_ready": false,
+    "research_validated": false
+  },
+  "task_id": "TASK-01"
+}

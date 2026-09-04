@@ -1,0 +1,67 @@
+{
+  "protocol_version": "1.0.0",
+  "schema_versions": {
+    "shared": "1.1.0",
+    "source": "1.1.0-compatible",
+    "stimulus": "1.1.0",
+    "asset_candidate": "1.0.0",
+    "ecological_stimulus": "2.0.0",
+    "rights_evidence": "2.0.0",
+    "handoff_manifest": "2.0.0"
+  },
+  "awards": ["DFA", "Indigo", "WOLDA", "Golden Pin", "GDC"],
+  "inventory": {
+    "snapshot_date": "2026-09-04",
+    "font_root": "图包与字体包/字体包",
+    "award_roots": {
+      "DFA": "图包与字体包/图包/中文奖项/DFA",
+      "Indigo": "图包与字体包/图包/国际奖项/Indigo",
+      "WOLDA": "图包与字体包/图包/国际奖项/WOLDA",
+      "Golden Pin": "图包与字体包/图包/中文奖项/Golden Pin",
+      "GDC": "图包与字体包/图包/中文奖项/GDC"
+    }
+  },
+  "qc": {
+    "max_pixels": 40000000,
+    "near_duplicate_hamming_distance": 4,
+    "assume_srgb_without_profile": true
+  },
+  "open_fixture": {
+    "path": "data/fixtures/asset_system/open_fixture.pgm",
+    "target_bbox": [2, 2, 14, 10],
+    "license_id": "CC0-1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "reviewed_at": "2026-09-04T00:00:00Z"
+  },
+  "representations": {
+    "A_layout": {
+      "exif_orientation": true,
+      "output_format": "PNG",
+      "preserve_canvas": true
+    },
+    "B_shape": {
+      "canvas_px": [512, 512],
+      "content_px": [448, 448],
+      "background": 255,
+      "threshold": 128,
+      "resampling": "LANCZOS"
+    },
+    "C_ink": {
+      "background_correction": "corner_median_shift",
+      "corner_fraction": 0.1,
+      "target_background": 255,
+      "minimum_gray_levels": 3
+    }
+  },
+  "fixture_policy": {
+    "required_rights_tier": "open",
+    "release_status": "fixture_only"
+  },
+  "release_policy": {
+    "require_human_review": true,
+    "require_open_rights": true,
+    "block_unknown_rights": true,
+    "block_fixture_publication": true,
+    "no_overwrite": true
+  }
+}

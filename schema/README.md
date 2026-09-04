@@ -17,6 +17,10 @@ Mastodon 记录必须使用 `0.2.0`。该最小扩展不会改写视觉特征、
 | `social_observation.schema.json` | 一条从公开平台/API/人工采集中规范化的内容观察 | `observation_id` + `collection_run_id`，可选 `stimulus_id`/`font_id` |
 | `social_run_manifest.schema.json` | 一次有边界的采集运行的查询、时间窗、抽样和治理记录 | `collection_run_id` |
 | `source.schema.json` | 原始来源、许可和本地存档信息 | 主键 `source_id` |
+| `asset_candidate.schema.json` | 尚未冻结为刺激的原始/派生资产候选 | `asset_id` + `source_id` + `parent_asset_id` |
+| `rights_evidence.schema.json` | 人工待审的许可依据和权利层级 | `rights_evidence_id` + `source_id` |
+| `ecological_stimulus.schema.json` | 奖项生态图像或开放 fixture 的冻结表示 | `stimulus_id` + `original_asset_id` |
+| `handoff_manifest.schema.json` | 跨任务输入、输出、哈希、质量门禁和 readiness | `task_id` + 输出 artifact |
 | `shared.schema.json` | 公共 ID、枚举和复用对象定义 | 被其他 schema 引用 |
 
 ## 设计规则
@@ -81,3 +85,14 @@ CSV 投影使用 `local_archive` 列（JSON 对象字符串或空值），不能
 ## 版本策略
 
 当前采用语义版本号。增加可选字段不改变主版本；改变必填字段、枚举含义或测量定义时提升主版本。每个数据文件必须写明所使用的 schema 版本，分析脚本不得静默混用版本。
+
+### TASK-01 兼容矩阵
+
+| 读取方 | 既有 `stimulus` 1.1.0 | `asset_candidate` 1.0.0 | `ecological_stimulus` 2.0.0 | 迁移要求 |
+|---|---|---|---|---|
+| 既有 visual features v1 | 原样支持 | 不直接读取 | 默认不读取 | 无；冻结字段含义不变 |
+| TASK-01 资产系统 | 只读兼容 | 规范读写 | 规范读写 | 旧图包 manifest 经显式迁移器生成候选 |
+| TASK-02/03/04 | 按既有 schema 读取 | 仅消费 handoff 声明的记录 | 按独立 schema 读取 | 以 `logical_type`/schema 版本分派，禁止猜测 |
+| TASK-05 | 联合只读 | 联合只读 | 联合只读 | 先验证 `handoff_manifest` 2.0 producer snapshot、记录数和 SHA-256 |
+
+生态刺激采用独立 schema，而不是删除或弱化受控字体刺激中的 `shaping`、`font`、`anchors` 等字段。生态刺激 2.0 与 rights evidence 2.0 新增必填用途绑定；handoff 2.0 新增必填 producer source snapshot，三者均不把 1.0 记录静默视为 2.0。既有 visual v1 的 A/B/C 参数和表示 ID 哈希投影不受这些非视觉合同升级影响。联合读取器必须根据 handoff 的 `logical_type` 和 schema 版本选择验证器。旧 12 位 SHA-1、反斜杠/绝对路径和日期目录语义不具备自动兼容性；迁移时保留旧来源表完整 SHA-256 和修复事件，不原地改写历史记录。

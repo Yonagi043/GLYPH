@@ -20,6 +20,12 @@ CSV 模板对应 `schema/` 中的 JSON Schema。复杂对象字段使用 JSON �
 模板中的全零哈希仅用于示例结构检查；对模板运行发布校验时需要显式加
 `--allow-zero-hash`，真实数据不能使用该选项。
 
+## 资产系统 fixture 参考交接
+
+`data/fixtures/asset_system/reference_handoff_v1/` 是 TASK-01 的可提交工程参考运行。目录只包含项目生成且以 `CC0-1.0` 提供的 fixture 派生图；五奖项图片和字体不会被复制到该目录，只交接 metadata、完整 SHA-256、QC、人工审核队列和 `blocked_unknown` 权利状态。
+
+参考包的 `handoff_manifest.json` 使用 handoff 2.0，声明 `engineering_ready=true`、`pilot_ready=false`、`research_validated=false`，并以逐文件及聚合 SHA-256 固化 dirty producer source snapshot。它可用于下游契约和算法测试，不能移入 `data/releases/`，也不能当作正式研究刺激。操作协议见 `docs/asset_curation_protocol_zh.md`。
+
 社会叙事线的登记顺序是：先填写 `data/templates/social_queries.csv` 和
 `data/templates/social_run_manifest.json`，再保存原始导出，最后生成
 `social_observations.jsonl`。`social_codebook.csv` 固定对象、评价词和品类的写法，

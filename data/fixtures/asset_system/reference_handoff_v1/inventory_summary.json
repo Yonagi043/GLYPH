@@ -1,0 +1,438 @@
+{
+  "fixture_original_count": 1,
+  "planned_fixture_representation_count": 4,
+  "readiness": {
+    "engineering_ready": true,
+    "pilot_ready": false,
+    "research_validated": false
+  },
+  "repository": {
+    "award_years": {
+      "DFA": {
+        "2020": {
+          "curation_passed_count": 0,
+          "file_count": 16,
+          "unique_binary_count": 16,
+          "unique_work_count": 16
+        },
+        "2021": {
+          "curation_passed_count": 0,
+          "file_count": 16,
+          "unique_binary_count": 16,
+          "unique_work_count": 16
+        },
+        "2022": {
+          "curation_passed_count": 0,
+          "file_count": 16,
+          "unique_binary_count": 16,
+          "unique_work_count": 16
+        },
+        "2023": {
+          "curation_passed_count": 0,
+          "file_count": 16,
+          "unique_binary_count": 16,
+          "unique_work_count": 16
+        },
+        "2024": {
+          "curation_passed_count": 0,
+          "file_count": 16,
+          "unique_binary_count": 16,
+          "unique_work_count": 16
+        }
+      },
+      "GDC": {
+        "2021": {
+          "curation_passed_count": 0,
+          "file_count": 18,
+          "unique_binary_count": 18,
+          "unique_work_count": 9
+        },
+        "2023": {
+          "curation_passed_count": 0,
+          "file_count": 13,
+          "unique_binary_count": 13,
+          "unique_work_count": 7
+        },
+        "2025": {
+          "curation_passed_count": 0,
+          "file_count": 15,
+          "unique_binary_count": 15,
+          "unique_work_count": 15
+        }
+      },
+      "Golden Pin": {
+        "2022": {
+          "curation_passed_count": 0,
+          "file_count": 18,
+          "unique_binary_count": 18,
+          "unique_work_count": 18
+        },
+        "2023": {
+          "curation_passed_count": 0,
+          "file_count": 18,
+          "unique_binary_count": 18,
+          "unique_work_count": 18
+        },
+        "2024": {
+          "curation_passed_count": 0,
+          "file_count": 18,
+          "unique_binary_count": 18,
+          "unique_work_count": 18
+        },
+        "2025": {
+          "curation_passed_count": 0,
+          "file_count": 18,
+          "unique_binary_count": 18,
+          "unique_work_count": 18
+        }
+      },
+      "Indigo": {
+        "2020": {
+          "curation_passed_count": 0,
+          "file_count": 18,
+          "unique_binary_count": 18,
+          "unique_work_count": 18
+        },
+        "2021": {
+          "curation_passed_count": 0,
+          "file_count": 18,
+          "unique_binary_count": 18,
+          "unique_work_count": 18
+        },
+        "2022": {
+          "curation_passed_count": 0,
+          "file_count": 18,
+          "unique_binary_count": 18,
+          "unique_work_count": 18
+        },
+        "2023": {
+          "curation_passed_count": 0,
+          "file_count": 18,
+          "unique_binary_count": 18,
+          "unique_work_count": 18
+        },
+        "2024": {
+          "curation_passed_count": 0,
+          "file_count": 18,
+          "unique_binary_count": 18,
+          "unique_work_count": 18
+        }
+      },
+      "WOLDA": {
+        "2020": {
+          "curation_passed_count": 0,
+          "file_count": 17,
+          "unique_binary_count": 17,
+          "unique_work_count": 17
+        },
+        "2021": {
+          "curation_passed_count": 0,
+          "file_count": 17,
+          "unique_binary_count": 17,
+          "unique_work_count": 17
+        },
+        "2022": {
+          "curation_passed_count": 0,
+          "file_count": 18,
+          "unique_binary_count": 18,
+          "unique_work_count": 18
+        },
+        "2023": {
+          "curation_passed_count": 0,
+          "file_count": 18,
+          "unique_binary_count": 18,
+          "unique_work_count": 18
+        },
+        "2024": {
+          "curation_passed_count": 0,
+          "file_count": 17,
+          "unique_binary_count": 17,
+          "unique_work_count": 17
+        }
+      }
+    },
+    "awards": {
+      "DFA": {
+        "content_suggestions": {
+          "uncertain": 80
+        },
+        "curation_passed_count": 0,
+        "file_count": 80,
+        "rights_tiers": {
+          "blocked_unknown": 80
+        },
+        "unique_binary_count": 80,
+        "unique_work_count": 80
+      },
+      "GDC": {
+        "content_suggestions": {
+          "uncertain": 46
+        },
+        "curation_passed_count": 0,
+        "file_count": 46,
+        "rights_tiers": {
+          "blocked_unknown": 46
+        },
+        "unique_binary_count": 46,
+        "unique_work_count": 31
+      },
+      "Golden Pin": {
+        "content_suggestions": {
+          "uncertain": 72
+        },
+        "curation_passed_count": 0,
+        "file_count": 72,
+        "rights_tiers": {
+          "blocked_unknown": 72
+        },
+        "unique_binary_count": 72,
+        "unique_work_count": 72
+      },
+      "Indigo": {
+        "content_suggestions": {
+          "uncertain": 90
+        },
+        "curation_passed_count": 0,
+        "file_count": 90,
+        "rights_tiers": {
+          "blocked_unknown": 90
+        },
+        "unique_binary_count": 90,
+        "unique_work_count": 90
+      },
+      "WOLDA": {
+        "content_suggestions": {
+          "duplicate_exact": 6,
+          "project_board_or_poster": 81
+        },
+        "curation_passed_count": 0,
+        "file_count": 87,
+        "rights_tiers": {
+          "blocked_unknown": 87
+        },
+        "unique_binary_count": 84,
+        "unique_work_count": 85
+      }
+    },
+    "candidate_count": 388,
+    "content_suggestions": {
+      "duplicate_exact": 6,
+      "project_board_or_poster": 81,
+      "uncertain": 288
+    },
+    "curation_passed_count": 0,
+    "exact_duplicate_file_count": 6,
+    "font_families": [
+      {
+        "family_id": "font_family_b09826a59801bbc69c991d1b",
+        "family_name": "Lato",
+        "file_count": 2,
+        "font_ids": [
+          "font_aec3e9c2530d7b847e88bee5",
+          "font_fd7d274ba95795dfa60732b5"
+        ],
+        "regional_glyphs": [],
+        "rights_tiers": {
+          "blocked_unknown": 2
+        },
+        "subfamily_names": [
+          "Bold",
+          "Regular"
+        ]
+      },
+      {
+        "family_id": "font_family_971fe543a6c23913d2f03a0c",
+        "family_name": "M PLUS 1p",
+        "file_count": 1,
+        "font_ids": [
+          "font_6c3ec627f81f4f96f143bb3a"
+        ],
+        "regional_glyphs": [],
+        "rights_tiers": {
+          "blocked_unknown": 1
+        },
+        "subfamily_names": [
+          "Regular"
+        ]
+      },
+      {
+        "family_id": "font_family_f518d5e523e5342d43aaf984",
+        "family_name": "Ma Shan Zheng",
+        "file_count": 1,
+        "font_ids": [
+          "font_2d375f658e030af23676b3b6"
+        ],
+        "regional_glyphs": [],
+        "rights_tiers": {
+          "blocked_unknown": 1
+        },
+        "subfamily_names": [
+          "Regular"
+        ]
+      },
+      {
+        "family_id": "font_family_866e1b312cb32212bc07fdff",
+        "family_name": "NanumGothic",
+        "file_count": 1,
+        "font_ids": [
+          "font_6a8324c2ecb7a6e99fc6f2ef"
+        ],
+        "regional_glyphs": [],
+        "rights_tiers": {
+          "blocked_unknown": 1
+        },
+        "subfamily_names": [
+          "Regular"
+        ]
+      },
+      {
+        "family_id": "font_family_1158543cb3f37a1e72922e8f",
+        "family_name": "Noto Sans JP Thin",
+        "file_count": 1,
+        "font_ids": [
+          "font_b0f1b8b0361ee277ad1b4420"
+        ],
+        "regional_glyphs": [
+          "JP"
+        ],
+        "rights_tiers": {
+          "blocked_unknown": 1
+        },
+        "subfamily_names": [
+          "Regular"
+        ]
+      },
+      {
+        "family_id": "font_family_92419ef00b89431076fdf08d",
+        "family_name": "Noto Sans KR Thin",
+        "file_count": 1,
+        "font_ids": [
+          "font_69258fab2d024fa14a83fa5f"
+        ],
+        "regional_glyphs": [
+          "KR"
+        ],
+        "rights_tiers": {
+          "blocked_unknown": 1
+        },
+        "subfamily_names": [
+          "Regular"
+        ]
+      },
+      {
+        "family_id": "font_family_a5da8a884e039d374419a1f6",
+        "family_name": "Noto Sans SC Thin",
+        "file_count": 1,
+        "font_ids": [
+          "font_9bb96d63f5afd9c4d0bf6e19"
+        ],
+        "regional_glyphs": [
+          "CN"
+        ],
+        "rights_tiers": {
+          "blocked_unknown": 1
+        },
+        "subfamily_names": [
+          "Regular"
+        ]
+      },
+      {
+        "family_id": "font_family_ac5f021f234e1655289b11b6",
+        "family_name": "Noto Serif JP",
+        "file_count": 1,
+        "font_ids": [
+          "font_a792882a38365f15704842dc"
+        ],
+        "regional_glyphs": [
+          "JP"
+        ],
+        "rights_tiers": {
+          "blocked_unknown": 1
+        },
+        "subfamily_names": [
+          "Regular"
+        ]
+      },
+      {
+        "family_id": "font_family_d9dbc3bc20e02c50a57fcf09",
+        "family_name": "Noto Serif KR",
+        "file_count": 1,
+        "font_ids": [
+          "font_87149c140205751f9d77cb7d"
+        ],
+        "regional_glyphs": [
+          "KR"
+        ],
+        "rights_tiers": {
+          "blocked_unknown": 1
+        },
+        "subfamily_names": [
+          "Regular"
+        ]
+      },
+      {
+        "family_id": "font_family_30931083caae499c2ace4f73",
+        "family_name": "Noto Serif SC",
+        "file_count": 1,
+        "font_ids": [
+          "font_51b68c742e6a8054e15ffbcf"
+        ],
+        "regional_glyphs": [
+          "CN"
+        ],
+        "rights_tiers": {
+          "blocked_unknown": 1
+        },
+        "subfamily_names": [
+          "Regular"
+        ]
+      },
+      {
+        "family_id": "font_family_80d804f15b16f5557f6a12f3",
+        "family_name": "Open Sans",
+        "file_count": 1,
+        "font_ids": [
+          "font_677e169e71196b81da345970"
+        ],
+        "regional_glyphs": [],
+        "rights_tiers": {
+          "blocked_unknown": 1
+        },
+        "subfamily_names": [
+          "Regular"
+        ]
+      },
+      {
+        "family_id": "font_family_3b4819721d650e1797328316",
+        "family_name": "Roboto",
+        "file_count": 1,
+        "font_ids": [
+          "font_96cbd8d4e3ec036a03c3d5db"
+        ],
+        "regional_glyphs": [],
+        "rights_tiers": {
+          "blocked_unknown": 1
+        },
+        "subfamily_names": [
+          "Regular"
+        ]
+      }
+    ],
+    "font_family_count": 12,
+    "font_file_count": 13,
+    "image_file_count": 375,
+    "image_unique_sha256_count": 372,
+    "near_duplicate_file_count": 17,
+    "oversize_image_count": 4,
+    "qc_statuses": {
+      "failed": 4,
+      "needs_review": 371,
+      "passed": 13
+    },
+    "rights_tiers": {
+      "blocked_unknown": 388
+    },
+    "source_issue_count": 68,
+    "unique_work_count": 358
+  }
+}

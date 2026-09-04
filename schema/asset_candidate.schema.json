@@ -1,0 +1,346 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH asset candidate record",
+  "description": "A versioned record for a source or derived file that has not necessarily passed curation or become a stimulus.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "asset_id",
+    "record_origin",
+    "source_id",
+    "parent_asset_id",
+    "work_id",
+    "asset_role",
+    "candidate_kind",
+    "asset_ref",
+    "pixel_metadata",
+    "rights_tier",
+    "transform",
+    "automated_qc",
+    "classification",
+    "target_geometry",
+    "curation_status",
+    "exclusion_codes",
+    "review"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "asset_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "record_origin": {
+      "type": "string",
+      "enum": ["repository_asset", "generated_fixture"]
+    },
+    "source_id": { "$ref": "shared.schema.json#/$defs/id" },
+    "parent_asset_id": {
+      "anyOf": [
+        { "$ref": "shared.schema.json#/$defs/id" },
+        { "type": "null" }
+      ]
+    },
+    "work_id": {
+      "anyOf": [
+        { "$ref": "shared.schema.json#/$defs/id" },
+        { "type": "null" }
+      ]
+    },
+    "asset_role": {
+      "type": "string",
+      "enum": ["original", "A_layout", "B_shape", "C_ink", "mask", "thumbnail"],
+      "description": "In protocol v1, mask means the thresholded B_shape mask; alpha-mask semantics are not supported."
+    },
+    "candidate_kind": {
+      "type": "string",
+      "enum": [
+        "font_file",
+        "ecological_award_image",
+        "isolated_wordmark",
+        "controlled_font_specimen",
+        "han_style_specimen"
+      ]
+    },
+    "asset_ref": { "$ref": "shared.schema.json#/$defs/assetRef" },
+    "pixel_metadata": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width_px", "height_px", "mode", "color_space", "has_alpha", "dpi_x", "dpi_y"],
+          "properties": {
+            "width_px": { "type": "integer", "minimum": 1 },
+            "height_px": { "type": "integer", "minimum": 1 },
+            "mode": { "type": "string", "minLength": 1 },
+            "color_space": {
+              "type": "string",
+              "enum": ["sRGB", "Display-P3", "grayscale", "CMYK", "indexed", "unknown"]
+            },
+            "has_alpha": { "type": "boolean" },
+            "dpi_x": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+            "dpi_y": { "type": ["number", "null"], "exclusiveMinimum": 0 }
+          }
+        },
+        { "type": "null" }
+      ]
+    },
+    "rights_tier": {
+      "type": "string",
+      "enum": ["open", "research_local_only", "metadata_only", "blocked_unknown"]
+    },
+    "transform": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tool", "tool_version", "config_sha256", "parent_sha256", "parameters"],
+          "properties": {
+            "tool": { "type": "string", "minLength": 1 },
+            "tool_version": { "type": "string", "minLength": 1 },
+            "config_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "parent_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "parameters": { "type": "object", "additionalProperties": true }
+          }
+        },
+        { "type": "null" }
+      ]
+    },
+    "automated_qc": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "decodable",
+        "pixel_limit_status",
+        "hash_duplicate_status",
+        "perceptual_duplicate_status",
+        "boundary_status",
+        "format_status",
+        "failure_codes"
+      ],
+      "properties": {
+        "status": { "type": "string", "enum": ["passed", "failed", "needs_review"] },
+        "decodable": { "type": ["boolean", "null"] },
+        "pixel_limit_status": { "type": "string", "enum": ["passed", "failed", "not_applicable"] },
+        "hash_duplicate_status": { "type": "string", "enum": ["unique", "duplicate_exact"] },
+        "perceptual_duplicate_status": {
+          "type": "string",
+          "enum": ["unique", "duplicate_near", "not_checked", "not_applicable"]
+        },
+        "boundary_status": { "type": "string", "enum": ["passed", "failed", "needs_review", "not_applicable"] },
+        "format_status": { "type": "string", "enum": ["passed", "failed"] },
+        "failure_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "QC_DECODE_FAILED",
+              "QC_PIXEL_LIMIT_EXCEEDED",
+              "QC_EXACT_DUPLICATE",
+              "QC_NEAR_DUPLICATE",
+              "QC_BOUNDARY_AMBIGUOUS",
+              "QC_FORMAT_UNSUPPORTED",
+              "QC_HASH_MISMATCH",
+              "QC_SOURCE_MISSING",
+              "QC_SOURCE_ROW_INVALID"
+            ]
+          }
+        }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["automated_suggestion", "human_decision", "fixture_decision"],
+      "properties": {
+        "automated_suggestion": {
+          "anyOf": [
+            { "$ref": "#/$defs/contentClass" },
+            { "type": "null" }
+          ]
+        },
+        "human_decision": {
+          "anyOf": [
+            { "$ref": "#/$defs/contentClass" },
+            { "type": "null" }
+          ]
+        },
+        "fixture_decision": {
+          "anyOf": [
+            { "$ref": "#/$defs/contentClass" },
+            { "type": "null" }
+          ]
+        },
+        "suggestion_method": { "type": ["string", "null"] }
+      }
+    },
+    "target_geometry": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["geometry_type", "coordinates", "confirmed_by", "confirmed_at"],
+          "properties": {
+            "geometry_type": { "type": "string", "enum": ["bbox", "polygon"] },
+            "coordinates": {
+              "type": "array",
+              "items": { "type": "number", "minimum": 0 },
+              "description": "bbox is [left, top, right, bottom]; polygon is flattened [x1, y1, x2, y2, ...]."
+            },
+            "confirmed_by": { "type": "string", "minLength": 1 },
+            "confirmed_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" }
+          },
+          "oneOf": [
+            {
+              "properties": {
+                "geometry_type": { "const": "bbox" },
+                "coordinates": { "minItems": 4, "maxItems": 4 }
+              }
+            },
+            {
+              "properties": {
+                "geometry_type": { "const": "polygon" },
+                "coordinates": { "minItems": 6, "maxItems": 2048 }
+              }
+            }
+          ]
+        },
+        { "type": "null" }
+      ]
+    },
+    "curation_status": {
+      "type": "string",
+      "enum": ["pending", "passed", "excluded", "needs_review"]
+    },
+    "exclusion_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "RIGHTS_BLOCKED",
+          "SOURCE_MISSING",
+          "SOURCE_ROW_INVALID",
+          "DECODE_FAILED",
+          "PIXEL_LIMIT_EXCEEDED",
+          "DUPLICATE_EXACT",
+          "DUPLICATE_NEAR",
+          "NON_WINNER_ASSET",
+          "TARGET_AMBIGUOUS",
+          "CONTENT_NOT_ELIGIBLE",
+          "MANUAL_REVIEW_REQUIRED"
+        ]
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "reviewer_id", "reviewed_at", "decision", "notes"],
+      "properties": {
+        "method": { "type": "string", "enum": ["none", "human", "fixture_protocol"] },
+        "reviewer_id": { "type": ["string", "null"] },
+        "reviewed_at": {
+          "anyOf": [
+            { "$ref": "shared.schema.json#/$defs/isoDateTime" },
+            { "type": "null" }
+          ]
+        },
+        "decision": {
+          "type": ["string", "null"],
+          "enum": ["passed", "excluded", "needs_review", null]
+        },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "award_context": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["award", "year", "edition", "category", "award_status"],
+      "properties": {
+        "award": { "type": "string", "enum": ["DFA", "Indigo", "WOLDA", "Golden Pin", "GDC"] },
+        "year": { "type": ["integer", "null"], "minimum": 1900, "maximum": 2100 },
+        "edition": { "type": ["string", "null"] },
+        "category": { "type": ["string", "null"] },
+        "award_status": { "type": ["string", "null"] }
+      }
+    },
+    "font_metadata": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": [
+        "font_id",
+        "family_id",
+        "family_name",
+        "subfamily_name",
+        "postscript_name",
+        "version",
+        "is_variable",
+        "variable_axes",
+        "unicode_coverage",
+        "unicode_codepoint_count",
+        "regional_glyphs",
+        "license_hint"
+      ],
+      "properties": {
+        "font_id": { "$ref": "shared.schema.json#/$defs/id" },
+        "family_id": { "$ref": "shared.schema.json#/$defs/id" },
+        "family_name": { "type": "string", "minLength": 1 },
+        "subfamily_name": { "type": ["string", "null"] },
+        "postscript_name": { "type": ["string", "null"] },
+        "version": { "type": ["string", "null"] },
+        "is_variable": { "type": "boolean" },
+        "variable_axes": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "unicode_coverage": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "unicode_codepoint_count": { "type": "integer", "minimum": 0 },
+        "regional_glyphs": { "type": ["string", "null"] },
+        "license_hint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["internal_text", "internal_url", "sidecar_files"],
+          "properties": {
+            "internal_text": { "type": ["string", "null"] },
+            "internal_url": { "type": ["string", "null"] },
+            "sidecar_files": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "contentClass": {
+      "type": "string",
+      "enum": [
+        "isolated_wordmark_clean",
+        "logo_lockup_with_symbol",
+        "project_board_or_poster",
+        "mockup_or_scene",
+        "award_header_or_navigation_asset",
+        "call_for_entries_or_non_winner",
+        "duplicate_exact",
+        "duplicate_near",
+        "unreadable_or_corrupt",
+        "rights_blocked",
+        "uncertain"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "asset_role": { "const": "original" } },
+        "required": ["asset_role"]
+      },
+      "then": {
+        "properties": {
+          "parent_asset_id": { "type": "null" },
+          "transform": { "type": "null" }
+        }
+      },
+      "else": {
+        "properties": {
+          "parent_asset_id": { "$ref": "shared.schema.json#/$defs/id" },
+          "transform": { "type": "object" }
+        }
+      }
+    }
+  ]
+}

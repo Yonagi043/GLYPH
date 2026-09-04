@@ -1,0 +1,12 @@
+{
+  "decision_required": "Choose a large-file history remediation strategy after reviewing the documented trade-offs.",
+  "gate_id": "GATE-HISTORY",
+  "prohibited_without_approval": [
+    "filter-repo",
+    "force push",
+    "remote asset deletion",
+    "history replacement"
+  ],
+  "remediation_plan_path": "docs/asset_history_remediation_plan_zh.md",
+  "status": "blocked"
+}

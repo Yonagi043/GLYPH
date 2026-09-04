@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLYPH task handoff manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "handoff_schema_version",
+    "task_id",
+    "producer_version",
+    "contract_compatibility",
+    "producer_provenance",
+    "created_at",
+    "readiness",
+    "contract_versions",
+    "input_snapshots",
+    "outputs",
+    "quality_gates",
+    "known_limitations",
+    "blocked_human_gates",
+    "next_task_entrypoints"
+  ],
+  "properties": {
+    "handoff_schema_version": { "type": "string", "const": "2.0.0" },
+    "task_id": { "type": "string", "const": "TASK-01" },
+    "producer_version": { "type": "string", "const": "1.0.0" },
+    "contract_compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["previous_version", "backward_compatible", "reason"],
+      "properties": {
+        "previous_version": { "const": "1.0.0" },
+        "backward_compatible": { "const": false },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "producer_provenance": { "$ref": "#/$defs/producerProvenance" },
+    "created_at": { "$ref": "shared.schema.json#/$defs/isoDateTime" },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engineering_ready", "pilot_ready", "research_validated"],
+      "properties": {
+        "engineering_ready": { "type": "boolean" },
+        "pilot_ready": { "type": "boolean" },
+        "research_validated": { "type": "boolean" }
+      }
+    },
+    "contract_versions": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "input_snapshots": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "quality_gates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/gateStatus" }
+    },
+    "known_limitations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "blocked_human_gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gate_id", "status", "packet_path", "reasons"],
+        "properties": {
+          "gate_id": { "type": "string", "enum": ["GATE-RIGHTS", "GATE-HISTORY", "GATE-TERMS", "GATE-RELEASE"] },
+          "status": { "const": "blocked" },
+          "packet_path": { "type": "string", "minLength": 1 },
+          "reasons": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+        }
+      }
+    },
+    "next_task_entrypoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "status", "path", "notes"],
+        "properties": {
+          "task_id": { "type": "string", "enum": ["TASK-02", "TASK-03", "TASK-04", "TASK-05"] },
+          "status": { "type": "string", "enum": ["fixture_only", "blocked", "metadata_only"] },
+          "path": { "type": "string", "minLength": 1 },
+          "notes": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "producerProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base_commit", "working_tree_state", "producer_snapshot_matches_base", "aggregate_sha256", "files"],
+      "properties": {
+        "base_commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "working_tree_state": { "type": "string", "enum": ["clean", "dirty"] },
+        "producer_snapshot_matches_base": { "type": "boolean" },
+        "aggregate_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "path", "sha256"],
+            "properties": {
+              "role": { "type": "string", "enum": ["entrypoint", "dependency_lock", "config", "schema", "producer_source"] },
+              "path": { "type": "string", "minLength": 1 },
+              "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+            }
+          }
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logical_type", "path", "sha256", "record_count", "rights_or_privacy_level", "schema_version"],
+      "properties": {
+        "logical_type": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "record_count": { "type": "integer", "minimum": 0 },
+        "rights_or_privacy_level": {
+          "type": "string",
+          "enum": ["open_fixture", "metadata_only", "research_local_only", "blocked_unknown", "public_code_or_schema"]
+        },
+        "schema_version": { "type": ["string", "null"] }
+      }
+    },
+    "gateStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_id", "status", "evidence"],
+      "properties": {
+        "gate_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["passed", "fixture_only", "needs_review", "blocked"] },
+        "evidence": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
