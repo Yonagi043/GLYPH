@@ -1,0 +1,367 @@
+{
+  "blocked_human_gates": [
+    {
+      "gate_id": "GATE-EXPERT",
+      "packet_path": "data/fixtures/visual_measurements/reference_handoff_v1/GATE-EXPERT.json",
+      "reasons": [
+        "Two independent visual or type-domain reviewers have not reviewed fixture face validity and cross-script failure modes."
+      ],
+      "status": "blocked"
+    }
+  ],
+  "calibration_status": "not_calibrated",
+  "contract_compatibility": {
+    "canonical_long_form": "1.0.0",
+    "notes": "The v1.1 wide table remains readable and round-trippable; ordinary v2 A/B/C records cannot fabricate v1 sequence metadata.",
+    "visual_v1_readable": true,
+    "visual_v1_roundtrip": true
+  },
+  "contract_versions": {
+    "expert_gate": "1.0.0",
+    "feature_registry": "2.0.0",
+    "handoff": "1.0.0",
+    "long_measurement": "1.0.0",
+    "visual_v1": "1.1.0-compatible"
+  },
+  "created_at": "2026-09-04T09:00:00Z",
+  "git_commit": "26e93b33cee91c68cbf3701e54d71a25bfdcb4b1",
+  "handoff_schema_version": "1.0.0",
+  "input_snapshots": [
+    {
+      "logical_type": "task01_handoff",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/handoff_manifest.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "2.0.0",
+      "sha256": "acc193134495401b9a026aab0e7a866d7f15202b9b865db0d73d6f689bd1bdab"
+    },
+    {
+      "logical_type": "feature_registry_config",
+      "path": "configs/visual_measurements_v2.yaml",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": "2.0.0",
+      "sha256": "cee1fd77db8ec631b44f57fa0e4f5e59bd9cbb9bd4df4296854ae7eceb515a85"
+    },
+    {
+      "logical_type": "fixture_representation",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_6e451135614c28ccf86c714a.A_layout.png",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "09d33c2db0b15601b2f778885e6290be0755ce16c7c6aab126fa5e0d712dee3a"
+    },
+    {
+      "logical_type": "fixture_representation",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_c7e16ea61e90d876c6fe05b9.B_shape.png",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "578e75ef3abe8d182efce7c9b8445fedc673eeef74397fe0f23c04ecc309199b"
+    },
+    {
+      "logical_type": "fixture_representation",
+      "path": "data/fixtures/asset_system/reference_handoff_v1/fixture/derived/asset_e3d69a8b57fddd8087ffb0f1.C_ink.png",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "09d33c2db0b15601b2f778885e6290be0755ce16c7c6aab126fa5e0d712dee3a"
+    }
+  ],
+  "joint_analysis_exclusions": [
+    "total_score",
+    "uncalibrated_dimension_scores",
+    "unbound_manual_weights",
+    "qi_as_direct_observation"
+  ],
+  "known_limitations": [
+    "The reference run contains one generated open fixture and cannot support population, aesthetic, or script-level claims.",
+    "Threshold sensitivity warnings remain visible and have not been tuned away.",
+    "Surface validity awaits two independent domain reviewers.",
+    "Construct and predictive validity await TASK-03 real human ratings and held-out calibration.",
+    "Eight visual v1-only definitions are retained as deprecated compatibility metadata and are not active v2 outputs."
+  ],
+  "metrics": {
+    "active_feature_count": 20,
+    "failure_count": 0,
+    "measurement_count": 60,
+    "missing_measurement_count": 41,
+    "registry_definition_count": 28,
+    "representation_count": 3,
+    "sensitivity_warning_count": 14,
+    "stimulus_count": 1,
+    "valid_measurement_count": 19
+  },
+  "next_task_entrypoints": [
+    {
+      "notes": "Use the frozen dictionary for questionnaire stratification only; do not expose proxy values to participants.",
+      "path": "data/fixtures/visual_measurements/reference_run_v1/feature_registry.json",
+      "status": "fixture_only",
+      "task_id": "TASK-03"
+    },
+    {
+      "notes": "Use within-script applicability and low-level stroke/ink APIs; expert conclusions remain blocked.",
+      "path": "data/fixtures/visual_measurements/reference_run_v1/feature_registry.json",
+      "status": "metadata_only",
+      "task_id": "TASK-04"
+    },
+    {
+      "notes": "Integrate only for contract and product dry-runs; enforce joint_analysis_exclusions.",
+      "path": "data/fixtures/visual_measurements/reference_run_v1/measurements.jsonl",
+      "status": "fixture_only",
+      "task_id": "TASK-05"
+    }
+  ],
+  "outputs": [
+    {
+      "logical_type": "feature_registry",
+      "path": "data/fixtures/visual_measurements/reference_run_v1/feature_registry.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": "2.0.0",
+      "sha256": "21a34769c3af7c4e24fb6c749136a60fe5524e7af48816cd03ad983ed3469d94"
+    },
+    {
+      "logical_type": "long_measurements",
+      "path": "data/fixtures/visual_measurements/reference_run_v1/measurements.jsonl",
+      "record_count": 60,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "00371ebde91fe7d22359510343f94373ed194ccdc558b5a0d449d6ffa5c658c5"
+    },
+    {
+      "logical_type": "extraction_failures",
+      "path": "data/fixtures/visual_measurements/reference_run_v1/failures.jsonl",
+      "record_count": 0,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "logical_type": "run_manifest",
+      "path": "data/fixtures/visual_measurements/reference_run_v1/run_manifest.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "6a2fa5ad9a12f0b197956dd7cd3fb299254603b4e67edffd3c49863cd6e2d85d"
+    },
+    {
+      "logical_type": "quality_report",
+      "path": "data/fixtures/visual_measurements/reference_run_v1/quality_report.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "d511efb73a31b450baa9a438977b7e4c4fd66bc3d6cb0e230956190243f630e6"
+    },
+    {
+      "logical_type": "quality_report_markdown",
+      "path": "data/fixtures/visual_measurements/reference_run_v1/quality_report.md",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": null,
+      "sha256": "b08edc64b0eb8438144b92b95c09b4a8d0334261e2a547e07e700a7f9d0d1d93"
+    },
+    {
+      "logical_type": "sensitivity_report",
+      "path": "data/fixtures/visual_measurements/reference_run_v1/sensitivity_report.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "912bcaa25364366d94eca361d5e1bacaa358ef9612568336da4cfc57119c02a4"
+    },
+    {
+      "logical_type": "representation_comparison",
+      "path": "data/fixtures/visual_measurements/reference_run_v1/representation_comparison.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "096443a91c9050332a8ae8a40a0f1288b7eef614ab0d2d9e9b0c5153c966756c"
+    },
+    {
+      "logical_type": "reference_checksums",
+      "path": "data/fixtures/visual_measurements/reference_run_v1/checksums.sha256",
+      "record_count": 8,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": null,
+      "sha256": "e22dbb5e602d372641991079e29df12bae1261cad3175c9151df5a7e892d7278"
+    },
+    {
+      "logical_type": "cross_script_fixture",
+      "path": "data/fixtures/visual_measurements/cross_script_component_cases.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "open_fixture",
+      "schema_version": "1.0.0",
+      "sha256": "2d0b08c7b1be2511de38ab33143e17b5167471c03a6c0cde8e8d7c1c3184fdde"
+    },
+    {
+      "logical_type": "feature_definition_schema",
+      "path": "schema/visual_feature_definition.schema.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": "1.0.0",
+      "sha256": "6d0d42d3ec3b36160c72c176524fd945079638ba2ef8e1d5dfbd5dcebd5d98c9"
+    },
+    {
+      "logical_type": "measurement_schema",
+      "path": "schema/visual_measurement.schema.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": "1.0.0",
+      "sha256": "9be9e6f2c1cab6998e1de98254d6dfd0203e6a4ec1273b24310aa4465f5c4f0e"
+    },
+    {
+      "logical_type": "protocol_documentation",
+      "path": "docs/visual_measurement_protocol_zh.md",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": null,
+      "sha256": "9ed9afb98a279d2a0a7f95fc11a653717ceaa383a6158f427937063e9b9b464c"
+    },
+    {
+      "logical_type": "migration_documentation",
+      "path": "docs/visual_measurement_migration_zh.md",
+      "record_count": 1,
+      "rights_or_privacy_level": "public_code_or_schema",
+      "schema_version": null,
+      "sha256": "5494eae561d8a0860b6f47dda47b96162fefe0f914a5e99af58abc68444b4507"
+    },
+    {
+      "logical_type": "expert_gate_packet",
+      "path": "data/fixtures/visual_measurements/reference_handoff_v1/GATE-EXPERT.json",
+      "record_count": 1,
+      "rights_or_privacy_level": "metadata_only",
+      "schema_version": "1.0.0",
+      "sha256": "6f4f92db273f0ab19cb3e5833ab20aa44749c630a369c1e7ab7889cb226952b2"
+    }
+  ],
+  "producer_provenance": {
+    "aggregate_sha256": "87c3d5f498d7d7fc29fd1a539187e02a6c9c97f3e173da55b76bc44dd1884438",
+    "files": [
+      {
+        "path": "configs/visual_measurements_v2.yaml",
+        "role": "config",
+        "sha256": "cee1fd77db8ec631b44f57fa0e4f5e59bd9cbb9bd4df4296854ae7eceb515a85"
+      },
+      {
+        "path": "pyproject.toml",
+        "role": "entrypoint",
+        "sha256": "d720ef0295d0fb15ef1fd8d8e16e0991690df4363b52b2e6596d3ff0998a7cc5"
+      },
+      {
+        "path": "runtime.lock.json",
+        "role": "dependency_lock",
+        "sha256": "c6b987aea4fe72fb3e55ade4a0554bb8d20b35373d75c2a33ed9c88423159536"
+      },
+      {
+        "path": "schema/visual_expert_gate.schema.json",
+        "role": "schema",
+        "sha256": "0b7fdc4fd3d81a8b689c54e763adc085422dbc42638fa8d806450092a221e959"
+      },
+      {
+        "path": "schema/visual_feature_definition.schema.json",
+        "role": "schema",
+        "sha256": "6d0d42d3ec3b36160c72c176524fd945079638ba2ef8e1d5dfbd5dcebd5d98c9"
+      },
+      {
+        "path": "schema/visual_measurement.schema.json",
+        "role": "schema",
+        "sha256": "9be9e6f2c1cab6998e1de98254d6dfd0203e6a4ec1273b24310aa4465f5c4f0e"
+      },
+      {
+        "path": "schema/visual_measurement_handoff.schema.json",
+        "role": "schema",
+        "sha256": "1f436d6c9800e2ee9ad112411bd6425d49b6effd91950f200179688ab4bfb989"
+      },
+      {
+        "path": "src/glyph_features/vision_system/__init__.py",
+        "role": "producer_source",
+        "sha256": "7445f1450c4ed4d13655b01779ee523e9664afc001bcb98f0b8fdbca3b24edc6"
+      },
+      {
+        "path": "src/glyph_features/vision_system/cli.py",
+        "role": "producer_source",
+        "sha256": "759cbe29dd6307035088445f6ce662da06f30b3cf570c4427eaab1398cef520b"
+      },
+      {
+        "path": "src/glyph_features/vision_system/compat.py",
+        "role": "producer_source",
+        "sha256": "827485e5a08c4bf29d2dcfa72c935d8f5ecc6ab9cf77b9329018a8cd5577a5a9"
+      },
+      {
+        "path": "src/glyph_features/vision_system/definitions.py",
+        "role": "producer_source",
+        "sha256": "145a1c20ea6110a326d93002dc41b6e8c5371a45593b3ffb58e8c3fe8068cf11"
+      },
+      {
+        "path": "src/glyph_features/vision_system/extract.py",
+        "role": "producer_source",
+        "sha256": "4c22e2e6b86341f52a241cc033f5ee960569a891aad85d55c6ff81a9d760b65b"
+      },
+      {
+        "path": "src/glyph_features/vision_system/handoff.py",
+        "role": "producer_source",
+        "sha256": "a6ccf12dfdc0e4f21471aa5de95273d5efedfdc4f7bfae45b7ebedac73a2884b"
+      },
+      {
+        "path": "src/glyph_features/vision_system/legacy_mvp.py",
+        "role": "producer_source",
+        "sha256": "418d0e67bd15fd1aff62d85072c9036227908026ed4c56bf5e5637db880ea863"
+      },
+      {
+        "path": "src/glyph_features/vision_system/qc.py",
+        "role": "producer_source",
+        "sha256": "a5349289e67d3646b855abdc44babce77e22613bbc9cb53a81edba9cdb55c502"
+      }
+    ],
+    "git_commit": "26e93b33cee91c68cbf3701e54d71a25bfdcb4b1",
+    "producer_snapshot_matches_commit": true,
+    "working_tree_state": "clean"
+  },
+  "producer_version": "visual_measurements_v2.0.0",
+  "quality_gates": [
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_run_v1/quality_report.json",
+      "gate_id": "schema_validation",
+      "status": "passed"
+    },
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_run_v1/checksums.sha256",
+      "gate_id": "input_and_config_integrity",
+      "status": "passed"
+    },
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_run_v1/quality_report.json",
+      "gate_id": "computational_stability",
+      "status": "passed"
+    },
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_run_v1/sensitivity_report.json",
+      "gate_id": "representation_sensitivity",
+      "status": "needs_review"
+    },
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_handoff_v1/GATE-EXPERT.json",
+      "gate_id": "surface_validity",
+      "status": "blocked"
+    },
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_run_v1/quality_report.json",
+      "gate_id": "construct_validity",
+      "status": "blocked"
+    },
+    {
+      "evidence": "data/fixtures/visual_measurements/reference_run_v1/quality_report.json",
+      "gate_id": "predictive_validity",
+      "status": "blocked"
+    }
+  ],
+  "readiness": {
+    "engineering_ready": true,
+    "pilot_ready": false,
+    "research_validated": false
+  },
+  "task_id": "TASK-02",
+  "upstream_commits": {
+    "TASK-01": "af3820836a6ffa92c63016b0e308f624f9b42db0"
+  }
+}
