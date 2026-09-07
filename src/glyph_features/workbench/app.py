@@ -17,7 +17,7 @@ from typing import Any, Callable, Literal
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -27,6 +27,10 @@ from .gates import ReleaseBlocked
 from .releases import ExportError
 from .service import DatabaseBoundaryError, WorkbenchService
 from .operations import OperationError, OperationManager
+from .materials import MaterialCatalog
+from .research import FontSampleConfig, MaterialSelection, ResearchAssessment, ResearchService, StudyConfig
+from .personas import PersonaExecutor
+from .research_results import analyze_research, export_research
 
 
 STATIC_DIR = Path(__file__).with_name("static")
@@ -290,6 +294,7 @@ def create_app(
     export_root: str | Path,
     backup_root: str | Path,
     restore_root: str | Path,
+    material_root: str | Path | None = None,
     csrf_ttl_seconds: float = 300,
     csrf_clock: Callable[[], float] | None = None,
 ) -> FastAPI:
@@ -343,6 +348,9 @@ def create_app(
     app.state.csrf_tokens = csrf_tokens
     app.state.scheduler_started = False
     app.state.operations = operations
+    app.state.materials = MaterialCatalog(material_root) if material_root else None
+    app.state.research = ResearchService(service.catalog, app.state.materials, service.workspace_root) if app.state.materials else None
+    app.state.personas = PersonaExecutor(app.state.research) if app.state.research else None
     app.mount(
         "/static",
         StaticFiles(directory=STATIC_DIR, check_dir=False),
@@ -397,11 +405,139 @@ def create_app(
             "csrf_expires_in_seconds": csrf_ttl_seconds,
             "distribution_label": "SYNTHETIC / DEMO",
             "write_policy": "local_origin_and_csrf_required",
+            "material_catalog_configured": app.state.materials is not None,
         }
 
     @app.get("/api/overview")
     def overview() -> dict[str, Any]:
         return service.overview()
+
+    def material_catalog() -> MaterialCatalog:
+        if app.state.materials is None:
+            raise HTTPException(status_code=409, detail="MATERIAL_ROOT_NOT_CONFIGURED")
+        return app.state.materials
+
+    def research_service() -> ResearchService:
+        material_catalog()
+        return app.state.research
+
+    @app.get("/api/research")
+    def studies() -> dict[str, Any]:
+        return {"runs": research_service().list()}
+
+    @app.post("/api/research", status_code=201)
+    def create_study(config: StudyConfig) -> dict[str, Any]:
+        return research_service().create(config)
+
+    @app.post("/api/research/font-samples", status_code=201)
+    def render_study_fonts(config: FontSampleConfig) -> dict[str, Any]:
+        return {"items": research_service().render_font_samples(config)}
+
+    @app.get("/api/research/{run_id}")
+    def study(run_id: str) -> dict[str, Any]:
+        return research_service().get(run_id)
+
+    @app.post("/api/research/{run_id}/measure")
+    def measure_study(run_id: str) -> dict[str, Any]:
+        return research_service().measure(run_id)
+
+    @app.get("/api/research/{run_id}/results")
+    def study_results(run_id: str) -> dict[str, Any]:
+        return analyze_research(research_service(), app.state.personas, run_id)
+
+    @app.get("/api/research/{run_id}/assessments")
+    def study_assessments(run_id: str) -> dict[str, Any]:
+        return {"assessments": research_service().assessments(run_id)}
+
+    @app.post("/api/research/{run_id}/assessments", status_code=201)
+    def save_study_assessment(run_id: str, payload: ResearchAssessment) -> dict[str, Any]:
+        return research_service().save_assessment(run_id, payload, study_results(run_id))
+
+    @app.get("/api/research-assessments/{assessment_id}/continue")
+    def continue_study(assessment_id: str) -> dict[str, Any]:
+        return {"config": research_service().continuation(assessment_id)}
+
+    @app.post("/api/research/{run_id}/export")
+    def export_study(run_id: str) -> dict[str, Any]:
+        exported = export_research(study_results(run_id), exports)
+        return {**exported, "download_url": f"/api/research-exports/{exported['export_id']}"}
+
+    @app.get("/api/research-exports/{export_id}")
+    def download_study(export_id: str) -> FileResponse:
+        if not __import__("re").fullmatch(r"study_[0-9a-f]{24}-[0-9a-f]{16}", export_id):
+            raise HTTPException(status_code=422, detail="RESEARCH_EXPORT_ID_INVALID")
+        destination = exports / "research" / f"{export_id}.zip"
+        if not destination.is_file():
+            raise HTTPException(status_code=404, detail="RESEARCH_EXPORT_NOT_FOUND")
+        return FileResponse(destination, filename=destination.name, media_type="application/zip")
+
+    @app.get("/api/research/{run_id}/tasks")
+    def persona_tasks(run_id: str) -> dict[str, Any]:
+        research_service()
+        return {"executor": "VS Code agent / runSubagent", "backend_can_call_subagent": False, "tasks": app.state.personas.tasks(run_id)}
+
+    @app.post("/api/research/{run_id}/tasks")
+    def prepare_persona_tasks(run_id: str) -> dict[str, Any]:
+        research_service()
+        return {"tasks": app.state.personas.prepare(run_id)}
+
+    @app.post("/api/research/{run_id}/suspend")
+    def suspend_study(run_id: str) -> dict[str, Any]:
+        research_service()
+        app.state.personas.suspend(run_id)
+        return research_service().get(run_id)
+
+    @app.post("/api/research/{run_id}/resume")
+    def resume_study(run_id: str) -> dict[str, Any]:
+        research_service()
+        app.state.personas.resume(run_id)
+        return research_service().get(run_id)
+
+    @app.post("/api/research/{run_id}/tasks/{task_id}/retry")
+    def retry_persona_task(run_id: str, task_id: str) -> dict[str, Any]:
+        research_service()
+        app.state.personas.retry(run_id, task_id)
+        return {"tasks": app.state.personas.tasks(run_id)}
+
+    @app.get("/api/research/{run_id}/inputs/{material_id}")
+    def study_input(run_id: str, material_id: str) -> FileResponse:
+        return FileResponse(research_service().input_image(run_id, material_id))
+
+    @app.get("/api/materials")
+    def materials(query: str = "", kind: str = "", award: str = "", offset: int = 0, limit: int = 50) -> dict[str, Any]:
+        catalog = material_catalog()
+        if offset < 0 or not 1 <= limit <= 500:
+            raise HTTPException(status_code=422, detail="MATERIAL_PAGE_INVALID")
+        items = catalog.search(query, kind, award)
+        return {"summary": catalog.summary(), "total": len(items), "items": items[offset:offset + limit]}
+
+    @app.get("/api/materials/{material_id}")
+    def material(material_id: str) -> dict[str, Any]:
+        try:
+            return material_catalog().items[material_id]
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail="MATERIAL_NOT_FOUND") from error
+
+    @app.get("/api/materials/{material_id}/image/{representation}")
+    def material_image(material_id: str, representation: Literal["original", "standardized"]) -> FileResponse:
+        try:
+            return FileResponse(material_catalog().image_path(material_id, representation))
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail="MATERIAL_REPRESENTATION_NOT_FOUND") from error
+
+    @app.get("/api/materials/{material_id}/preview/{representation}")
+    def material_preview(material_id: str, representation: Literal["original", "standardized"],
+                         left: int | None = None, top: int | None = None, right: int | None = None, bottom: int | None = None,
+                         foreground: Literal["unconfirmed", "dark", "light"] = "unconfirmed",
+                         color_mode: Literal["native", "grayscale"] = "native", max_edge: int | None = None,
+                         layer: Literal["input", "mask", "overlay"] = "input") -> Response:
+        edges = (left, top, right, bottom)
+        if any(edge is not None for edge in edges) and not all(edge is not None for edge in edges):
+            raise HTTPException(status_code=422, detail="STUDY_CROP_INCOMPLETE")
+        selection = MaterialSelection(material_id=material_id, representation=representation, reason="preview only",
+                                      crop_box=edges if left is not None else None, foreground=foreground,
+                                      foreground_note="Preview only; not a saved confirmation.", color_mode=color_mode, max_edge=max_edge)
+        return Response(research_service().preview(selection, layer), media_type="image/png")
 
     @app.get("/api/modules")
     def modules() -> dict[str, Any]:

@@ -1,0 +1,10 @@
+{
+  "material_root": "../../GLYPH",
+  "catalog_database": "data/processed/workbench_v04/catalog.sqlite3",
+  "social_database": "data/processed/workbench_v04/unused-social.sqlite3",
+  "export_root": "data/processed/workbench_v04/exports",
+  "backup_root": "data/processed/workbench_v04/backups",
+  "restore_root": "data/processed/workbench_v04/restores",
+  "host": "127.0.0.1",
+  "port": 8025
+}

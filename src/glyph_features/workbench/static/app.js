@@ -2,6 +2,7 @@
 
 const state = {
   view: "overview",
+  defaultView: "overview",
   overview: null,
   health: null,
   cache: new Map(),
@@ -10,6 +11,8 @@ const state = {
   menuTrigger: null,
   confirmationTrigger: null,
   pendingConfirmation: null,
+  selectedMaterials: new Set(),
+  draftConfig: null,
 };
 
 const dangerousActions = {
@@ -70,6 +73,7 @@ const dangerousActions = {
 };
 
 const labels = {
+  research: ["研究运行", "synthetic_persona"],
   overview: ["总览", "模块健康、研究阶段与待处理门禁"],
   assets: ["来源与资产", "来源、权利、资产与刺激派生链"],
   vision: ["视觉测量", "特征运行、质量控制与构念边界"],
@@ -269,6 +273,194 @@ function renderModule(view, data) {
     </section>`;
 }
 
+function materialImage(item, representation, className = "material-thumb") {
+  const record = item.representations[representation];
+  if (!record?.exists || !/\.(png|jpg|jpeg|webp|gif)$/i.test(record.path)) return "";
+  return `<img class="${className}" loading="lazy" src="/api/materials/${encodeURIComponent(item.material_id)}/image/${representation}" alt="${escapeHtml(representation === "original" ? "原图" : "已有标准化图")}">`;
+}
+
+function renderMaterials(data) {
+  const summary = data.summary;
+  return `<header class="page-head"><div><span class="eyebrow">GLYPH · EXISTING MATERIALS</span><h1>来源与资产</h1></div><div class="action-row"><span id="selection-count">已选 ${state.selectedMaterials.size}</span><button class="button primary" data-view="research">配置研究</button></div></header>
+    <section class="stat-strip"><div class="stat"><span>商业原图</span><b>${summary.kinds.ecological_award_image}</b></div><div class="stat"><span>字体文件（含额外库存）</span><b>${summary.kinds.font_file}</b></div><div class="stat"><span>现成样张</span><b>${summary.kinds.existing_font_sample}</b></div><div class="stat"><span>未匹配旧变换</span><b>${summary.unmatched_transforms.length}</b></div></section>
+    <section class="content-section"><div class="table-tools"><input class="search-input" type="search" data-filter placeholder="检索作品、奖项、年份、字体或 ID" aria-label="检索已有材料">
+      <select id="material-kind" aria-label="材料类型">
+        <option value="">全部材料</option>
+        <option value="ecological_award_image">商业图像</option>
+        <option value="existing_font_sample">已有字体样张</option>
+        <option value="font_file">字体文件</option>
+      </select></div>
+    <div class="table-wrap"><table><thead><tr><th>选择</th><th>图像</th><th>材料与来源</th><th>类别</th><th>用途状态</th></tr></thead><tbody>${data.items.map((item) => {
+      const candidate = item.candidate || {};
+      const title = item.source?.title || item.representations.original.path.split("/").at(-1);
+      return `<tr data-filter-row data-material-kind="${escapeHtml(item.kind)}"><td><input type="checkbox" data-select-material="${escapeHtml(item.material_id)}" aria-label="选择 ${escapeHtml(title)}" ${state.selectedMaterials.has(item.material_id) ? "checked" : ""} ${item.kind === "font_file" ? 'disabled title="字体文件不是图像，请选择对应样张"' : ""}></td><td>${materialImage(item, "standardized")}</td><td><button class="entity-button" data-material="${escapeHtml(item.material_id)}">${escapeHtml(title)}</button><br><span class="mono">${escapeHtml(item.material_id)}</span><br>${escapeHtml(candidate.award_context?.award || "")} ${escapeHtml(candidate.award_context?.year || "")}</td><td>${escapeHtml(item.kind)}</td><td>${badge(item.use_status.model_input)}<br>${escapeHtml(item.use_status.study_eligibility || candidate.rights_tier || "未审核")}</td></tr>`;
+    }).join("")}</tbody></table></div></section>`;
+}
+
+async function showMaterial(materialId, trigger) {
+  document.querySelector("#inspector-title").textContent = "材料详情";
+  const content = document.querySelector("#inspector-content");
+  content.textContent = "读取中...";
+  openInspector(trigger);
+  try {
+    const item = await request(`/api/materials/${encodeURIComponent(materialId)}`);
+    content.innerHTML = `<div class="material-pair"><figure>${materialImage(item, "original", "material-preview")}<figcaption>原图 / 原样张</figcaption></figure><figure>${materialImage(item, "standardized", "material-preview")}<figcaption>已有标准化图</figcaption></figure></div>
+      <section class="inspector-section"><h3>来源与用途</h3><dl class="definition-list"><div><dt>材料 ID</dt><dd>${escapeHtml(item.material_id)}</dd></div><div><dt>作品 ID</dt><dd>${escapeHtml(item.work_id || "未匹配")}</dd></div><div><dt>来源 URL</dt><dd>${escapeHtml(item.source?.url || "渲染样张")}</dd></div></dl><pre class="json-block">${escapeHtml(JSON.stringify(item.use_status, null, 2))}</pre></section>
+      <section class="inspector-section"><h3>原始记录与对应证据</h3><pre class="json-block">${escapeHtml(JSON.stringify(item, null, 2))}</pre></section>`;
+    if (item.kind === "ecological_award_image") content.insertAdjacentHTML("afterbegin", `<section class="inspector-section"><h3>重复与作品关联</h3><p>同图哈希：${item.same_image_ids?.length || 0} · 同作品其他条目：${item.same_work_ids?.length || 0}</p>${(item.same_work_ids || []).map((otherId) => `<button class="entity-button" data-material="${escapeHtml(otherId)}">${escapeHtml(otherId)}</button>`).join("<br>")}</section>`);
+  } catch (error) { content.textContent = error.message; }
+}
+
+function renderTextRegionControls(materialId) {
+  return `<label>颜色<select name="color_mode"><option value="native">原色</option><option value="grayscale">灰度</option></select></label><label>输入最长边（像素）<input name="max_edge" type="number" min="128" max="4096" step="1" value="1280"></label><label>文字前景<select name="foreground"><option value="unconfirmed">未确认：构图</option><option value="dark">已确认：深色文字</option><option value="light">已确认：浅色文字</option></select></label><label>文字区域确认依据<textarea name="foreground_note" maxlength="2000"></textarea></label><button class="button" type="button" data-preview-selection="${escapeHtml(materialId)}">预览输入 / 掩码</button><div data-selection-preview></div>`;
+}
+
+function renderResearch(data, materials) {
+  const selected = materials.items.filter((item) => state.selectedMaterials.has(item.material_id));
+  data = {...data, runs: [...data.runs].reverse()};
+  return `<header class="page-head"><div><span class="eyebrow">GLYPH · SYNTHETIC PERSONA</span><h1>研究运行</h1></div><div class="action-row"><button class="button" data-new-study>新建空白研究</button><button class="button" data-view="assets">选择材料</button></div></header>
+    <section class="content-section"><details><summary>同内容字体对照</summary><form id="font-sample-form" class="study-form"><label>已有字体<select name="font_ids" multiple required size="6">${materials.items.filter((item) => item.kind === "font_file").map((item) => `<option value="${escapeHtml(item.material_id)}">${escapeHtml(item.representations.original.path.split("/").at(-1))}</option>`).join("")}</select></label><label>文字内容<textarea name="texts" required></textarea></label><div class="study-options"><label>名义字重<input name="weight" type="number" min="100" max="900" step="1" value="400" required></label><label>字号（像素）<input name="font_size" type="number" min="16" max="256" value="96" required></label><label>画布宽<input name="width" type="number" min="256" max="2048" value="1280" required></label><label>画布高<input name="height" type="number" min="128" max="1024" value="320" required></label></div><button class="button" type="submit">生成并选择样张</button></form></details></section>
+    <section class="content-section"><div class="section-head"><h2>已保存运行</h2><span>${data.runs.length}</span></div><div class="table-wrap"><table><thead><tr><th>研究</th><th>状态</th><th>材料</th><th>来源</th><th>操作</th></tr></thead><tbody>${data.runs.map((run) => `<tr><td><button class="entity-button" data-study="${escapeHtml(run.run_id)}">${escapeHtml(run.config.name)}</button><br><span class="mono">${escapeHtml(run.run_id)}</span></td><td>${badge(run.status)}</td><td>${run.snapshot.materials.length}</td><td>synthetic_persona</td><td><button class="button" data-study-measure="${escapeHtml(run.run_id)}">测量</button></td></tr>`).join("") || emptyRow(5)}</tbody></table></div></section>
+    <section class="content-section"><div class="section-head"><h2>新研究配置</h2><span>美观 · 探索性</span></div><form id="study-form" class="study-form">
+      <label>研究名称<input name="name" required minlength="2" maxlength="160"></label>
+      <label>表示比较的参考运行<select name="reference_run_id"><option value="">无参考运行</option>${data.runs.map((run) => `<option value="${escapeHtml(run.run_id)}">${escapeHtml(run.config.name)}</option>`).join("")}</select></label>
+      <label>研究问题<textarea name="question" required minlength="5">在当前材料与提示条件下，哪些文字视觉实例更美观，差异是否随身份条件改变？</textarea></label>
+      <label>候选解释<textarea name="explanations" required>视觉形式\n熟悉与识读的身份提示\n习得文化联想\n具体设计与商业语境</textarea></label>
+      <label>比较依据<textarea name="design_rationale" maxlength="5000"></textarea></label>
+      <label>各解释的可反驳预期<textarea name="predictions"></textarea></label>
+      <input name="parent_assessment_id" type="hidden">
+      <fieldset><legend>身份条件</legend>${["baseline", "zh", "en", "ja", "ko"].map((role) => `<label class="inline-choice"><input type="checkbox" name="roles" value="${role}" ${["baseline", "zh"].includes(role) ? "checked" : ""} ${role === "baseline" ? "disabled" : ""}>${escapeHtml({baseline:"无身份基线",zh:"中文背景",en:"英语背景",ja:"日语背景",ko:"韩语背景"}[role])}</label>`).join("")}</fieldset>
+      <div class="study-options"><label>问卷语言<select name="questionnaire_language"><option value="en">English</option><option value="zh-Hans">简体中文</option></select></label><label>身份措辞<select name="wording"><option value="background">背景描述</option><option value="profile">档案描述</option></select></label><label>同条件重复<input name="repetitions" type="number" value="1" min="1" step="1" required></label></div>
+      <label>宿主执行 agent<select name="executor_agent"><option value="Explore">Explore（只读）</option><option value="default">当前默认 agent</option></select></label>
+      <label>每份问卷图片数<input name="task_size" type="number" min="1" step="1" value="4"></label>
+      <fieldset><legend>呈现顺序</legend><label class="inline-choice"><input type="checkbox" name="orders" value="forward" checked>正序</label><label class="inline-choice"><input type="checkbox" name="orders" value="reverse" checked>反序</label></fieldset>
+      <div class="table-wrap"><table><thead><tr><th>所选材料</th><th>表示</th><th>选择理由</th></tr></thead><tbody>${selected.map((item) => `<tr data-study-selection="${escapeHtml(item.material_id)}"><td>${escapeHtml(item.source?.title || item.representations.original.path.split("/").at(-1))}<br>${badge(item.use_status.model_input)}</td><td><select name="representation">${item.representations.standardized ? '<option value="standardized">已有标准化图</option>' : ""}<option value="original">原图 / 原样张</option></select><details><summary>矩形区域（可选，像素）</summary>${["left", "top", "right", "bottom"].map((edge, index) => `<label>${["左", "上", "右", "下"][index]}<input name="crop_${edge}" type="number" min="0" step="1"></label>`).join("")}</details>${renderTextRegionControls(item.material_id)}</td><td><input name="reason" required minlength="3" value="现有实例比较"></td></tr>`).join("") || emptyRow(3, "尚未选择材料")}</tbody></table></div>
+      <label>选择范围与未用原因<textarea name="selection_scope" required minlength="5">本次按内容、字体或商业实例进行有针对性比较；其余材料未纳入本次配置，不代表质量不合格。</textarea></label>
+      <label>继续 / 停止规则<textarea name="stopping_rule" required minlength="5">完成匹配基线、身份与顺序条件，检查缺失和重复波动；不为预期排序或显著性重复抽取。</textarea></label>
+      <button class="button primary" type="submit" ${selected.length ? "" : "disabled"}>保存研究配置</button>
+    </form></section>`;
+}
+
+function researchNumber(value) {
+  return Number.isFinite(value) ? String(Number(value.toFixed(4))) : "NA";
+}
+
+function differenceRange(items) {
+  const values = items.map((item) => item.difference).filter(Number.isFinite);
+  return values.length ? `${Math.min(...values)} 至 ${Math.max(...values)}（${values.length} 配对）` : "无有效配对";
+}
+
+function renderResearchJudgments(run, results) {
+  const judgments = {supported: "支持", not_supported: "不支持", unresolved: "无法区分"};
+  const workSummary = results.representation_comparison?.work_summary;
+  const titleFor = (materialId) => results.materials.find((item) => item.material_id === materialId)?.title || materialId;
+  const latest = results.research_assessments?.at(-1);
+  return `<section class="inspector-section"><h3>当前研究结论</h3><p>${escapeHtml(latest?.conclusion || "尚未保存研究判断；下列为实际结果及冻结比较。")}</p><details><summary>冻结问题、比较依据与预期</summary><p>${escapeHtml(run.config.question)}</p><p>${escapeHtml(run.config.design_rationale || "未登记比较依据")}</p>${(run.config.predictions || []).map((prediction) => `<p>${escapeHtml(prediction)}</p>`).join("")}${run.config.parent_assessment_id ? `<p class="mono">沿用判断 ${escapeHtml(run.config.parent_assessment_id)}</p>` : ""}</details>
+    ${workSummary?.works.length ? `<h4>作品级表示差值</h4><p>本运行减参考。${workSummary.observed_work_count} 个作品等权均差 ${researchNumber(workSummary.equal_work_mean_difference)}；负向 ${workSummary.negative_works}、持平 ${workSummary.tied_works}、正向 ${workSummary.positive_works}。</p><div class="table-wrap"><table><thead><tr><th>作品</th><th>均差 / 范围</th><th>负 / 零 / 正条件</th></tr></thead><tbody>${workSummary.works.map((work) => `<tr><td>${work.material_ids.map((materialId) => escapeHtml(titleFor(materialId))).join(" / ")}</td><td>${researchNumber(work.mean_difference)} / ${work.range_difference.map(researchNumber).join(" 至 ")}</td><td>${work.negative_conditions} / ${work.tied_conditions} / ${work.positive_conditions}</td></tr>`).join("")}</tbody></table></div><p>有序评分的描述性均差；同一作品的多次调用不作独立样本。逐一去掉一个作品的均差范围：${differenceRange((workSummary.leave_one_work_out || []).map((item) => ({difference: item.mean_difference})))}。这不是置信区间。</p>` : ""}
+    ${(results.font_comparison_summaries || []).length ? `<h4>同内容字体比较</h4><p>比较项减参考项。美观为主要结果，清晰度另列；同一字体的文本和调用不是独立字体家族。</p><div class="table-wrap"><table><thead><tr><th>内容 / 条件</th><th>比较减参考</th><th>美观逐对差值</th><th>正序 / 反序均差</th><th>清晰度均差</th></tr></thead><tbody>${results.font_comparison_summaries.map((summary) => `<tr><td>${escapeHtml(summary.content)}<br>${escapeHtml(summary.role)} · ${escapeHtml(summary.model_display_name)}</td><td>${escapeHtml(summary.comparison_title)}<br>减 ${escapeHtml(summary.reference_title)}</td><td>${summary.aesthetic_differences.map(researchNumber).join(", ")}</td><td>${researchNumber(summary.order_mean_differences.forward)} / ${researchNumber(summary.order_mean_differences.reverse)}</td><td>${researchNumber(summary.mean_clarity_difference)}</td></tr>`).join("")}</tbody></table></div>` : ""}
+    ${(results.research_assessments || []).map((assessment) => `<article class="research-source"><h4>已保存判断 · ${escapeHtml(assessment.assessment_id)}</h4><p>研究者 / agent 解释，非独立因果证据</p><p>${escapeHtml(assessment.conclusion)}</p>${assessment.explanation_updates.map((update) => `<h4>${escapeHtml(judgments[update.judgment])}：${escapeHtml(update.explanation)}</h4><p>${escapeHtml(update.evidence)}</p><p>${update.material_ids.map((materialId) => escapeHtml(titleFor(materialId))).join(" / ")}</p>`).join("")}<h4>尚未区分</h4>${assessment.remaining_confounds.map((confound) => `<p>${escapeHtml(confound)}</p>`).join("")}<h4>下一问题</h4><p>${escapeHtml(assessment.next_question)}</p><p>${escapeHtml(assessment.next_comparison)}</p><p class="mono">依据结果 ${escapeHtml(assessment.basis_result_sha256)}</p><button class="button" data-continue-assessment="${escapeHtml(assessment.assessment_id)}">据此继续研究</button></article>`).join("") || "<p>尚未保存研究判断。</p>"}
+    <details><summary>记录新的研究判断</summary><form class="study-form" data-assessment-form="${escapeHtml(run.run_id)}" data-basis-result="${escapeHtml(results.result_sha256)}"><label>当前结论<textarea name="conclusion" required minlength="10" maxlength="6000"></textarea></label>${run.config.explanations.map((explanation, index) => `<fieldset data-explanation-index="${index}"><legend>${escapeHtml(explanation)}</legend><input type="hidden" name="explanation" value="${escapeHtml(explanation)}"><label>判断<select name="judgment">${Object.entries(judgments).map(([value, title]) => `<option value="${value}" ${value === "unresolved" ? "selected" : ""}>${title}</option>`).join("")}</select></label><label>具体比较与证据<textarea name="evidence" minlength="5" maxlength="5000" required></textarea></label>${run.snapshot.materials.map((record) => `<label class="inline-choice"><input type="checkbox" name="material_ids" value="${escapeHtml(record.selection.material_id)}" checked>${escapeHtml(titleFor(record.selection.material_id))}</label>`).join("")}</fieldset>`).join("")}<label>未决混杂<textarea name="remaining_confounds" required></textarea></label><label>下一问题<textarea name="next_question" required minlength="5"></textarea></label><label>下一比较及选择依据<textarea name="next_comparison" required minlength="10"></textarea></label><label>研究决定<select name="decision"><option value="new_comparison">改变比较条件</option><option value="independent_materials">增加独立材料</option><option value="repeat_check">检验重复波动</option><option value="stop_path">停止当前路径</option></select></label><button class="button primary" type="submit">保存判断</button></form></details></section>`;
+}
+
+function renderStudyOverview(run, results) {
+  const comparison = results.representation_comparison || {pairs: []};
+  const workIds = run.snapshot.materials.map((record) => {
+    if (record.material.work_id) return record.material.work_id;
+    try { return JSON.parse(record.material.source.notes)?.work_id || null; }
+    catch { return null; }
+  });
+  const validCalls = new Set(results.rows.map((row) => row.task_id)).size;
+  const missingCodes = {REPRESENTATION_NOT_APPLICABLE: "表示不适用", MEASUREMENT_NOT_IMPLEMENTED: "未实现", GLYPH_UNITS_NOT_AVAILABLE: "缺少字形单元"};
+  return `<section class="inspector-section research-overview"><h3>比较问题</h3><p>${escapeHtml(run.config.question)}</p><p>登记作品组 ${new Set(workIds.filter(Boolean)).size} · 未登记作品的输入 ${workIds.filter((value) => !value).length} · 本运行输入 ${run.snapshot.materials.length} · 实际调用 ${results.actual_calls} / ${results.planned_tasks} · 纳入调用 ${validCalls} · 评分 ${results.rows.length}</p><p>synthetic_persona · 作品组不是人类样本；Auto显示名不保证固定底层模型。</p>
+    ${comparison.reference_run_id ? `<p>参考运行：<button class="entity-button" data-study="${escapeHtml(comparison.reference_run_id)}">${escapeHtml(run.snapshot.reference_run.config.name)}</button> · 调用 ${comparison.reference_actual_calls} / ${comparison.reference_planned_tasks}</p><p>下列表示差值为本运行减参考运行；变换条件见各输入，独立调用的波动仍无法与表示差异完全分离。</p>` : ""}
+    <div class="research-inputs">${run.snapshot.materials.map((record) => {
+      const materialId = record.selection.material_id;
+      const summary = results.materials.find((item) => item.material_id === materialId);
+      const referenceInput = run.snapshot.reference_run?.snapshot.materials.find((item) => item.selection.material_id === materialId);
+      return `<article class="research-input"><h4>${escapeHtml(summary.title)}</h4><div class="material-pair">${referenceInput ? `<figure><img class="material-preview" src="/api/research/${comparison.reference_run_id}/inputs/${materialId}" alt="${escapeHtml(summary.title)} 参考输入"><figcaption>参考输入</figcaption></figure>` : ""}${record.input_path ? `<figure><img class="material-preview" src="/api/research/${run.run_id}/inputs/${materialId}" alt="${escapeHtml(summary.title)} 本次输入"><figcaption>本次输入 · ${escapeHtml(record.selection.representation)}${record.selection.crop_box ? ` · ${record.selection.crop_box.join(", ")}` : " · 完整图"}</figcaption></figure>` : "<p>无可用输入</p>"}</div>
+      <p>颜色 ${escapeHtml(record.selection.color_mode || "native")} · 最长边 ${record.selection.max_edge ?? "未限制"} · 美观中位数 ${summary.median_aesthetic ?? "未评分"} · 范围 ${summary.range_aesthetic?.join(" 至 ") || "无"} · 有效 ${summary.observed_aesthetic} / 计划 ${summary.planned_observations} · 缺失或未执行 ${summary.missing_or_unexecuted}</p>
+      <dl class="research-differences">${[...["zh", "en", "ja", "ko"].filter((role) => run.config.roles.includes(role)).map((role) => [`${role} 减基线`, results.identity_differences.filter((item) => item.role === role)]), ["重复减首次", results.repeat_differences], ["反序减正序", results.order_and_call_differences], ...(comparison.reference_run_id ? [["本表示减参考", comparison.pairs]] : [])].map(([label, items]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(differenceRange(items.filter((item) => item.material_id === materialId)))}</dd></div>`).join("")}</dl>
+      ${comparison.reference_run_id ? `<p>逐对表示差值：${comparison.pairs.filter((pair) => pair.material_id === materialId).map((pair) => researchNumber(pair.difference)).join(", ") || "无有效配对"}</p><details><summary>表示配对与未匹配记录</summary><pre class="json-block">${escapeHtml(JSON.stringify({pairs: comparison.pairs.filter((pair) => pair.material_id === materialId), unmatched: (comparison.unmatched || []).filter((item) => item.material_id === materialId)}, null, 2))}</pre></details>` : ""}
+      <details><summary>测量对象与适用量</summary><p>${escapeHtml(summary.measurement?.scope || "尚未测量")} · ${escapeHtml(summary.measurement?.measurement_kind || "NA")} · 前景 ${escapeHtml(summary.measurement?.foreground || "unconfirmed")}</p><p>${escapeHtml(record.selection.foreground_note || "未确认文字前景，构图量不能解释为独立字形量。")}</p><p>阈值 96 / 128 / 160。连通域不是字符数；测量不是美感真值。</p><div class="table-wrap"><table><thead><tr><th>原始量</th><th>三阈值</th><th>不适用 / 缺失</th></tr></thead><tbody>${(summary.threshold_sensitivity || []).map((metric) => {
+        const codes = [...new Set((summary.measurement?.thresholds || []).map((entry) => entry.metrics[metric.feature].missing_code).filter(Boolean))];
+        return `<tr><td>${escapeHtml(metric.feature)}</td><td>${metric.values.map(researchNumber).join(" / ")}</td><td>${codes.map((code) => escapeHtml(missingCodes[code] || code)).join(", ") || "适用"}</td></tr>`;
+      }).join("") || emptyRow(3, "尚未测量")}</tbody></table></div></details></article>`;
+    }).join("")}</div></section>
+    <section class="inspector-section"><h3>条件覆盖</h3><div class="table-wrap"><table><thead><tr><th>身份 / 顺序 / 重复 / 图片组</th><th>状态</th><th>实际尝试</th><th>纳入美观 / 输入数</th></tr></thead><tbody>${results.tasks_and_raw_returns.map((task) => `<tr><td>${escapeHtml(task.condition.role)} / ${escapeHtml(task.condition.order)} / ${task.condition.repetition + 1} / ${(task.condition.block ?? 0) + 1}</td><td>${badge(task.status)}</td><td>${task.attempts.length}</td><td>${results.rows.filter((row) => row.task_id === task.task_id && row.aesthetic !== null).length} / ${task.inputs?.length ?? run.snapshot.materials.length}</td></tr>`).join("") || emptyRow(4)}</tbody></table></div></section>
+    <section class="inspector-section"><h3>本次具体来源</h3>${(results.four_line_evidence.specific_sources?.entries || []).map((entry) => `<article class="research-source"><h4>${escapeHtml(entry.evidence_id)}</h4><p><a href="${escapeHtml(entry.source_url)}" target="_blank" rel="noreferrer">${escapeHtml(entry.source_url)}</a></p><p>核验位置：${escapeHtml(entry.locator)} · ${escapeHtml(entry.accessed_at)}</p><p>来源事实：${escapeHtml(entry.source_facts)}</p><p>可支持：${escapeHtml(entry.supports)}</p><p>不能支持：${escapeHtml(entry.does_not_support)}</p><details><summary>核验范围与局限</summary><p>${escapeHtml(entry.verification_scope)}</p><p>${escapeHtml(entry.evidence_level)} · ${escapeHtml(entry.limitations)}</p></details></article>`).join("") || "<p>本运行尚未绑定具体来源。后面的通用文献仅作背景，不是每件资产的直接证据。</p>"}</section>`;
+}
+
+async function showStudy(runId, trigger) {
+  const run = await request(`/api/research/${encodeURIComponent(runId)}`);
+  const tasks = await request(`/api/research/${encodeURIComponent(runId)}/tasks`);
+  const results = await request(`/api/research/${encodeURIComponent(runId)}/results`);
+  document.querySelector("#inspector-title").textContent = run.config.name;
+  document.querySelector("#inspector-content").innerHTML = `<section class="inspector-section"><h3>${escapeHtml(run.status)}</h3><p>${escapeHtml(run.config.question)}</p>${run.snapshot.materials.map((record) => `<button class="entity-button" data-material="${escapeHtml(record.selection.material_id)}">${escapeHtml(record.material.source?.title || record.selection.material_id)}</button>`).join("<br>")}</section>
+    <section class="inspector-section"><h3>实际模型结果</h3><p>已记录调用 ${results.actual_calls} / 计划任务 ${results.planned_tasks} · 协议偏离 ${results.protocol_deviation_calls} · 失败 ${results.failed_calls} · 重试 ${results.retries}</p>
+    <div class="table-wrap"><table><thead><tr><th>实例</th><th>美观中位数</th><th>范围</th><th>有效 / 缺失或未执行</th></tr></thead><tbody>${results.materials.map((item) => `<tr><td><button class="entity-button" data-material="${escapeHtml(item.material_id)}">${escapeHtml(item.title)}</button></td><td>${item.median_aesthetic ?? "未评分"}</td><td>${escapeHtml(item.range_aesthetic?.join(" - ") || "未评分")}</td><td>${item.observed_aesthetic} / ${item.missing_or_unexecuted}</td></tr>`).join("")}</tbody></table></div>
+    <p>synthetic_persona · 有序评分的描述比较，不代表真实人群或因果贡献。</p>
+    <button class="button" data-export-study="${escapeHtml(runId)}">导出内部审计包</button><div id="research-download"></div></section>
+    <section class="inspector-section"><h3>逐次评分与模型事后描述</h3><div class="table-wrap"><table><thead><tr><th>任务 / 材料</th><th>条件</th><th>美观 / 清晰度</th><th>模型理由与联想</th></tr></thead><tbody>${results.rows.map((row) => `<tr><td class="mono">${escapeHtml(row.task_id)}<br>${escapeHtml(row.material_id)}</td><td>${escapeHtml(row.role)} / ${escapeHtml(row.order)} / ${row.repetition}</td><td>${row.aesthetic ?? "缺失"} / ${row.visual_clarity ?? "缺失"}</td><td>${escapeHtml(row.reason)}<br>${escapeHtml(row.associations)}</td></tr>`).join("") || emptyRow(4, "尚无通过视觉证据核验的回答")}</tbody></table></div></section>
+    <section class="inspector-section"><h3>匹配比较与视觉量</h3><details><summary>身份减基线、同条件重复、顺序与同内容字体差值</summary><pre class="json-block">${escapeHtml(JSON.stringify({identity: results.identity_differences, repetition: results.repeat_differences, order_and_call: results.order_and_call_differences, font_pairs: results.within_content_font_pairs}, null, 2))}</pre></details><details><summary>三阈值原始测量及敏感性</summary><pre class="json-block">${escapeHtml(JSON.stringify(results.materials, null, 2))}</pre></details></section>
+    <section class="inspector-section"><h3>通用背景文献与未匹配项</h3>${results.four_line_evidence.literature.map((item) => `<details><summary>${escapeHtml(item.evidence_id)} · 背景记录，非资产特定证据</summary><p>${escapeHtml(item.original_record)}</p></details>`).join("")}<details><summary>当前字体字符映射、汉字实例与文化叙事缺口</summary><pre class="json-block">${escapeHtml(JSON.stringify({instances: results.four_line_evidence.instances, task04_source: results.four_line_evidence.task04_source, social_evidence: results.four_line_evidence.social_evidence}, null, 2))}</pre></details></section>
+    <section class="inspector-section"><h3>用途阻塞</h3><pre class="json-block">${escapeHtml(JSON.stringify(run.snapshot.blockers, null, 2))}</pre><details><summary>配置、输入与推断限制</summary><pre class="json-block">${escapeHtml(JSON.stringify({run, limits: results.limits}, null, 2))}</pre></details></section>`;
+  openInspector(trigger);
+  const controls = document.createElement("section");
+  document.querySelector("#inspector-content").insertAdjacentHTML("afterbegin", `<section class="inspector-section"><details><summary>本次实际输入与表示</summary><div class="material-pair">${run.snapshot.materials.filter((record) => record.input_path).map((record) => `<figure><img class="material-preview" loading="lazy" src="/api/research/${encodeURIComponent(runId)}/inputs/${encodeURIComponent(record.selection.material_id)}" alt="本次研究输入"><figcaption>${escapeHtml(record.material.source?.title || record.selection.material_id)} · ${escapeHtml(record.selection.representation)}${record.selection.crop_box ? ` · 区域 ${record.selection.crop_box.join(", ")}` : ""}</figcaption></figure>`).join("")}</div></details></section>`);
+  controls.className = "inspector-section";
+  controls.innerHTML = `<h3>视觉问卷</h3><p>执行端：${escapeHtml(tasks.executor)}</p><button class="button" data-prepare-personas="${escapeHtml(runId)}" ${run.snapshot.blockers.length || tasks.tasks.length ? "disabled" : ""}>生成问卷任务</button><div class="table-wrap"><table><thead><tr><th>条件</th><th>状态</th><th>调用</th><th>操作</th></tr></thead><tbody>${tasks.tasks.map((task) => `<tr><td>${escapeHtml(task.condition.role)} / ${escapeHtml(task.condition.order)} / ${task.condition.repetition}</td><td>${badge(task.status)}</td><td>${task.attempts.length}</td><td>${task.status === "failed" ? `<button class="button" data-study-transition="tasks/${escapeHtml(task.task_id)}/retry" data-run="${escapeHtml(runId)}">重新排队</button>` : ""}</td></tr>`).join("") || emptyRow(4)}</tbody></table></div><details><summary>任务、原始回答与看图证据</summary><pre class="json-block">${escapeHtml(JSON.stringify(tasks, null, 2))}</pre></details>`;
+  document.querySelector("#inspector-content").prepend(controls);
+  controls.insertAdjacentHTML("afterbegin", `<div class="action-row"><button class="button" data-clone-study="${escapeHtml(runId)}">复用配置</button>${run.status === "suspended" ? `<button class="button" data-study-transition="resume" data-run="${escapeHtml(runId)}">恢复队列</button>` : `<button class="button" data-suspend-study="${escapeHtml(runId)}">暂停队列</button>`}<button class="icon-button" data-study="${escapeHtml(runId)}" aria-label="刷新运行状态" title="刷新运行状态">↻</button></div>`);
+  document.querySelector("#inspector-content").insertAdjacentHTML("afterbegin", renderStudyOverview(run, results));
+  document.querySelector("#inspector-content").insertAdjacentHTML("afterbegin", renderResearchJudgments(run, results));
+}
+
+function captureStudyDraft() {
+  const form = document.querySelector("#study-form");
+  if (!form) return;
+  const config = {};
+  for (const key of ["name", "question", "questionnaire_language", "wording", "repetitions", "selection_scope", "stopping_rule", "executor_agent", "reference_run_id", "task_size", "design_rationale", "parent_assessment_id"]) config[key] = form.querySelector(`[name='${key}']`).value;
+  config.explanations = form.querySelector("[name='explanations']").value.split("\n");
+  config.predictions = form.querySelector("[name='predictions']").value.split("\n");
+  for (const key of ["roles", "orders"]) config[key] = [...form.querySelectorAll(`[name='${key}']`)].filter((field) => field.checked).map((field) => field.value);
+  config.selections = [...form.querySelectorAll("[data-study-selection]")].map((row) => ({
+    material_id: row.dataset.studySelection,
+    representation: row.querySelector("[name='representation']").value,
+    reason: row.querySelector("[name='reason']").value,
+    crop_box: ["left", "top", "right", "bottom"].map((edge) => row.querySelector(`[name='crop_${edge}']`).value),
+    foreground: row.querySelector("[name='foreground']").value,
+    foreground_note: row.querySelector("[name='foreground_note']").value,
+    color_mode: row.querySelector("[name='color_mode']").value,
+    max_edge: row.querySelector("[name='max_edge']").value,
+  }));
+  state.draftConfig = config;
+}
+
+function fillStudyDraft() {
+  const config = state.draftConfig;
+  const form = document.querySelector("#study-form");
+  if (!config || !form) return;
+  for (const key of ["name", "question", "questionnaire_language", "wording", "repetitions", "selection_scope", "stopping_rule", "executor_agent", "reference_run_id", "task_size", "design_rationale", "parent_assessment_id"]) {
+    const field = form.querySelector(`[name='${key}']`);
+    if (field && config[key] !== undefined) field.value = config[key] ?? "";
+  }
+  form.querySelector("[name='explanations']").value = config.explanations.join("\n");
+  form.querySelector("[name='predictions']").value = (config.predictions || []).join("\n");
+  for (const key of ["roles", "orders"]) form.querySelectorAll(`[name='${key}']`).forEach((input) => { input.checked = config[key].includes(input.value); });
+  for (const selection of config.selections) {
+    const row = form.querySelector(`[data-study-selection='${selection.material_id}']`);
+    if (row) {
+      row.querySelector("[name='representation']").value = selection.representation;
+      row.querySelector("[name='reason']").value = selection.reason;
+      row.querySelector("[name='foreground']").value = selection.foreground ?? "unconfirmed";
+      row.querySelector("[name='foreground_note']").value = selection.foreground_note ?? "";
+      row.querySelector("[name='color_mode']").value = selection.color_mode ?? "native";
+      row.querySelector("[name='max_edge']").value = selection.max_edge ?? "";
+      ["left", "top", "right", "bottom"].forEach((edge, index) => { row.querySelector(`[name='crop_${edge}']`).value = selection.crop_box?.[index] ?? ""; });
+    }
+  }
+}
+
 function wpCards(packages) {
   const names = ["WP1", "WP2", "WP3", "WP4"];
   return names.map((name) => {
@@ -360,7 +552,8 @@ function bindFilters() {
       const table = input.closest(".content-section")?.querySelector("tbody");
       const query = input.value.trim().toLocaleLowerCase("zh-Hans");
       table?.querySelectorAll("[data-filter-row]").forEach((row) => {
-        row.hidden = Boolean(query) && !row.textContent.toLocaleLowerCase("zh-Hans").includes(query);
+        const kind = document.querySelector("#material-kind")?.value;
+        row.hidden = (Boolean(query) && !row.textContent.toLocaleLowerCase("zh-Hans").includes(query)) || (Boolean(kind) && row.dataset.materialKind !== kind);
       });
     });
   });
@@ -372,8 +565,10 @@ async function loadBase(force = false) {
   document.querySelector("#rail-health").textContent = state.health.status === "ready" ? "系统可用" : "系统阻断";
 }
 
-async function navigate(view, force = false) {
+async function navigate(view, force = false, preserveDraft = true) {
   if (!labels[view]) view = "overview";
+  if (preserveDraft) captureStudyDraft();
+  closeInspector();
   state.view = view;
   document.querySelector("#view-crumb").textContent = labels[view][0];
   document.querySelectorAll("[data-view]").forEach((button) => button.classList.toggle("active", button.dataset.view === view));
@@ -386,6 +581,10 @@ async function navigate(view, force = false) {
     let content;
     if (view === "overview") {
       content = renderOverview(state.overview);
+    } else if (view === "assets") {
+      content = renderMaterials(await request("/api/materials?limit=500"));
+    } else if (view === "research") {
+      content = renderResearch(await request("/api/research"), await request("/api/materials?limit=500"));
     } else {
       const endpoint = view === "analysis" ? "/api/analysis" : view === "audit" ? "/api/audit" : `/api/views/${view}`;
       let data = !force ? state.cache.get(endpoint) : null;
@@ -398,6 +597,7 @@ async function navigate(view, force = false) {
     }
     root.innerHTML = `<div class="page-enter">${content}</div>`;
     bindFilters();
+    if (view === "research") fillStudyDraft();
   } catch (error) {
     root.innerHTML = `<section class="error-state"><span class="eyebrow">REQUEST BLOCKED</span><h1>视图无法加载</h1><code>${escapeHtml(error.message)}</code><p><button class="button" data-action="refresh">重新检查</button></p></section>`;
   } finally {
@@ -575,6 +775,85 @@ function closeConfirmation() {
 }
 
 document.addEventListener("click", (event) => {
+  const previewButton = event.target.closest("[data-preview-selection]");
+  if (previewButton) {
+    const row = previewButton.closest("[data-study-selection]");
+    const parameters = new URLSearchParams();
+    for (const edge of ["left", "top", "right", "bottom"]) {
+      const value = row.querySelector(`[name='crop_${edge}']`).value;
+      if (value !== "") parameters.set(edge, value);
+    }
+    const foreground = row.querySelector("[name='foreground']").value;
+    parameters.set("foreground", foreground);
+    parameters.set("color_mode", row.querySelector("[name='color_mode']").value);
+    const maxEdge = row.querySelector("[name='max_edge']").value;
+    if (maxEdge !== "") parameters.set("max_edge", maxEdge);
+    const layers = foreground === "unconfirmed" ? ["input"] : ["input", "mask", "overlay"];
+    const representation = row.querySelector("[name='representation']").value;
+    row.querySelector("[data-selection-preview]").innerHTML = layers.map((layer) => `<figure><img class="material-preview" src="/api/materials/${encodeURIComponent(previewButton.dataset.previewSelection)}/preview/${representation}?${parameters}&layer=${layer}" alt="${{input:"实际输入",mask:"文字掩码：阈值128",overlay:"前景叠加：阈值128"}[layer]}"><figcaption>${{input:"实际输入",mask:"文字掩码：阈值128",overlay:"前景叠加：阈值128"}[layer]}</figcaption></figure>`).join("");
+    return;
+  }
+  if (event.target.closest("[data-new-study]")) {
+    state.draftConfig = null;
+    state.selectedMaterials = new Set();
+    navigate("research", true, false);
+    return;
+  }
+  const transitionButton = event.target.closest("[data-study-transition]");
+  if (transitionButton) {
+    transitionButton.disabled = true;
+    request(`/api/research/${transitionButton.dataset.run}/${transitionButton.dataset.studyTransition}`, {method: "POST"}).then(() => showStudy(transitionButton.dataset.run, state.inspectorTrigger)).catch((error) => {toast(error.message, true); transitionButton.disabled = false;});
+    return;
+  }
+  const cloneButton = event.target.closest("[data-clone-study]");
+  const continueButton = event.target.closest("[data-continue-assessment]");
+  if (continueButton) {
+    request(`/api/research-assessments/${continueButton.dataset.continueAssessment}/continue`).then(({config}) => {
+      state.draftConfig = config;
+      state.selectedMaterials = new Set(config.selections.map((item) => item.material_id));
+      closeInspector();
+      return navigate("research", true, false);
+    }).catch((error) => toast(error.message, true));
+    return;
+  }
+  if (cloneButton) {
+    request(`/api/research/${cloneButton.dataset.cloneStudy}`).then((run) => {
+      state.draftConfig = {...run.config, name: `${run.config.name}-新版本`};
+      state.selectedMaterials = new Set(run.config.selections.map((item) => item.material_id));
+      closeInspector();
+      return navigate("research", true, false);
+    }).catch((error) => toast(error.message, true));
+    return;
+  }
+  const suspendButton = event.target.closest("[data-suspend-study]");
+  if (suspendButton) {
+    request(`/api/research/${suspendButton.dataset.suspendStudy}/suspend`, {method:"POST"}).then(() => showStudy(suspendButton.dataset.suspendStudy, state.inspectorTrigger)).catch((error) => toast(error.message, true));
+    return;
+  }
+  const prepareButton = event.target.closest("[data-prepare-personas]");
+  if (prepareButton) {
+    prepareButton.disabled = true;
+    request(`/api/research/${prepareButton.dataset.preparePersonas}/tasks`, {method: "POST"}).then(() => showStudy(prepareButton.dataset.preparePersonas, state.inspectorTrigger)).catch((error) => {toast(error.message, true); prepareButton.disabled = false;});
+    return;
+  }
+  const exportStudy = event.target.closest("[data-export-study]");
+  if (exportStudy) {
+    exportStudy.disabled = true;
+    request(`/api/research/${exportStudy.dataset.exportStudy}/export`, {method: "POST"}).then((result) => {
+      document.querySelector("#research-download").innerHTML = `<a href="${escapeHtml(result.download_url)}" download>下载 ${escapeHtml(result.export_id)}.zip</a><p class="mono">SHA-256: ${escapeHtml(result.sha256)}</p>`;
+    }).catch((error) => toast(error.message, true)).finally(() => {exportStudy.disabled = false;});
+    return;
+  }
+  const studyButton = event.target.closest("[data-study]");
+  if (studyButton) { showStudy(studyButton.dataset.study, studyButton).catch((error) => toast(error.message, true)); return; }
+  const measureButton = event.target.closest("[data-study-measure]");
+  if (measureButton) {
+    measureButton.disabled = true;
+    request(`/api/research/${measureButton.dataset.studyMeasure}/measure`, {method: "POST"}).then(() => navigate("research", true)).catch((error) => { toast(error.message, true); measureButton.disabled = false; });
+    return;
+  }
+  const materialButton = event.target.closest("[data-material]");
+  if (materialButton) { showMaterial(materialButton.dataset.material, materialButton); return; }
   const viewButton = event.target.closest("[data-view]");
   if (viewButton) {
     window.location.hash = viewButton.dataset.view;
@@ -591,6 +870,89 @@ document.addEventListener("click", (event) => {
   else if (action === "show-health") showHealth(actionButton);
   else if (dangerousActions[action]) openConfirmation(action, actionButton.dataset, actionButton);
   else perform(action, actionButton.dataset);
+});
+
+document.addEventListener("submit", async (event) => {
+  if (event.target.id === "font-sample-form") {
+    event.preventDefault();
+    captureStudyDraft();
+    const form = event.target;
+    const fields = new FormData(form);
+    const config = Object.fromEntries(["weight", "font_size", "width", "height"].map((key) => [key, Number(fields.get(key))]));
+    config.font_ids = fields.getAll("font_ids");
+    config.texts = String(fields.get("texts")).split("\n").filter(Boolean);
+    const button = form.querySelector("[type='submit']");
+    button.disabled = true;
+    try {
+      const {items} = await request("/api/research/font-samples", {method: "POST", body: JSON.stringify(config)});
+      state.selectedMaterials = new Set(items.map((item) => item.material_id));
+      state.draftConfig.selections = items.map((item) => ({material_id: item.material_id, representation: "original", reason: "同内容、固定画布、明确字重的字体对照"}));
+      await navigate("research", true, false);
+    } catch (error) { toast(error.message, true); button.disabled = false; }
+    return;
+  }
+  if (event.target.matches("[data-assessment-form]")) {
+    event.preventDefault();
+    const form = event.target;
+    const fields = new FormData(form);
+    const payload = Object.fromEntries(["conclusion", "next_question", "next_comparison", "decision"].map((key) => [key, fields.get(key)]));
+    payload.basis_result_sha256 = form.dataset.basisResult;
+    payload.remaining_confounds = String(fields.get("remaining_confounds")).split("\n").filter(Boolean);
+    payload.explanation_updates = [...form.querySelectorAll("[data-explanation-index]")].map((group) => ({explanation: group.querySelector("[name='explanation']").value, judgment: group.querySelector("[name='judgment']").value, evidence: group.querySelector("[name='evidence']").value, material_ids: [...group.querySelectorAll("[name='material_ids']:checked")].map((input) => input.value)}));
+    const button = form.querySelector("[type='submit']");
+    button.disabled = true;
+    try {
+      await request(`/api/research/${form.dataset.assessmentForm}/assessments`, {method: "POST", body: JSON.stringify(payload)});
+      await showStudy(form.dataset.assessmentForm, state.inspectorTrigger);
+    } catch (error) { toast(error.message, true); button.disabled = false; }
+    return;
+  }
+  if (event.target.id !== "study-form") return;
+  event.preventDefault();
+  const form = event.target;
+  const fields = new FormData(form);
+  const config = Object.fromEntries(fields.entries());
+  config.roles = ["baseline", ...fields.getAll("roles")];
+  config.orders = fields.getAll("orders");
+  config.repetitions = Number(fields.get("repetitions"));
+  config.reference_run_id = fields.get("reference_run_id") || null;
+  config.parent_assessment_id = fields.get("parent_assessment_id") || null;
+  config.task_size = fields.get("task_size") ? Number(fields.get("task_size")) : null;
+  config.explanations = String(fields.get("explanations")).split("\n").filter(Boolean);
+  config.predictions = String(fields.get("predictions")).split("\n").filter(Boolean);
+  const selectionRows = [...form.querySelectorAll("[data-study-selection]")];
+  const cropValues = (row) => ["left", "top", "right", "bottom"].map((edge) => row.querySelector(`[name='crop_${edge}']`).value);
+  if (selectionRows.some((row) => cropValues(row).some(Boolean) && !cropValues(row).every(Boolean))) { toast("矩形区域需填写四个边界。", true); return; }
+  config.selections = selectionRows.map((row) => ({material_id: row.dataset.studySelection, representation: row.querySelector("[name='representation']").value, reason: row.querySelector("[name='reason']").value, crop_box: cropValues(row).some(Boolean) ? cropValues(row).map(Number) : null, foreground: row.querySelector("[name='foreground']").value, foreground_note: row.querySelector("[name='foreground_note']").value, color_mode: row.querySelector("[name='color_mode']").value, max_edge: row.querySelector("[name='max_edge']").value ? Number(row.querySelector("[name='max_edge']").value) : null}));
+  for (const edge of ["left", "top", "right", "bottom"]) delete config[`crop_${edge}`];
+  delete config.representation;
+  delete config.reason;
+  delete config.foreground;
+  delete config.foreground_note;
+  delete config.color_mode;
+  delete config.max_edge;
+  const button = form.querySelector("[type='submit']");
+  button.disabled = true;
+  try {
+    await request("/api/research", {method: "POST", body: JSON.stringify(config)});
+    await navigate("research", true);
+  } catch (error) { toast(error.message, true); button.disabled = false; }
+});
+
+document.addEventListener("change", (event) => {
+  if (event.target.id === "material-kind") {
+    document.querySelector("[data-filter]").dispatchEvent(new Event("input"));
+    return;
+  }
+  const materialId = event.target.dataset.selectMaterial;
+  if (!materialId) return;
+  if (event.target.checked) state.selectedMaterials.add(materialId);
+  else {
+    state.selectedMaterials.delete(materialId);
+    if (state.draftConfig) state.draftConfig.selections = state.draftConfig.selections.filter((item) => item.material_id !== materialId);
+  }
+  const counter = document.querySelector("#selection-count");
+  if (counter) counter.textContent = `已选 ${state.selectedMaterials.size}`;
 });
 
 document.querySelector("#menu-button").addEventListener("click", () => {
@@ -666,5 +1028,13 @@ document.querySelector("#confirmation-form").addEventListener("submit", (event) 
   perform(action, requestData);
 });
 
-window.addEventListener("hashchange", () => navigate(window.location.hash.slice(1) || "overview"));
-navigate(window.location.hash.slice(1) || "overview");
+window.addEventListener("hashchange", () => navigate(window.location.hash.slice(1) || state.defaultView));
+request("/api/session").then((session) => {
+  if (session.material_catalog_configured) {
+    state.defaultView = "research";
+    document.querySelector(".environment-label").textContent = "LOCAL / RESEARCH";
+    document.querySelector(".mode-chip").textContent = "内部研究 · 未正式发布";
+    document.querySelector(".brand").href = "#research";
+  }
+  navigate(window.location.hash.slice(1) || state.defaultView);
+}).catch(() => navigate(window.location.hash.slice(1) || state.defaultView));

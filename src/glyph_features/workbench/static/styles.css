@@ -27,6 +27,34 @@ button { cursor: pointer; }
 a { color: inherit; }
 :focus-visible { outline: 3px solid #f1b941; outline-offset: 2px; }
 
+.material-thumb { width: 72px; height: 72px; object-fit: contain; background: white; }
+.material-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.material-pair figure { margin: 0; min-width: 0; }
+.material-pair figcaption { font-size: 12px; margin-top: 6px; }
+.material-preview { width: 100%; aspect-ratio: 1; object-fit: contain; background: white; }
+.study-form { display: grid; gap: 16px; padding: 18px 0; }
+.study-form label { display: grid; gap: 7px; font-size: 13px; min-width: 0; }
+.study-form input:not([type="checkbox"]), .study-form textarea, .study-form select { width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--line-strong); background: white; font: inherit; }
+.study-form textarea { min-height: 76px; resize: vertical; }
+.study-form .inline-choice { display: inline-flex; align-items: center; margin: 6px 12px 6px 0; }
+.study-form fieldset { border: 1px solid var(--line); min-width: 0; }
+.study-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.research-input, .research-source { border-top: 1px solid var(--line); padding: 12px 0; min-width: 0; }
+.research-input h4, .research-source h4 { font-size: 14px; margin: 6px 0 12px; overflow-wrap: anywhere; }
+.research-inputs .material-preview { aspect-ratio: 4 / 3; }
+.research-differences { font-size: 12px; margin: 12px 0; }
+.research-differences div { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.research-differences dd { margin: 0; font-variant-numeric: tabular-nums; }
+[data-selection-preview] figure { margin: 12px 0; min-width: 0; }
+[data-selection-preview] .material-preview { aspect-ratio: 3 / 2; min-width: 140px; }
+@media (max-width: 600px) {
+  .research-inputs .material-pair { grid-template-columns: 1fr; }
+  .study-form .table-wrap table { min-width: 0; width: 100%; }
+  .study-form .table-wrap thead { display: none; }
+  .study-form [data-study-selection] { display: grid; border-bottom: 2px solid var(--line-strong); }
+  .study-form [data-study-selection] td { display: block; width: 100%; white-space: normal; }
+}
+
 .skip-link {
   background: var(--ink);
   color: white;
@@ -77,6 +105,12 @@ a { color: inherit; }
 }
 
 .primary-nav { display: grid; gap: 3px; overflow-y: auto; padding: 14px 10px; }
+.primary-nav summary { font-size: 11px; color: #bdc5bd; padding: 14px 12px; cursor: pointer; }
+.inspector-content details { margin: 12px 0; }
+.inspector-content summary { cursor: pointer; font-size: 12px; overflow-wrap: anywhere; }
+.inspector-content p, .inspector-content a { overflow-wrap: anywhere; }
+.inspector-content .table-wrap table { min-width: 560px; }
+.study-form .button { justify-self: start; }
 .primary-nav button {
   align-items: center;
   background: transparent;
@@ -210,7 +244,8 @@ a { color: inherit; }
 .section-head p { color: var(--ink-soft); font-size: 11px; margin: 4px 0 0; }
 .section-count { color: var(--ink-soft); font-family: var(--mono); font-size: 10px; white-space: nowrap; }
 
-.table-tools { display: flex; gap: 8px; margin-bottom: 10px; }
+.table-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.table-tools select { min-width: 0; max-width: 100%; border: 1px solid var(--line); background: white; font-size: 12px; padding: 6px; }
 .search-input {
   background: white;
   border: 1px solid var(--line);
@@ -300,6 +335,10 @@ tbody tr:hover td { background: #fafbf7; }
   z-index: 50;
 }
 .inspector.open { transform: translateX(0); }
+.inspector:has(.research-overview) { width: 1120px; max-width: 100vw; }
+.inspector:has(.research-overview) .inspector-section { font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.inspector:has(.research-overview) table { font-size: 12px; }
+.inspector:has(.research-overview) th { font-size: 11px; }
 .inspector > header { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding: 20px 22px; }
 .inspector h2 { font-size: 18px; margin: 4px 0 0; }
 .inspector-content { padding: 20px 22px 40px; }

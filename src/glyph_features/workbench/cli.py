@@ -14,6 +14,9 @@ import uvicorn
 
 from .app import create_app
 from .service import WorkbenchService
+from .materials import MaterialCatalog
+from .research import ResearchService
+from .personas import PersonaExecutor
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -26,6 +29,7 @@ DEFAULT_RESTORE_ROOT = TEMP_ROOT / "glyph-workbench-restores"
 
 
 def _databases(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--local-config", type=Path)
     parser.add_argument("--catalog-database", type=Path, default=DEFAULT_CATALOG)
     parser.add_argument("--social-database", type=Path, default=DEFAULT_SOCIAL)
 
@@ -48,6 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--export-root", type=Path, default=DEFAULT_EXPORT_ROOT)
     serve.add_argument("--backup-root", type=Path, default=DEFAULT_BACKUP_ROOT)
     serve.add_argument("--restore-root", type=Path, default=DEFAULT_RESTORE_ROOT)
+    serve.add_argument("--material-root", type=Path, help="已有材料所在目录，只读接入")
 
     for name, help_text in (
         ("status", "输出模块、就绪度和数据库健康"),
@@ -82,6 +87,14 @@ def build_parser() -> argparse.ArgumentParser:
     restore.add_argument("backup_id")
     restore.add_argument("--backup-root", type=Path, default=DEFAULT_BACKUP_ROOT)
     restore.add_argument("--restore-root", type=Path, default=DEFAULT_RESTORE_ROOT)
+    for name in ("persona-next", "persona-pending", "persona-import"):
+        command = commands.add_parser(name, help="领取问卷任务或导入宿主实际调用证据")
+        _databases(command)
+        command.add_argument("--material-root", type=Path)
+        command.add_argument("run_id")
+        if name == "persona-import":
+            command.add_argument("--session", type=Path, required=True)
+            command.add_argument("--finalize-evidence", action="store_true", help="仅在人工核对完整宿主轨迹后，把仍缺图像证据的返回记为失败；不自动重调")
     return parser
 
 
@@ -91,6 +104,14 @@ def _print(payload: Any) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.local_config:
+        settings = json.loads(args.local_config.read_text(encoding="utf-8"))
+        for name in ("catalog_database", "social_database", "material_root", "export_root", "backup_root", "restore_root"):
+            if name in settings and hasattr(args, name):
+                setattr(args, name, (ROOT / settings[name]).resolve())
+        for name in ("host", "port"):
+            if name in settings and hasattr(args, name):
+                setattr(args, name, settings[name])
     if args.command == "serve":
         if args.host not in {"127.0.0.1", "localhost", "::1"}:
             print("EXTERNAL_BIND_REQUIRES_SEPARATE_APPROVAL", file=sys.stderr)
@@ -105,12 +126,25 @@ def main(argv: list[str] | None = None) -> int:
             export_root=args.export_root.resolve(),
             backup_root=args.backup_root.resolve(),
             restore_root=args.restore_root.resolve(),
+            material_root=args.material_root,
         )
         uvicorn.run(app, host=args.host, port=args.port, log_level="info")
         return 0
     try:
         service = _service(args)
-        if args.command == "status":
+        if args.command in {"persona-next", "persona-pending", "persona-import"}:
+            if args.material_root is None:
+                raise ValueError("MATERIAL_ROOT_NOT_CONFIGURED")
+            research = ResearchService(service.catalog, MaterialCatalog(args.material_root), ROOT)
+            executor = PersonaExecutor(research)
+            if args.command == "persona-next":
+                _print(executor.claim(args.run_id))
+            elif args.command == "persona-pending":
+                _print(executor.pending(args.run_id))
+            else:
+                result = executor.ingest(args.run_id, args.session, finalize_evidence=args.finalize_evidence)
+                _print({"imported_host_call_ids": result["imported_host_call_ids"], "awaiting_host_evidence": result["awaiting_host_evidence"], "task_statuses": [{"task_id": task["task_id"], "status": task["status"]} for task in result["tasks"]]})
+        elif args.command == "status":
             _print(service.overview())
         elif args.command == "initialize":
             result = service.initialize_catalog()

@@ -234,6 +234,11 @@ def measure_array(
         hole_connectivity=int(defaults["hole_connectivity"]),
         skeleton_algorithm=str(defaults["skeleton_algorithm"]),
         symmetry_alignment=str(defaults["symmetry_alignment"]),
+        include_skeleton=any(
+            representation in definition["input_representations"]
+            and definition["feature_code"] in {"stroke_width_mean_norm", "stroke_width_cv", "direction_coherence", "skeleton_endpoint_count"}
+            for definition in registry.definitions
+        ),
     )
     if representation == "C_ink":
         computed.update(_tonal_metrics(image, bins=int(defaults["tonal_bins"])))
@@ -254,6 +259,7 @@ def _binary_metrics(
     hole_connectivity: int,
     skeleton_algorithm: str,
     symmetry_alignment: str,
+    include_skeleton: bool = True,
 ) -> dict[str, Metric]:
     if skeleton_algorithm != SUPPORTED_SKELETON_ALGORITHM:
         raise VisionSystemError(
@@ -311,6 +317,8 @@ def _binary_metrics(
         spacings = [math.dist(first, second) for first, second in zip(ordered, ordered[1:])]
         metrics["component_spacing_cv"] = _coefficient_of_variation(spacings, minimum_count=2)
 
+    if not include_skeleton:
+        return metrics
     skeleton = skeletonize(local)
     skeleton_points = np.argwhere(skeleton)
     if skeleton_points.size == 0:
