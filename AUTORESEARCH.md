@@ -436,15 +436,15 @@ Serif减Sans等权均差+0.4375，正序+0.875、反序0，故不能说稳定胜
 | H-002：当前实例的字体间差异可能大于身份条件差异 | 探索性；b01 字体配对平均差约 .825 分，匹配身份相对基线的平均绝对差约 .292 分，但对照对象不等价、分数有序且材料不平衡，不构成方差分解或整体支配关系 | 中文两内容下宋体/文楷实例相对无衬线从未更低，但不少持平；视觉清晰度未同步更高。下一判别是增加独立内容/字体与真实构图，不能由这两内容推字体总体优劣 |
 | H-003：深色像素阈值在负形商业标志上可能测到背景而非字形 | 探索性材料判断；E-010 在 UNIQLO 实例支持，在 MUJI 深色字实例几乎不发生；不是“所有 v2 指标错误” | 完整构图与显式字形分开测；UNIQLO 暗像素/白字掩码 IoU=0，MUJI 约 .997。仅局部掩码规则有效，不宣布通用分割已解决 |
 
-E-007 / controlled_generated_measurement：12 个开放字体字标候选，不是真实商业作品。工件：[manifest](data/processed/autoresearch/2026-09-07-b01/manifest.json)、[原始测量](data/processed/autoresearch/2026-09-07-b01/measurements.json)、[正向图板](data/processed/autoresearch/2026-09-07-b01/board_forward.png)、[反向图板](data/processed/autoresearch/2026-09-07-b01/board_reverse.png)。六个字体文件逐一核对内嵌 OFL 许可、cmap 和 HarfBuzz 缺字；实际 OS/2 字重均 400，无可变轴，部分 name 表残留 Thin/ExtraLight 不作为实际字重依据。现目录已有所需 v2 `measure_array`，无需 TASK-05 合并。复用既有 `render_font_samples.render_one` 的 Pillow BASIC 路径，当前环境无 RAQM；仅用横排汉字/假名/谚文/拉丁简单字符串，保留无法等同复杂排版的限制。
+E-007 / controlled_generated_measurement：12 个开放字体字标候选，不是真实商业作品。工件仅在本机，不随 Git 提交：`data/processed/autoresearch/2026-09-07-b01/manifest.json`、同目录的 `measurements.json`、`board_forward.png`、`board_reverse.png`。六个字体文件逐一核对内嵌 OFL 许可、cmap 和 HarfBuzz 缺字；实际 OS/2 字重均 400，无可变轴，部分 name 表残留 Thin/ExtraLight 不作为实际字重依据。现目录已有所需 v2 `measure_array`，无需 TASK-05 合并。复用既有 `render_font_samples.render_one` 的 Pillow BASIC 路径，当前环境无 RAQM；仅用横排汉字/假名/谚文/拉丁简单字符串，保留无法等同复杂排版的限制。
 
 原始量判断：中文“春茶”在无衬线、宋体实例、文楷实例的 bbox_fill 分别为 .3675、.2446、.2704；“山月”为 .2950、.1986、.2323。这里只描述墨量结构，不判美感。字符数与排版影响画布墨量，连通域不是字数；不把 component spacing 当字距。M08 “Mountain Moon” 因宽度封顶字面高 57px，其余 80px，保留但排除尺寸匹配的跨文字比较。测量阈值 96/128/160、每项重复计算一致；阈值敏感性稍后与问卷一起量化。未测受限获奖图，真实商业层仍为空。
 
-b01 调用前方案：[协议](data/processed/autoresearch/2026-09-07-b01/protocol.json)，[准备脚本](tools/autoresearch_persona_batch.py)。5 条件 x 2 空间顺序 = 10 次预计调用，不是总次数上限；统一英语问卷，无身份基线与中文/英语/日语/韩语虚构语言背景，身份不注入偏好，日语共享汉字单列。主结果美观，次结果清晰度，均 1–7；原图 ID 对应逐刺激分析，不用 pooled 人类推断。只有中文覆盖 3 字体 x 2 内容，其余各 1 字体 x 2 内容，不能估整种文字效应。工具 `runSubagent` 每次用同一默认路由，未显式选择不同 agent/model；实际模型版本、effort、温度、种子、token、继承上下文是否完全隔离均未暴露，不假定继承主对话设置。所有回答必须有实际图像工具证据，保存为 synthetic_persona。
+b01 调用前方案：本机协议 `data/processed/autoresearch/2026-09-07-b01/protocol.json`，[准备脚本](tools/autoresearch_persona_batch.py)。5 条件 x 2 空间顺序 = 10 次预计调用，不是总次数上限；统一英语问卷，无身份基线与中文/英语/日语/韩语虚构语言背景，身份不注入偏好，日语共享汉字单列。主结果美观，次结果清晰度，均 1–7；原图 ID 对应逐刺激分析，不用 pooled 人类推断。只有中文覆盖 3 字体 x 2 内容，其余各 1 字体 x 2 内容，不能估整种文字效应。工具 `runSubagent` 每次用同一默认路由，未显式选择不同 agent/model；实际模型版本、effort、温度、种子、token、继承上下文是否完全隔离均未暴露，不假定继承主对话设置。所有回答必须有实际图像工具证据，保存为 synthetic_persona。
 
 E-008 / synthetic_persona，b01：10 次调用、120 条评分完成。以五身份条件分别比较正/反图板，平均绝对差为 baseline .250、zh .417、en .167、ja .167、ko .250 分；这是**空间位置与调用变化合在一起**，并非纯顺序效应。4 身份相对匹配基线的 96 个逐图差值，平均绝对值 .292 分。40 个中文同内容字体配对（2 内容 x 2 对照字体 x 10 调用）为 33 个 +1、7 个 0。字形比身份“更重要”只能是当前描述趋势，不能从不同对照的均值直接推出因果贡献。
 
-E-009 / synthetic_persona，b02：[调用前协议](data/processed/autoresearch/2026-09-07-b01/followup_protocol.json)。因 b01 M11 出现较稳定韩语身份差值，而 M12 变化，追加 6 次调用：baseline/ko 原条件重复、baseline/ko 身份措辞改写、baseline/ko 中文题项（周边说明/身份仍英语）。全部保留，不作答后改分。原条件复测相对 b01 同方向，baseline 有 1/12 项变动，平均绝对差 .083；ko 有 3/12 项变动，平均绝对差 .250，少量重复不足以估完整噪声分布。
+E-009 / synthetic_persona，b02：调用前协议仅在本机 `data/processed/autoresearch/2026-09-07-b01/followup_protocol.json`。因 b01 M11 出现较稳定韩语身份差值，而 M12 变化，追加 6 次调用：baseline/ko 原条件重复、baseline/ko 身份措辞改写、baseline/ko 中文题项（周边说明/身份仍英语）。全部保留，不作答后改分。原条件复测相对 b01 同方向，baseline 有 1/12 项变动，平均绝对差 .083；ko 有 3/12 项变动，平均绝对差 .250，少量重复不足以估完整噪声分布。
 
 | 匹配条件 | M11 韩语身份减无身份 | M12 韩语身份减无身份 |
 |---|---:|---:|
@@ -460,11 +460,11 @@ E-009 / synthetic_persona，b02：[调用前协议](data/processed/autoresearch/
 
 测量适用性补充：阈值 96/128/160 下，全部 12 个刺激的连通域计数不变，但 M07 闭合孔从 4 变为 5，M02 bbox_fill 最大跨度 .03958，M08 画布墨量跨度 .00823、归一化笔画宽度跨度 .01298。因此保留阈值敏感性，不把单一阈值微小差距或孔计数解释为稳定审美解释变量。
 
-问卷工件：[逐项数据](data/processed/autoresearch/2026-09-07-b01/ratings.csv)、[分析](data/processed/autoresearch/2026-09-07-b01/analysis.json)、[逐调用视觉及用量证据](data/processed/autoresearch/2026-09-07-b01/call_evidence.json)。同目录 prompts 保留逐调用提示，responses 保留原回答，raw_returns 保留宿主工具原始返回；分析脚本逐项核对二者 JSON 相同、ID、量尺、提示/图像哈希及已完成的子调用 `copilot_viewImage`。没有读取其他人的回答给 subagent，也没有协调者代填。
+问卷工件仅在本机目录 `data/processed/autoresearch/2026-09-07-b01/`：`ratings.csv` 为逐项数据，`analysis.json` 为分析，`call_evidence.json` 为逐调用视觉及用量证据。同目录 prompts 保留逐调用提示，responses 保留原回答，raw_returns 保留宿主工具原始返回；分析脚本逐项核对二者 JSON 相同、ID、量尺、提示/图像哈希及已完成的子调用 `copilot_viewImage`。没有读取其他人的回答给 subagent，也没有协调者代填。
 
 可见用量：16 次成功问卷（b01=10，b02=6），失败 0、重试 0，12 个唯一刺激、192 条评分行、384 个量尺值，**后者与旧 384 条 fixture 无关**。宿主日志在执行后暴露的模型显示名均为 `GPT-6 Astra`；这是实际读取字段，不是由主对话设置推测。模型具体构建版本、effort、温度、seed、tokens 未暴露。宿主 `credits` 字段 b01 合计 559.4498、b02 合计 306.75105，总计 866.20085；单位和货币换算未暴露，不能把它当美元、token 或实际新增收费。调用使用现有授权通道，没有新购服务。文件 mtime 仅作落盘时间，不能冒充调用起止时间。
 
-E-010 / commercial_visual_measurement：[来源及权利依据](data/processed/autoresearch/2026-09-07-commercial/sources.json)、[测量](data/processed/autoresearch/2026-09-07-commercial/measurements.json)。MUJI 与 UNIQLO 的 Commons 文件页均明确为 PD-textlogo，并保留商标限制；仅进行本机内部研究，未对外发布或传给问卷模型。两图是商业标志的 Commons SVG 栅格预览，不是现场招牌照片，也未独立认证为品牌当前官方母版；MUJI 历史中还记有字体重建纠正，不能把社区署名意见当字体史实。
+E-010 / commercial_visual_measurement：来源及权利依据仅在本机 `data/processed/autoresearch/2026-09-07-commercial/sources.json`，测量为同目录的 `measurements.json`。MUJI 与 UNIQLO 的 Commons 文件页均明确为 PD-textlogo，并保留商标限制；仅进行本机内部研究，未对外发布或传给问卷模型。两图是商业标志的 Commons SVG 栅格预览，不是现场招牌照片，也未独立认证为品牌当前官方母版；MUJI 历史中还记有字体重建纠正，不能把社区署名意见当字体史实。
 
 | 实际材料与表示 | 画布前景占比 | 连通域 | 闭合孔 | 解释 |
 |---|---:|---:|---:|---|
