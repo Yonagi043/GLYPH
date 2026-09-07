@@ -58,6 +58,22 @@ def test_material_root_can_be_explicit_without_copying_assets():
     assert reopened.items[material_id] == materials.items[material_id]
 
 
+def test_registered_use_decision_is_loaded_without_releasing_assets():
+    materials = MaterialCatalog(ROOT)
+    commercial = materials.search(kind="ecological_award_image")
+    assert len(commercial) == 375
+    decision_path = "configs/research_material_uses_v1.json"
+    for item in commercial:
+        assert item["use_status"]["local_analysis"] == "allowed_user_declared_open_A11"
+        assert item["use_status"]["model_input"] == "allowed_user_declared_open_A11"
+        assert item["use_status"]["redistribution"] == "not_authorized"
+        assert item["candidate"]["rights_tier"] == "blocked_unknown"
+        evidence = item["research_use_decision"]
+        assert evidence["decision_path"] == decision_path
+        assert evidence["decision_sha256"] == materials.manifest_hashes[decision_path]
+        assert evidence["formal_rights_gate_changed"] is False
+
+
 def test_material_api_uses_explicit_root_and_does_not_initialize_social(tmp_path):
     app = create_app(
         ROOT,
