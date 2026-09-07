@@ -1,0 +1,44 @@
+{
+  "version": "research_evidence_1",
+  "entries": [
+    {
+      "evidence_id": "DFA-2020-HANYI",
+      "material_ids": ["asset_130aa1cfc05436040b984f62"],
+      "source_url": "https://dfaa.dfaawards.com/en/lib/ajax/winner-dfa/list/?year=2020&design_category=3",
+      "accessed_at": "2026-09-07",
+      "locator": "data / Silver Award / uid=wEeI_cWBMh0; project_name_en, company_name_en, images[0]",
+      "verification_scope": "Original public JSON queried and parsed; exact project record and image URL checked, not a historical treatise or audience experiment.",
+      "source_facts": "DFA lists Hanyi Redcloud Li, creator Hanyi Fonts, Silver Award, with application_20201016_at4NR.jpg as its first image. The local input has SHA256 99d5f9dd95a99dbe0f1438739cb7b2950cbdfb9dc25a73b8f2e040415340b4ac.",
+      "supports": "This is a specific contemporary commercial type-design presentation. The crop can be linked to this work rather than treated as a generic historical script sample.",
+      "does_not_support": "The project name does not authenticate a historical clerical-script category, identify the Latin display font, or prove that cultural tradition caused any preference.",
+      "evidence_level": "Award-organizer project provenance, not aesthetic ground truth.",
+      "limitations": "One selected presentation image; no independent audience effect or expert historical classification. Selected eight characters do not represent the complete font."
+    },
+    {
+      "evidence_id": "DFA-2020-KONTRAPUNKT",
+      "material_ids": ["asset_db61d261df8b3454ec6247d1"],
+      "source_url": "https://dfaa.dfaawards.com/en/lib/ajax/winner-dfa/list/?year=2020&design_category=3",
+      "accessed_at": "2026-09-07",
+      "locator": "data / Silver Award / uid=7giFZmJREn0; project_name_en, company_name_en, images[0]",
+      "verification_scope": "Original public JSON queried and parsed; exact project record and image URL checked.",
+      "source_facts": "DFA lists Kontrapunkt Type, creator Kontrapunkt, Silver Award, with application_20201016_IVk9L.jpg as its first image. The local input has SHA256 3df62204dd8e79f295d219daf798035d919d3d5e24bddffe6d15e0b801a2f6e9.",
+      "supports": "The three E forms and full screenshot belong to the same named design work. Full-image and region ratings compare representations of this work, not unrelated logos.",
+      "does_not_support": "Neither the award nor the image establishes that these are three font families, a representative Latin sample, or an audience preference ranking.",
+      "evidence_level": "Award-organizer project provenance, not aesthetic ground truth.",
+      "limitations": "Still screenshot of a presentation with a visible interactive control; no motion or interaction was reproduced. Three E forms are not three independent commercial works."
+    },
+    {
+      "evidence_id": "KONTRAPUNKT-ABOUT-2026",
+      "material_ids": ["asset_db61d261df8b3454ec6247d1"],
+      "source_url": "https://type.kontrapunkt.com/en/about",
+      "accessed_at": "2026-09-07",
+      "locator": "About section, first three paragraphs",
+      "verification_scope": "Current public About text read in full; contemporary self-description, not a verified 2020 project specification.",
+      "source_facts": "The foundry describes custom fonts as designed for specific needs and brand voices, and describes its current typefaces as foundational and expressive.",
+      "supports": "Brand voice and intended context are plausible competing explanations to purely geometric form; this motivates preserving a full-presentation reference condition.",
+      "does_not_support": "Self-described intent is not evidence that viewers shared the associations, that the 2020 E forms use a particular font, or that brand voice caused the model score.",
+      "evidence_level": "Creator narrative / contextual motivation, not causal or audience evidence.",
+      "limitations": "2026 text cannot establish the historical 2020 specification. The old /work/kontrapunkt-type URL returned homepage content; the attempted Awwwards /sites/kontrapunkt-type URL was not found. No asset-specific cultural effect was located in these targeted sources."
+    }
+  ]
+}

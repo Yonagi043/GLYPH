@@ -1,0 +1,18 @@
+{
+  "version": "research_material_uses_1",
+  "decision_id": "A11-existing-commercial-research-2026-09-07-v1",
+  "basis": "user_declared_open",
+  "authority": {"document": "AUTORESEARCH.md", "records": ["A9", "A11"], "date": "2026-09-07"},
+  "declaration": "The user declared the existing supplied materials open and explicitly requested their continued use for local research and the existing Copilot visual questionnaire.",
+  "third_party_license_verification": "not_claimed",
+  "scope": {
+    "source_catalog_path": "data/fixtures/asset_system/reference_handoff_v1/sources.jsonl",
+    "source_catalog_sha256": "f180122abae5a829490ab2fb5ffe9495f27e6ac0247f72b2913bce54ca1def94",
+    "candidate_kind": "ecological_award_image",
+    "original_path_prefix": "图包与字体包/图包/"
+  },
+  "uses": ["local_analysis", "model_input"],
+  "model_channel": "existing_copilot",
+  "redistribution": "not_authorized",
+  "restrictions": []
+}
