@@ -20,6 +20,7 @@ IDENTITIES = {
     "ja": "An adult whose first language is Japanese, who reads Japanese daily and English proficiently, recognizes some shared Han characters but has little experience reading Chinese sentences or Korean. No professional typography or calligraphy training.",
     "ko": "An adult whose first language is Korean, who reads Korean daily and English proficiently, with little experience reading Chinese or Japanese. No professional typography or calligraphy training.",
 }
+QUESTIONNAIRE_CONSTRUCTS = ("aesthetic", "premium", "modern", "trustworthy", "visual_clarity", "recognition", "unfamiliarity")
 
 
 def objects(value):
@@ -90,8 +91,8 @@ class PersonaExecutor:
         config = run["config"]
         language = config["questionnaire_language"]
         aesthetic_item = next(item for item in questionnaire["items"] if item["item_id"] == "item_aesthetic")
-        aesthetic = aesthetic_item["translations"][language]["text"]
-        clarity = "Regardless of whether you recognize the writing, are the form's contours and structure visually clear?" if language == "en" else "无论是否认识这些文字，其轮廓和结构在视觉上是否清晰？"
+        aesthetic = aesthetic_item.get("translations", {}).get(language, {}).get("text", aesthetic_item.get("text", "Overall, is this visual form aesthetically pleasing?"))
+        clarity = "Regardless of whether you recognize the writing, are the form's contours and structure visually clear?"
         directory = self.research.output_root / run_id
         inputs = []
         for record in run["snapshot"]["materials"]:
@@ -129,11 +130,10 @@ Read only this prompt and view the listed images, in the listed order, using the
 Images are existing visual design or controlled font samples used in research about commercial signage, logos and packaging. Judge the actual displayed form; a font sample is not itself an existing brand. Do not score from filenames, known font names, text descriptions or expected rankings.
 Inputs in presentation order:
 {json.dumps(ordered, ensure_ascii=False, indent=2)}
-For each image, first score aesthetic: {aesthetic}
-Then score visual_clarity: {clarity}
-Both use integers 1 to 7: 1 Not at all, 4 Neutral, 7 Very much. No need to rank the images or use all scale values. Use null with missing_reason if unable to judge. Low reading ability alone does not prevent aesthetic judgment of a visible form.
+For each image, first score the visual-form and commercial-association items in this order: aesthetic ({aesthetic}), premium (Does this visual form feel premium and refined?), modern (Does this visual form feel modern?), trustworthy (If used for a brand, does this visual form feel trustworthy?), visual_clarity ({clarity}), recognition (Can you read or recognize the written content?), unfamiliarity (Does this visual form feel unfamiliar to you?).
+Use integers 1 to 7: 1 Not at all, 4 Neutral, 7 Very much. No need to rank the images or use all scale values. Use null with missing_reason if unable to judge. Low reading ability or unfamiliarity must not automatically lower aesthetic, premium, modern, trustworthy, or visual_clarity.
 After scores, optionally add a short reason and association. Do not revise scores to match the reason. These are post-rating descriptions, not causal explanations. Write reasons in the questionnaire language ({language}).
-Return only one JSON object: {{"task_id":"{task_id}","data_type":"synthetic_persona","visual_input_received":true,"ratings":[{{"material_id":"listed ID","aesthetic":null,"visual_clarity":null,"missing_reason":null,"visible_detail":"one detail actually seen","reason":"optional","associations":"optional"}}],"limitations":"viewing or role limitations"}}.
+Return only one JSON object: {{"task_id":"{task_id}","data_type":"synthetic_persona","visual_input_received":true,"ratings":[{{"material_id":"listed ID","aesthetic":null,"premium":null,"modern":null,"trustworthy":null,"visual_clarity":null,"recognition":null,"unfamiliarity":null,"missing_reason":null,"visible_detail":"one detail actually seen","reason":"optional","associations":"optional"}}],"limitations":"viewing or role limitations"}}.
 Return one row for each listed image in order. If actual viewing fails, set visual_input_received=false and leave ratings empty. Never invent a model version, effort, temperature, seed or usage.
 """
                     prompt_path = directory / "prompts" / f"{task_id}.txt"
@@ -231,7 +231,7 @@ Return one row for each listed image in order. If actual viewing fails, set visu
         for material_id in expected:
             matches = [row for row in rows if row.get("material_id") == material_id]
             row = dict(matches[0]) if len(matches) == 1 else {"material_id": material_id, "missing_reason": "MISSING_OR_DUPLICATE_ROW"}
-            for scale in ("aesthetic", "visual_clarity"):
+            for scale in QUESTIONNAIRE_CONSTRUCTS:
                 value = row.get(scale)
                 if type(value) is not int or not 1 <= value <= 7:
                     row[scale] = None
@@ -239,7 +239,7 @@ Return one row for each listed image in order. If actual viewing fails, set visu
                     issues.append(f"{material_id}:{scale}:MISSING_OR_INVALID")
             if not row.get("visible_detail"):
                 issues.append(f"{material_id}:VISIBLE_DETAIL_MISSING")
-            normalized.append({key: row.get(key) for key in ("material_id", "aesthetic", "visual_clarity", "missing_reason", "visible_detail", "reason", "associations")})
+            normalized.append({key: row.get(key) for key in ("material_id", *QUESTIONNAIRE_CONSTRUCTS, "missing_reason", "visible_detail", "reason", "associations")})
         return normalized, issues
 
     def ingest(self, run_id: str, session: Path, *, finalize_evidence: bool = False) -> dict:

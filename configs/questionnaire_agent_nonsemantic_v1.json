@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "study_id": "study_agent_nonsemantic_v1",
+  "questionnaire_version": "agent-nonsemantic-1.0.0",
+  "source_language": "en",
+  "status": "exploratory_agent_draft",
+  "constructs": ["aesthetic", "premium", "modern", "trustworthy", "visual_clarity", "recognition", "unfamiliarity"],
+  "scale": {"min": 1, "max": 7, "anchors": {"1": "Not at all", "4": "Neutral", "7": "Very much"}},
+  "instructions": "View the actual image first. Rate visual form before considering meaning. Recognition and unfamiliarity are reported separately and must not be used to automatically lower aesthetic ratings.",
+  "items": [
+    {"item_id": "item_aesthetic", "construct": "aesthetic", "text": "Overall, is this visual form aesthetically pleasing?"},
+    {"item_id": "item_premium", "construct": "premium", "text": "Does this visual form feel premium and refined?"},
+    {"item_id": "item_modern", "construct": "modern", "text": "Does this visual form feel modern?"},
+    {"item_id": "item_trustworthy", "construct": "trustworthy", "text": "If used for a brand, does this visual form feel trustworthy?"},
+    {"item_id": "item_visual_clarity", "construct": "visual_clarity", "text": "Regardless of whether you recognize the writing, are the form's contours and structure visually clear?"},
+    {"item_id": "item_recognition", "construct": "recognition", "text": "Can you read or recognize the written content?"},
+    {"item_id": "item_unfamiliarity", "construct": "unfamiliarity", "text": "Does this visual form feel unfamiliar to you?"}
+  ],
+  "response_fields": ["value", "missing_reason", "reason", "associations"],
+  "data_origin": "synthetic_persona"
+}

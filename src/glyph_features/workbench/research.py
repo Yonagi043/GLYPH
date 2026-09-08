@@ -75,6 +75,7 @@ class StudyConfig(BaseModel):
     roles: list[Literal["baseline", "zh", "en", "ja", "ko"]] = Field(default_factory=lambda: ["baseline", "zh"])
     orders: list[Literal["forward", "reverse"]] = Field(default_factory=lambda: ["forward", "reverse"], min_length=1)
     questionnaire_language: Literal["en", "zh-Hans"] = "en"
+    questionnaire_path: str = "configs/questionnaire_v1.json"
     repetitions: int = Field(default=1, ge=1)
     task_size: int | None = Field(default=None, ge=1)
     wording: Literal["background", "profile"] = "background"
@@ -285,7 +286,9 @@ class ResearchService:
             if item["use_status"].get("study_eligibility") == "blocked_missing_characters":
                 blockers.append({"material_id": selection.material_id, "use": "measurement_and_questionnaire", "reason": "SAMPLE_FONT_MISSING_CHARACTERS"})
             selected.append(selected_record)
-        questionnaire = self.workspace_root / "configs/questionnaire_v1.json"
+        questionnaire = (self.workspace_root / config.questionnaire_path).resolve()
+        if not questionnaire.is_relative_to(self.workspace_root.resolve()) or not questionnaire.is_file():
+            raise CatalogError("QUESTIONNAIRE_NOT_FOUND")
         registry = self.workspace_root / "configs/visual_measurements_v2.yaml"
         snapshot = {
             "version": "exploratory_persona_study_1",

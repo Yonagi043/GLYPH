@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "persona_version": "agent-nonsemantic-1.0.0",
+  "data_origin": "synthetic_persona",
+  "personas": [
+    {"persona_id": "baseline", "identity": "No fictional language identity is assigned. Answer without adopting a demographic persona.", "script_exposure": {}},
+    {"persona_id": "zh", "identity": "An adult whose first language is Mandarin Chinese, who reads simplified Chinese daily and English proficiently, with little experience reading Japanese or Korean. No professional typography or calligraphy training.", "script_exposure": {"latin": {"reading": 6, "writing": 5, "daily": 6, "commercial": 6}, "han": {"reading": 7, "writing": 6, "daily": 7, "commercial": 7}, "hangul": {"reading": 1, "writing": 1, "daily": 1, "commercial": 2}, "katakana": {"reading": 2, "writing": 1, "daily": 2, "commercial": 2}}},
+    {"persona_id": "en", "identity": "An adult whose first language is English, who reads English daily, with little experience reading Chinese, Japanese or Korean. No professional typography or calligraphy training.", "script_exposure": {"latin": {"reading": 7, "writing": 7, "daily": 7, "commercial": 7}, "han": {"reading": 1, "writing": 1, "daily": 2, "commercial": 2}, "hangul": {"reading": 1, "writing": 1, "daily": 1, "commercial": 1}, "katakana": {"reading": 1, "writing": 1, "daily": 1, "commercial": 1}}},
+    {"persona_id": "ja", "identity": "An adult whose first language is Japanese, who reads Japanese daily and English proficiently, recognizes some shared Han characters but has little experience reading Korean.", "script_exposure": {"latin": {"reading": 5, "writing": 4, "daily": 5, "commercial": 5}, "han": {"reading": 6, "writing": 5, "daily": 6, "commercial": 6}, "hangul": {"reading": 1, "writing": 1, "daily": 1, "commercial": 2}, "katakana": {"reading": 7, "writing": 7, "daily": 7, "commercial": 7}}},
+    {"persona_id": "ko", "identity": "An adult whose first language is Korean, who reads Korean daily and English proficiently, with little experience reading Chinese or Japanese.", "script_exposure": {"latin": {"reading": 5, "writing": 4, "daily": 5, "commercial": 5}, "han": {"reading": 2, "writing": 1, "daily": 2, "commercial": 2}, "hangul": {"reading": 7, "writing": 7, "daily": 7, "commercial": 7}, "katakana": {"reading": 1, "writing": 1, "daily": 1, "commercial": 1}}}
+  ]
+}
