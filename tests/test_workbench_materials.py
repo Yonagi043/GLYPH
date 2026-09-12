@@ -97,3 +97,27 @@ def test_material_api_uses_explicit_root_and_does_not_initialize_social(tmp_path
         assert client.get("/api/materials/unknown").status_code == 404
         assert client.get("/api/materials?limit=0").status_code == 422
     assert not (tmp_path / "absent-social.sqlite3").exists()
+
+
+def test_paired_board_keeps_generated_path_and_hash_boundary(tmp_path):
+    import hashlib
+    import json
+    from PIL import Image
+
+    directory = tmp_path / "generated"
+    directory.mkdir()
+    image_path = directory / "sample_pair.png"
+    Image.new("RGB", (40, 20), "white").save(image_path)
+    item = {"material_id": "sample_pair", "kind": "paired_design_board", "representations": {"original": {"path": image_path.name, "sha256": hashlib.sha256(image_path.read_bytes()).hexdigest()}}}
+    (directory / "sample_pair.json").write_text(json.dumps(item))
+    materials = MaterialCatalog(ROOT)
+    materials.attach_generated_samples(directory)
+    assert materials.image_path("sample_pair", "original") == image_path
+    selected = materials.items["sample_pair"]["representations"]["original"]
+    selected["path"] = "../outside.png"
+    with pytest.raises(ValueError, match="GENERATED_SAMPLE_CHANGED_OR_OUTSIDE_ROOT"):
+        materials.image_path("sample_pair", "original")
+    selected["path"] = image_path.name
+    selected["sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="GENERATED_SAMPLE_CHANGED_OR_OUTSIDE_ROOT"):
+        materials.image_path("sample_pair", "original")

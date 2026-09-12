@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import io
 import sqlite3
+import random
 from dataclasses import asdict
+from itertools import permutations
 from pathlib import Path
 from typing import Literal
 
@@ -20,6 +22,18 @@ from glyph_features.vision_system.extract import measure_array
 
 from .catalog import Catalog, CatalogError
 from .materials import MaterialCatalog
+
+
+QuestionnaireMode = Literal["q2", "aesthetic_only", "premium_only", "aesthetic_premium", "premium_aesthetic", "aesthetic_pair", "aesthetic_pair_only"]
+QUESTIONNAIRE_SCALES = {
+    "q2": ("aesthetic", "visual_clarity"),
+    "aesthetic_only": ("aesthetic",),
+    "premium_only": ("premium_positioning",),
+    "aesthetic_premium": ("aesthetic", "premium_positioning"),
+    "premium_aesthetic": ("premium_positioning", "aesthetic"),
+    "aesthetic_pair": (),
+    "aesthetic_pair_only": (),
+}
 
 
 class MaterialSelection(BaseModel):
@@ -67,6 +81,14 @@ def representation_preview(image: Image.Image, foreground: str, layer: str) -> I
     return Image.fromarray(overlay)
 
 
+class PresentationCondition(BaseModel):
+    condition_id: str = Field(min_length=1, max_length=100)
+    group_id: str = Field(min_length=1, max_length=100)
+    material_ids: list[str] = Field(min_length=1)
+    repetition: int = Field(default=0, ge=0)
+    questionnaire_mode: QuestionnaireMode | None = None
+
+
 class StudyConfig(BaseModel):
     name: str = Field(min_length=2, max_length=160)
     question: str = Field(min_length=5, max_length=4000)
@@ -86,6 +108,15 @@ class StudyConfig(BaseModel):
     predictions: list[str] = Field(default_factory=list)
     selection_scope: str = Field(min_length=5, max_length=4000)
     stopping_rule: str = Field(min_length=5, max_length=4000)
+    design_version: str = Field(default="exploratory_persona_study_1", min_length=1)
+    presentation_plan: list[PresentationCondition] = Field(default_factory=list)
+    design_contract: dict = Field(default_factory=dict)
+    presentation_mode: Literal["legacy", "explicit", "triplet_pairs", "measurement_bridge"] = "legacy"
+    questionnaire_mode: QuestionnaireMode = "q2"
+    task_path_layout: Literal["nested_v1", "flat_v1"] = "flat_v1"
+    bridge_modes: list[QuestionnaireMode] = Field(default_factory=lambda: ["aesthetic_only", "premium_only", "aesthetic_premium", "premium_aesthetic"], min_length=1)
+    focal_font_ids: list[str] = Field(default_factory=list)
+    schedule_seed: int = 20260911
 
     @model_validator(mode="after")
     def check_design(self):
@@ -94,6 +125,18 @@ class StudyConfig(BaseModel):
         for values in (self.roles, self.orders, [item.material_id for item in self.selections]):
             if len(values) != len(set(values)):
                 raise ValueError("DUPLICATE_DESIGN_CONDITION")
+        if self.presentation_plan:
+            if self.presentation_mode not in {"triplet_pairs", "measurement_bridge"} and (self.repetitions != 1 or self.task_size is not None):
+                raise ValueError("EXPLICIT_PLAN_OWNS_GROUPING_AND_REPETITIONS")
+            selected_ids = {item.material_id for item in self.selections}
+            identities = set()
+            for entry in self.presentation_plan:
+                identity = (entry.condition_id, entry.group_id, entry.repetition)
+                if identity in identities or len(entry.material_ids) != len(set(entry.material_ids)):
+                    raise ValueError("DUPLICATE_PRESENTATION")
+                if not set(entry.material_ids) <= selected_ids:
+                    raise ValueError("PRESENTATION_MATERIAL_NOT_SELECTED")
+                identities.add(identity)
         return self
 
 
@@ -230,6 +273,38 @@ class ResearchService:
         return buffer.getvalue()
 
     def create(self, config: StudyConfig) -> dict:
+        if config.presentation_mode == "measurement_bridge":
+            plan = []
+            generator = random.Random(config.schedule_seed)
+            for repetition in range(config.repetitions):
+                cycle = [PresentationCondition(condition_id=f"single-{mode}", group_id=selection.material_id, material_ids=[selection.material_id], repetition=repetition, questionnaire_mode=mode) for selection in config.selections for mode in dict.fromkeys(config.bridge_modes)]
+                generator.shuffle(cycle)
+                plan.extend(cycle)
+            config = config.model_copy(update={"presentation_plan": plan, "design_version": "measurement-bridge-v1"})
+        if config.presentation_mode == "triplet_pairs":
+            if len(config.focal_font_ids) != 2 or len(set(config.focal_font_ids)) != 2:
+                raise CatalogError("TWO_DISTINCT_FOCAL_FONTS_REQUIRED")
+            groups = {}
+            for selection in config.selections:
+                item = self.materials.items.get(selection.material_id, {})
+                sample = item.get("sample_provenance", {})
+                if not sample.get("content"):
+                    raise CatalogError("TRIPLET_PLAN_REQUIRES_FONT_SAMPLES")
+                groups.setdefault(sample["content"], []).append((sample.get("font_asset_id"), selection.material_id))
+            plan = []
+            generator = random.Random(config.schedule_seed)
+            for repetition in range(config.repetitions):
+                cycle = []
+                for content, members in groups.items():
+                    by_font = dict(members)
+                    if len(members) != 3 or len(by_font) != 3 or not set(config.focal_font_ids) <= set(by_font):
+                        raise CatalogError("EACH_CONTENT_REQUIRES_THREE_FONTS_WITH_FOCAL_PAIR")
+                    ordered_fonts = config.focal_font_ids + [font_id for font_id in by_font if font_id not in config.focal_font_ids]
+                    for order in [*permutations(range(3)), (0, 1), (1, 0)]:
+                        cycle.append(PresentationCondition(condition_id="set" + str(len(order)) + "-" + "".join(str(index + 1) for index in order), group_id=content, material_ids=[by_font[ordered_fonts[index]] for index in order], repetition=repetition))
+                generator.shuffle(cycle)
+                plan.extend(cycle)
+            config = config.model_copy(update={"presentation_plan": plan, "design_version": "triplet-pairs-v1"})
         reference = self.get(config.reference_run_id) if config.reference_run_id else None
         parent_assessment = self.get_assessment(config.parent_assessment_id) if config.parent_assessment_id else None
         selected = []

@@ -16,7 +16,7 @@ from fontTools.ttLib import TTFont
 from glyph_features.asset_system.catalog import canonical_json, sha256_file
 
 from .personas import PersonaExecutor, write_once
-from .research import ResearchService
+from .research import QUESTIONNAIRE_SCALES, ResearchService
 from .releases import _csv_safe
 
 
@@ -82,7 +82,8 @@ def eligible_rows(tasks: list[dict]) -> tuple[list[dict], list[dict], list[dict]
             continue
         attempt = accepted[0]
         for rating in attempt["ratings"]:
-            rows.append({"task_id": task["task_id"], "host_call_id": attempt["host_call_id"], "data_type": "synthetic_persona", **task["condition"], "model_display_name": attempt["evidence"]["model_display_name"], **rating})
+            sequence = [image["material_id"] for image in task.get("inputs", [])]
+            rows.append({"task_id": task["task_id"], "host_call_id": attempt["host_call_id"], "data_type": "synthetic_persona", **task["condition"], "presentation_sequence": sequence, "presentation_position": sequence.index(rating["material_id"]) + 1 if rating["material_id"] in sequence else None, "set_size": len(sequence) if sequence else None, "model_display_name": attempt["evidence"]["model_display_name"], **rating})
     return rows, excluded, attempts
 
 
@@ -95,7 +96,7 @@ def representation_comparison(run: dict, rows: list[dict], reference: dict | Non
     fields = ("material_id", "role", "order", "repetition", "language", "wording", "model_display_name")
     pairs, unmatched = [], []
     for row in rows:
-        matches = [other for other in reference_rows if all(other[field] == row[field] for field in fields)]
+        matches = [other for other in reference_rows if all(other[field] == row[field] for field in fields) and other.get("questionnaire_mode", "q2") == row.get("questionnaire_mode", "q2")]
         if len(matches) != 1 or row.get("aesthetic") is None or matches[0].get("aesthetic") is None:
             unmatched.append({"task_id": row["task_id"], "material_id": row["material_id"], "reason": "NO_UNIQUE_OBSERVED_REFERENCE"})
             continue
@@ -107,7 +108,9 @@ def representation_comparison(run: dict, rows: list[dict], reference: dict | Non
             continue
         pairs.append({**{field: row[field] for field in fields}, "task_id": row["task_id"], "reference_task_id": matches[0]["task_id"],
                       "input_sha256": current_input["input_sha256"], "reference_input_sha256": previous_input["input_sha256"],
-                      "aesthetic": row["aesthetic"], "reference_aesthetic": matches[0]["aesthetic"], "difference": row["aesthetic"] - matches[0]["aesthetic"]})
+                      "aesthetic": row["aesthetic"], "reference_aesthetic": matches[0]["aesthetic"], "difference": row["aesthetic"] - matches[0]["aesthetic"],
+                      "questionnaire_mode": row.get("questionnaire_mode", "q2"), "premium_positioning": row.get("premium_positioning"), "reference_premium_positioning": matches[0].get("premium_positioning"),
+                      "premium_difference": row["premium_positioning"] - matches[0]["premium_positioning"] if row.get("premium_positioning") is not None and matches[0].get("premium_positioning") is not None else None})
     return {"reference_run_id": reference["run_id"], "reference_actual_calls": len(reference_attempts), "reference_planned_tasks": len(reference_tasks),
             "reference_excluded_tasks": reference_excluded, "reference_rows": reference_rows, "reference_tasks_and_raw_returns": reference_tasks,
             "pairs": pairs, "unmatched": unmatched,
@@ -163,7 +166,7 @@ def summarize_font_pairs(pairs: list[dict], materials: list[dict]) -> list[dict]
         differences = [pair["differences"]["aesthetic"] for pair in matched if pair["differences"]["aesthetic"] is not None]
         clarity = [pair["differences"]["visual_clarity"] for pair in matched if pair["differences"]["visual_clarity"] is not None]
         order_means = {}
-        for order in ("forward", "reverse"):
+        for order in dict.fromkeys(["forward", "reverse", *[pair["order"] for pair in matched]]):
             values = [pair["differences"]["aesthetic"] for pair in matched if pair["order"] == order and pair["differences"]["aesthetic"] is not None]
             order_means[order] = statistics.mean(values) if values else None
         summaries.append({**dict(zip(fields, key)), "content": by_material[key[0]]["sample_provenance"]["content"],
@@ -174,6 +177,42 @@ def summarize_font_pairs(pairs: list[dict], materials: list[dict]) -> list[dict]
     return summaries
 
 
+def summarize_presentation_pairs(pairs: list[dict]) -> dict:
+    explicit = [pair for pair in pairs if pair.get("group_id") is not None]
+    matched_sets = []
+    for pair in explicit:
+        if pair["set_size"] != 3:
+            continue
+        fields = ("group_id", "reference_material_id", "comparison_material_id", "reference_position", "comparison_position", "role", "repetition", "language", "wording", "model_display_name")
+        matches = [other for other in explicit if other["set_size"] == 2 and all(other.get(field) == pair.get(field) for field in fields)]
+        if len(matches) == 1:
+            reference = matches[0]
+            left, right = reference["differences"]["aesthetic"], pair["differences"]["aesthetic"]
+            matched_sets.append({**{field: pair.get(field) for field in fields}, "triple_task_id": pair["task_id"], "pair_task_id": reference["task_id"], "triple_difference": right, "pair_difference": left, "difference_of_differences": right - left if right is not None and left is not None else None})
+    return {"pairs": explicit, "matched_slot_set_contrasts": matched_sets, "scope": "Exact focal positions and relative order matched. Set size, third image and call variation still co-vary; no pure third-font effect. Other slots have no two-item match."}
+
+
+def summarize_measurement_bridge(rows: list[dict]) -> dict:
+    bridge = [row for row in rows if row.get("questionnaire_mode", "q2") != "q2"]
+    contrasts, unmatched = [], []
+    fields = ("material_id", "role", "repetition", "language", "wording", "model_display_name", "presentation_sequence", "presentation_position")
+    for row in bridge:
+        mode = row["questionnaire_mode"]
+        for scale, reference_mode in (("aesthetic", "aesthetic_only"), ("premium_positioning", "premium_only"), ("aesthetic", "aesthetic_premium"), ("premium_positioning", "aesthetic_premium")):
+            if mode not in {"aesthetic_premium", "premium_aesthetic"} or mode == reference_mode or not any(other["questionnaire_mode"] == reference_mode for other in bridge):
+                continue
+            matches = [other for other in bridge if other["questionnaire_mode"] == reference_mode and all(other.get(field) == row.get(field) for field in fields)]
+            base = {**{field: row.get(field) for field in fields}, "task_id": row["task_id"], "outcome": scale, "condition": mode, "reference_condition": reference_mode}
+            if len(matches) != 1 or row.get(scale) is None or matches[0].get(scale) is None:
+                unmatched.append({**base, "reason": "NO_UNIQUE_OBSERVED_REFERENCE"})
+                continue
+            reference = matches[0]
+            contrasts.append({**base, "reference_task_id": reference["task_id"], "value": row[scale], "reference_value": reference[scale], "difference": row[scale] - reference[scale]})
+    return {"rows": bridge, "contrasts": contrasts, "unmatched": unmatched,
+            "joint_rows": [row for row in bridge if row.get("aesthetic") is not None and row.get("premium_positioning") is not None],
+            "scope": "Paired by material, presentation and recorded prompt conditions; separate calls still vary. Only joint_rows contain same-call measurements of both outcomes. No pooling with q2 or treating unasked outcomes as missing."}
+
+
 def analyze_research(research: ResearchService, executor: PersonaExecutor, run_id: str) -> dict:
     run = research.get(run_id)
     tasks = executor.tasks(run_id)
@@ -181,8 +220,16 @@ def analyze_research(research: ResearchService, executor: PersonaExecutor, run_i
     material_summaries = []
     for record in run["snapshot"]["materials"]:
         material_id = record["selection"]["material_id"]
-        planned = sum(any(image["material_id"] == material_id for image in task["inputs"]) for task in tasks)
+        material_tasks = [task for task in tasks if any(image["material_id"] == material_id for image in task["inputs"])]
+        planned = sum("aesthetic" in QUESTIONNAIRE_SCALES[task["condition"].get("questionnaire_mode", "q2")] for task in material_tasks)
         observed = [row["aesthetic"] for row in rows if row["material_id"] == material_id and row.get("aesthetic") is not None]
+        outcome_summaries = []
+        for mode in dict.fromkeys(task["condition"].get("questionnaire_mode", "q2") for task in material_tasks):
+            condition_tasks = [task for task in material_tasks if task["condition"].get("questionnaire_mode", "q2") == mode]
+            for scale in ("aesthetic", "premium_positioning", "visual_clarity"):
+                asked = scale in QUESTIONNAIRE_SCALES[mode]
+                values = [row[scale] for row in rows if row["material_id"] == material_id and row.get("questionnaire_mode", "q2") == mode and row.get(scale) is not None]
+                outcome_summaries.append({"questionnaire_mode": mode, "outcome": scale, "status": "collected_or_pending" if asked else "not_collected", "planned": len(condition_tasks) if asked else 0, "observed": len(values), "missing_or_unexecuted": len(condition_tasks) - len(values) if asked else 0, "values": values, "median": statistics.median(values) if values else None, "range": [min(values), max(values)] if values else None})
         measurement = next((item for item in run["measurements"] or [] if item["material_id"] == material_id), None)
         sensitivity = []
         if measurement and measurement["status"] == "measured":
@@ -193,6 +240,7 @@ def analyze_research(research: ResearchService, executor: PersonaExecutor, run_i
         material_summaries.append({
             "material_id": material_id, "title": record["material"]["source"].get("title", material_id),
             "planned_observations": planned, "observed_aesthetic": len(observed),
+            "total_presentations": len(material_tasks), "outcomes_by_condition": outcome_summaries,
             "missing_or_unexecuted": planned - len(observed),
             "median_aesthetic": statistics.median(observed) if observed else None,
             "range_aesthetic": [min(observed), max(observed)] if observed else None,
@@ -234,7 +282,15 @@ def analyze_research(research: ResearchService, executor: PersonaExecutor, run_i
             for scale in ("aesthetic", "visual_clarity"):
                 left, right = first_rows[0].get(scale), second_rows[0].get(scale)
                 differences[scale] = right - left if left is not None and right is not None else None
-            font_pairs.append({"task_id": task["task_id"], **{field: first_rows[0][field] for field in ("role", "order", "repetition", "language", "wording", "model_display_name")}, "reference_material_id": first["selection"]["material_id"], "comparison_material_id": second["selection"]["material_id"], "differences": differences})
+            font_pairs.append({"task_id": task["task_id"], **{field: first_rows[0][field] for field in ("role", "order", "repetition", "language", "wording", "model_display_name")}, "group_id": task["condition"].get("group_id"), "set_size": len(task["inputs"]), "reference_position": first_rows[0]["presentation_position"], "comparison_position": second_rows[0]["presentation_position"], "reference_material_id": first["selection"]["material_id"], "comparison_material_id": second["selection"]["material_id"], "differences": differences})
+    paired_choices = []
+    mapping = run["config"].get("design_contract", {}).get("board_mapping", {})
+    for row in rows:
+        if "preference_choice" not in row:
+            continue
+        board = mapping.get(row["material_id"], {})
+        selected = next((member["material_id"] for member in board.get("members", []) if member["label"] == row["preference_choice"]), None)
+        paired_choices.append({**row, "content": board.get("content"), "contrast": board.get("contrast"), "positive_label": board.get("positive_label"), "selected_material_id": selected})
     result = {
         "schema_version": "exploratory_persona_result_1", "run_id": run_id,
         "analysis_implementation_sha256": sha256_file(Path(__file__)),
@@ -246,9 +302,11 @@ def analyze_research(research: ResearchService, executor: PersonaExecutor, run_i
         "retries": sum(max(0, len(task["attempts"]) - 1) for task in tasks),
         "visible_credits": [attempt["evidence"]["visible_credits"] for attempt in attempts],
         "credits_unit": "unknown; not currency or token count", "tokens": "unknown",
-        "rows": rows, "materials": material_summaries, "identity_differences": identity_differences,
+        "rows": rows, "paired_choices": paired_choices, "materials": material_summaries, "identity_differences": identity_differences,
         "repeat_differences": repeat_differences, "within_content_font_pairs": font_pairs,
         "font_comparison_summaries": summarize_font_pairs(font_pairs, run["snapshot"]["materials"]),
+        "presentation_comparison": summarize_presentation_pairs(font_pairs),
+        "measurement_bridge": summarize_measurement_bridge(rows),
         "order_and_call_differences": order_differences,
         "representation_comparison": representation_comparison(run, rows, run["snapshot"].get("reference_run"), executor.tasks(run["config"]["reference_run_id"]) if run["config"].get("reference_run_id") else []),
         "excluded_or_unexecuted_tasks": excluded, "tasks_and_raw_returns": tasks,
@@ -273,10 +331,13 @@ def export_research(result: dict, export_root: Path) -> dict:
     result_bytes = canonical_json(result)
     export_id = f"{result['run_id']}-{result['result_sha256'][:16]}"
     csv_buffer = io.StringIO()
-    fields = ["task_id", "host_call_id", "material_id", "data_type", "role", "order", "repetition", "language", "wording", "model_display_name", "aesthetic", "visual_clarity", "missing_reason", "visible_detail", "reason", "associations"]
+    fields = ["task_id", "host_call_id", "material_id", "data_type", "role", "order", "repetition", "group_id", "design_version", "questionnaire_version", "questionnaire_mode", "presentation_position", "set_size", "language", "wording", "model_display_name", "aesthetic", "premium_positioning", "visual_clarity", "aesthetic_status", "premium_positioning_status", "visual_clarity_status", "preference_choice", "heavier_choice", "missing_reason", "visible_detail", "reason", "associations"]
     writer = csv.DictWriter(csv_buffer, fieldnames=fields, extrasaction="ignore")
     writer.writeheader()
-    writer.writerows({key: _csv_safe(value) for key, value in row.items()} for row in result["rows"])
+    for row in result["rows"]:
+        scales = QUESTIONNAIRE_SCALES[row.get("questionnaire_mode", "q2")]
+        statuses = {f"{scale}_status": "not_collected" if scale not in scales else "observed" if row.get(scale) is not None else "missing" for scale in ("aesthetic", "premium_positioning", "visual_clarity")}
+        writer.writerow({key: _csv_safe(value) for key, value in {**row, **statuses}.items()})
     csv_bytes = csv_buffer.getvalue().encode("utf-8")
     manifest = {
         "schema_version": "internal_persona_export_1", "export_id": export_id,
