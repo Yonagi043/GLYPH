@@ -10,7 +10,7 @@ from pathlib import Path
 from glyph_features.asset_system.catalog import canonical_json, sha256_file, stable_id
 
 from .catalog import CatalogError
-from .research import ResearchService
+from .research import ResearchService, QUESTIONNAIRE_SCALES
 
 
 IDENTITIES = {
@@ -99,10 +99,19 @@ class PersonaExecutor:
             if sha256_file(source) != record["input_sha256"]:
                 raise CatalogError("QUESTIONNAIRE_INPUT_CHANGED")
             material_id = record["selection"]["material_id"]
-            alias = directory / "inputs" / f"{material_id}{source.suffix.lower()}"
+            alias = self.research.output_root / "inputs" / f"{record['input_sha256']}{source.suffix.lower()}" if config.get("task_path_layout", "nested_v1") == "flat_v1" else directory / "inputs" / f"{material_id}{source.suffix.lower()}"
             write_once(alias, source.read_bytes())
             inputs.append({"material_id": material_id, "path": str(alias), "sha256": record["input_sha256"]})
-        for repetition in range(config["repetitions"]):
+        if config.get("presentation_plan"):
+            by_id = {image["material_id"]: image for image in inputs}
+            for entry in config["presentation_plan"]:
+                for role in config["roles"]:
+                    condition = {"group_id": entry["group_id"], "design_version": config["design_version"], "sequence_policy": "exact_once"}
+                    mode = entry.get("questionnaire_mode") or config.get("questionnaire_mode", "q2")
+                    if mode != "q2":
+                        condition["questionnaire_mode"] = mode
+                    self._prepare_task(run_id, config, directory, [by_id[material_id] for material_id in entry["material_ids"]], role, entry["condition_id"], entry["repetition"], language, aesthetic, clarity, None, condition)
+        for repetition in range(config["repetitions"] if not config.get("presentation_plan") else 0):
             for order in config["orders"]:
                 ordered = inputs if order == "forward" else list(reversed(inputs))
                 for role in config["roles"]:
@@ -114,10 +123,14 @@ class PersonaExecutor:
             connection.execute("UPDATE research_studies SET status = 'questionnaire_ready' WHERE run_id = ? AND status = 'measured'", (run_id,))
         return self.tasks(run_id)
 
-    def _prepare_task(self, run_id, config, directory, ordered, role, order, repetition, language, aesthetic, clarity, block_index):
+    def _prepare_task(self, run_id, config, directory, ordered, role, order, repetition, language, aesthetic, clarity, block_index, extra_condition=None):
                     condition = {"role": role, "order": order, "repetition": repetition, "language": language, "wording": config["wording"]}
+                    condition.update(extra_condition or {})
                     if block_index is not None:
                         condition["block"] = block_index
+                    mode = condition.get("questionnaire_mode", config.get("questionnaire_mode", "q2"))
+                    if mode != "q2":
+                        condition.update(questionnaire_mode=mode, questionnaire_version="synthetic_persona-q3")
                     task_id = stable_id("persona", {"run_id": run_id, "condition": condition})
                     identity = IDENTITIES[role]
                     if role != "baseline":
@@ -136,7 +149,46 @@ After scores, optionally add a short reason and association. Do not revise score
 Return only one JSON object: {{"task_id":"{task_id}","data_type":"synthetic_persona","visual_input_received":true,"ratings":[{{"material_id":"listed ID","aesthetic":null,"visual_clarity":null,"missing_reason":null,"visible_detail":"one detail actually seen","reason":"optional","associations":"optional"}}],"limitations":"viewing or role limitations"}}.
 Return one row for each listed image in order. If actual viewing fails, set visual_input_received=false and leave ratings empty. Never invent a model version, effort, temperature, seed or usage.
 """
-                    prompt_path = directory / "prompts" / f"{task_id}.txt"
+                    if mode != "q2":
+                        premium = "Based only on the visible design, how high-end does the brand positioning appear?" if language == "en" else "仅根据当前可见设计，它传达的品牌定位有多高端？"
+                        questions = {"aesthetic": f"{aesthetic} (1 Not at all, 4 Neutral, 7 Very much)", "premium_positioning": f"{premium} (1 Not at all high-end, 4 Mid-range, 7 Very high-end)"}
+                        scales = QUESTIONNAIRE_SCALES[mode]
+                        example = {"material_id": "listed ID", **{scale: None for scale in scales}, "missing_reason": None, "visible_detail": "one detail actually seen", "reason": "optional", "associations": "optional"}
+                        prompt = f"""GLYPH visual questionnaire, synthetic_persona-q3. Task ID: {task_id}
+{identity}
+This is a model simulation, not a human participant. Prompted identity does not erase multilingual knowledge.
+Read only this prompt and view every listed image exactly once, sequentially in listed order, using the image-viewing tool. Do not browse, delegate, inspect repository rules, memory, source records, measurements, other answers or research logs. Do not write files.
+Judge the actual visible design as a whole. A controlled font sample is not an existing brand. Do not score from filenames, font names, descriptions or expected rankings.
+Inputs in presentation order:
+{json.dumps(ordered, ensure_ascii=False, indent=2)}
+For each image, answer these items in exactly this order, and keep score keys in this order:
+{chr(10).join(f'{index + 1}. {scale}: {questions[scale]}' for index, scale in enumerate(scales))}
+Use integers 1 to 7. Use null with missing_reason if unable to judge. Do not provide scores for unasked items. No need to rank images or use all values.
+After scores, optionally give a short reason and association in the questionnaire language ({language}); do not revise scores to fit the reason. Reasons are post-rating descriptions, not causal evidence.
+Return only one JSON object: {{"task_id":"{task_id}","data_type":"synthetic_persona","visual_input_received":true,"ratings":[{json.dumps(example)}],"limitations":"viewing or role limitations"}}.
+Return one row per image in order. If viewing fails, set visual_input_received=false and ratings=[]. Never invent model settings or usage.
+"""
+                    if mode in {"aesthetic_pair", "aesthetic_pair_only"}:
+                        if len(ordered) != 1:
+                            raise CatalogError("PAIRED_BOARD_REQUIRES_ONE_IMAGE")
+                        condition["questionnaire_version"] = "synthetic_persona-q4-pair" if mode == "aesthetic_pair" else "synthetic_persona-q5-pair-only"
+                        weight_question = "Only after making that choice, answer heavier_choice: Which wordmark has visibly thicker strokes, A or B? Choose A, B, same, or unable. Do not revise the aesthetic choice based on this check.\n" if mode == "aesthetic_pair" else ""
+                        choice_example = {"material_id": ordered[0]["material_id"], "preference_choice": "tie", **({"heavier_choice": "unable"} if mode == "aesthetic_pair" else {}), "visible_detail": "actual wording and visual difference", "missing_reason": None, "reason": "optional"}
+                        choice_order = "Keep preference_choice before heavier_choice in the JSON. " if mode == "aesthetic_pair" else ""
+                        prompt = f"""GLYPH visual questionnaire, {condition['questionnaire_version']}. Task ID: {task_id}
+{identity}
+This is a model simulation, not a human participant. Prompted identity does not erase multilingual knowledge.
+Read only this prompt and view the assigned image exactly once using the image-viewing tool. Do not browse, delegate, inspect repository rules, memory, source records, measurements, other answers or research logs. Do not write files.
+The image presents two candidate wordmarks labelled A and B. The labels are not part of the wordmarks. These are controlled design candidates for commercial lettering, not existing brands. Judge the visible forms, not filenames or expected rankings.
+Input:
+{json.dumps(ordered, ensure_ascii=False, indent=2)}
+First answer preference_choice: Which wordmark is more aesthetically pleasing, A or B? Choose A, B, tie (no preference), or unable. There is no correct preference and no requirement to choose a winner.
+{weight_question}Then record visible_detail: transcribe the visible wording and describe one actual visual difference; if unable, say so. Reasons are optional post-choice descriptions, not causal evidence. Do not provide numerical ratings or high-end/clarity scores.
+Return only one JSON object: {{"task_id":"{task_id}","data_type":"synthetic_persona","visual_input_received":true,"ratings":[{json.dumps(choice_example)}],"limitations":"viewing limitations"}}.
+{choice_order}If viewing fails set visual_input_received=false and ratings=[]. Never invent model settings or usage.
+"""
+                    prompt_root = self.research.output_root if config.get("task_path_layout", "nested_v1") == "flat_v1" else directory
+                    prompt_path = prompt_root / "prompts" / f"{task_id}.txt"
                     prompt_bytes = prompt.encode("utf-8")
                     write_once(prompt_path, prompt_bytes)
                     with self.research.connect() as connection:
@@ -228,18 +280,41 @@ Return one row for each listed image in order. If actual viewing fails, set visu
         if [row.get("material_id") for row in rows] != expected:
             issues.append("RATING_ID_ORDER_OR_COVERAGE_MISMATCH")
         normalized = []
+        mode = task.get("condition", {}).get("questionnaire_mode", "q2")
+        scales = QUESTIONNAIRE_SCALES[mode]
         for material_id in expected:
             matches = [row for row in rows if row.get("material_id") == material_id]
             row = dict(matches[0]) if len(matches) == 1 else {"material_id": material_id, "missing_reason": "MISSING_OR_DUPLICATE_ROW"}
-            for scale in ("aesthetic", "visual_clarity"):
+            if mode != "q2":
+                if [key for key in row if key in scales] != list(scales):
+                    issues.append("QUESTION_ITEM_ORDER_OR_COVERAGE_MISMATCH")
+                if any(row.get(scale) is not None for scale in {"aesthetic", "visual_clarity", "premium_positioning"} - set(scales)):
+                    issues.append("UNPRESENTED_OUTCOME_SCORED")
+            for scale in scales:
                 value = row.get(scale)
+                if mode != "q2" and value is None and row.get("missing_reason"):
+                    continue
                 if type(value) is not int or not 1 <= value <= 7:
                     row[scale] = None
                     row["missing_reason"] = row.get("missing_reason") or "MISSING_OR_INVALID_SCORE"
                     issues.append(f"{material_id}:{scale}:MISSING_OR_INVALID")
             if not row.get("visible_detail"):
                 issues.append(f"{material_id}:VISIBLE_DETAIL_MISSING")
-            normalized.append({key: row.get(key) for key in ("material_id", "aesthetic", "visual_clarity", "missing_reason", "visible_detail", "reason", "associations")})
+            record = {key: row.get(key) for key in ("material_id", "aesthetic", "visual_clarity", "missing_reason", "visible_detail", "reason", "associations")}
+            if mode != "q2":
+                record["premium_positioning"] = row.get("premium_positioning")
+                record["outcome_status"] = {scale: "not_collected" if scale not in scales else "observed" if row.get(scale) is not None else "missing" for scale in ("aesthetic", "visual_clarity", "premium_positioning")}
+            if mode in {"aesthetic_pair", "aesthetic_pair_only"}:
+                choices = ("preference_choice", "heavier_choice") if mode == "aesthetic_pair" else ("preference_choice",)
+                if [key for key in row if key in {"preference_choice", "heavier_choice"}] != list(choices):
+                    return [], ["QUESTION_ITEM_ORDER_OR_COVERAGE_MISMATCH"]
+                if row["preference_choice"] not in {"A", "B", "tie", "unable"} or (mode == "aesthetic_pair" and row["heavier_choice"] not in {"A", "B", "same", "unable"}):
+                    return [], ["PAIR_CHOICE_INVALID"]
+                if "unable" in (row[key] for key in choices) and not row.get("missing_reason"):
+                    return [], ["PAIR_MISSING_REASON_REQUIRED"]
+                record.update({key: row[key] for key in choices})
+                record["outcome_status"]["aesthetic_preference"] = "missing" if row["preference_choice"] == "unable" else "observed"
+            normalized.append(record)
         return normalized, issues
 
     def ingest(self, run_id: str, session: Path, *, finalize_evidence: bool = False) -> dict:
@@ -287,6 +362,20 @@ Return one row for each listed image in order. If actual viewing fails, set visu
                         unexpected_reads.append({"tool_call_id": child["toolCallId"], "tool": tool_id, "invocation": child.get("invocationMessage")})
                 if unexpected_reads:
                     attempt_status = "protocol_deviation"
+                actual_sequence = []
+                for child in children:
+                    if child.get("toolId") in {"copilot_viewImage", "view_image"} and child.get("isComplete"):
+                        message = json.dumps(child.get("invocationMessage"), ensure_ascii=False)
+                        matches = [image["material_id"] for image in task["inputs"] if image["path"] in message]
+                        actual_sequence.append(matches[0] if len(matches) == 1 else "UNASSIGNED_IMAGE")
+                sequence_mismatch = task["condition"].get("sequence_policy") == "exact_once" and actual_sequence != [image["material_id"] for image in task["inputs"]]
+                rating_order_mismatch = task["condition"].get("sequence_policy") == "exact_once" and "RATING_ID_ORDER_OR_COVERAGE_MISMATCH" in issues
+                rating_order_mismatch = rating_order_mismatch or any(issue in issues for issue in ("QUESTION_ITEM_ORDER_OR_COVERAGE_MISMATCH", "UNPRESENTED_OUTCOME_SCORED"))
+                if rating_order_mismatch:
+                    attempt_status = "protocol_deviation"
+                if sequence_mismatch and not missing_images:
+                    issues.append("HOST_IMAGE_SEQUENCE_MISMATCH")
+                    attempt_status = "protocol_deviation"
                 evidence = {
                     "session": str(session), "host_call_id": parent["toolCallId"], "outer_prompt": details.get("prompt"),
                     "prompt_sha256": task["prompt_sha256"], "images": image_evidence,
@@ -294,7 +383,8 @@ Return one row for each listed image in order. If actual viewing fails, set visu
                     "tokens": "unknown", "model_build": "unknown", "effort": "unknown", "temperature": "unknown", "seed": "unknown",
                     "raw_return_sha256": hashlib.sha256(raw.encode()).hexdigest(), "validation_issues": issues,
                     "unexpected_context_reads": unexpected_reads,
-                    "analysis_eligible": not unexpected_reads and not missing_images and bool(ratings),
+                    "actual_image_sequence": actual_sequence,
+                    "analysis_eligible": not unexpected_reads and not missing_images and not sequence_mismatch and not rating_order_mismatch and bool(ratings),
                     "evidence_finalized_by_operator": finalized,
                     "requested_executor_agent": self.research.get(run_id)["config"].get("executor_agent", "default"),
                     "inherited_host_context": "unknown; tool trace does not establish complete model-context isolation",

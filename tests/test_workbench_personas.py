@@ -93,3 +93,172 @@ def test_task_queue_raw_return_and_visual_evidence(tmp_path):
 
 def test_invalid_return_preserves_failure_not_fabricated_ratings():
     assert PersonaExecutor.validate_return({"task_id":"example", "inputs":[]}, "not json") == ([], ["RAW_RETURN_NOT_JSON"])
+
+
+def test_explicit_plan_and_actual_image_order(tmp_path):
+    research = ResearchService(Catalog(tmp_path / "catalog.sqlite3"), MaterialCatalog(ROOT), ROOT)
+    samples = research.materials.search(kind="existing_font_sample")[:3]
+    material_ids = [item["material_id"] for item in samples]
+    from itertools import permutations
+    config = StudyConfig(
+        name="Explicit order fixture", question="Engineering sequence check only?",
+        explanations=["fixture"], roles=["baseline"], orders=["forward"],
+        selections=[{"material_id": material_id, "reason": "engineering fixture"} for material_id in material_ids],
+        selection_scope="Engineering fixture only", stopping_rule="No model calls",
+        design_version="explicit-sequence-test-v1",
+        presentation_plan=[{"condition_id": str(index), "group_id": "content", "material_ids": list(order)} for index, order in enumerate(permutations(material_ids))],
+    )
+    run = research.create(config)
+    executor = PersonaExecutor(research)
+    tasks = executor.prepare(run["run_id"])
+    assert [[image["material_id"] for image in task["inputs"]] for task in tasks] == [list(order) for order in permutations(material_ids)]
+    task = tasks[0]
+    rows = [{"material_id": material_id, "aesthetic": 4, "visual_clarity": 4, "visible_detail": "FIXTURE"} for material_id in material_ids]
+    raw = json.dumps({"task_id": task["task_id"], "data_type": "synthetic_persona", "visual_input_received": True, "ratings": rows})
+    parent = {"toolId": "runSubagent", "toolCallId": "parent", "isComplete": True, "toolSpecificData": {"prompt": task["prompt_path"], "result": raw}}
+    children = [{"toolId": "copilot_viewImage", "toolCallId": f"image-{index}", "isComplete": True, "subAgentInvocationId": "parent", "invocationMessage": image["path"]} for index, image in enumerate(task["inputs"])]
+    session = tmp_path / "host.jsonl"
+    session.write_text("\n".join(json.dumps(event) for event in [parent, *reversed(children)]))
+    attempt = executor.ingest(run["run_id"], session)["tasks"][0]["attempts"][0]
+    assert attempt["status"] == "protocol_deviation"
+    assert not attempt["evidence"]["analysis_eligible"]
+    assert "HOST_IMAGE_SEQUENCE_MISMATCH" in attempt["evidence"]["validation_issues"]
+    session.write_text("\n".join(json.dumps(event) for event in [parent, *children]))
+    attempt = executor.ingest(run["run_id"], session)["tasks"][0]["attempts"][0]
+    assert attempt["status"] == "completed"
+    assert attempt["evidence"]["actual_image_sequence"] == material_ids
+    assert attempt["evidence"]["analysis_eligible"]
+    parsed = json.loads(raw)
+    parsed["ratings"].reverse()
+    parent["toolSpecificData"]["result"] = json.dumps(parsed)
+    session.write_text("\n".join(json.dumps(event) for event in [parent, *children]))
+    attempt = executor.ingest(run["run_id"], session)["tasks"][0]["attempts"][0]
+    assert attempt["status"] == "protocol_deviation"
+    assert not attempt["evidence"]["analysis_eligible"]
+
+
+def test_exact_slot_set_contrasts_do_not_match_other_positions():
+    from glyph_features.workbench.research_results import summarize_presentation_pairs
+    common = {"group_id": "text", "reference_material_id": "sans", "comparison_material_id": "serif", "reference_position": 1, "comparison_position": 2, "role": "baseline", "repetition": 0, "language": "en", "wording": "background", "model_display_name": "fixture"}
+    pair = {**common, "task_id": "pair", "set_size": 2, "differences": {"aesthetic": 0}}
+    triple = {**common, "task_id": "triple", "set_size": 3, "differences": {"aesthetic": 1}}
+    unmatched = {**triple, "task_id": "unmatched", "reference_position": 2, "comparison_position": 3}
+    result = summarize_presentation_pairs([pair, triple, unmatched])
+    assert len(result["matched_slot_set_contrasts"]) == 1
+    assert result["matched_slot_set_contrasts"][0]["difference_of_differences"] == 1
+
+
+def test_measurement_bridge_items_and_not_collected(tmp_path):
+    from glyph_features.workbench.research import QUESTIONNAIRE_SCALES
+    research = ResearchService(Catalog(tmp_path / "catalog.sqlite3"), MaterialCatalog(ROOT), ROOT)
+    sample = next(item for item in research.materials.search(kind="existing_font_sample") if "Lato-Regular" in item["representations"]["original"]["path"])
+    config = StudyConfig(name="Bridge fixture", question="Are outcomes measured separately?", explanations=["fixture"], selections=[{"material_id": sample["material_id"], "reason": "engineering fixture"}], roles=["baseline"], orders=["forward"], selection_scope="Engineering only", stopping_rule="No model calls", presentation_mode="measurement_bridge", repetitions=2)
+    run = research.create(config)
+    tasks = PersonaExecutor(research).prepare(run["run_id"])
+    assert len(tasks) == 8
+    for task in tasks:
+        assert run["run_id"] not in task["prompt_path"]
+        assert all(run["run_id"] not in image["path"] for image in task["inputs"])
+        mode = task["condition"]["questionnaire_mode"]
+        scales = QUESTIONNAIRE_SCALES[mode]
+        prompt = Path(task["prompt_path"]).read_text()
+        assert "synthetic_persona-q3" in prompt
+        assert ("premium_positioning" in prompt) == ("premium_positioning" in scales)
+        rating = {"material_id": sample["material_id"], **{scale: 4 for scale in scales}, "visible_detail": "FIXTURE"}
+        raw = {"task_id": task["task_id"], "data_type": "synthetic_persona", "visual_input_received": True, "ratings": [rating]}
+        rows, issues = PersonaExecutor.validate_return(task, json.dumps(raw))
+        assert not issues
+        for scale in ("aesthetic", "visual_clarity", "premium_positioning"):
+            assert rows[0]["outcome_status"][scale] == ("observed" if scale in scales else "not_collected")
+        if mode == "aesthetic_only":
+            rating["premium_positioning"] = 4
+            assert "UNPRESENTED_OUTCOME_SCORED" in PersonaExecutor.validate_return(task, json.dumps(raw))[1]
+    config.bridge_modes = ["aesthetic_premium", "premium_aesthetic"]
+    dual_run = research.create(config)
+    dual_tasks = PersonaExecutor(research).prepare(dual_run["run_id"])
+    assert len(dual_tasks) == 4
+    assert {task["condition"]["questionnaire_mode"] for task in dual_tasks} == set(config.bridge_modes)
+
+
+def test_automatic_triplet_pairs_cover_slots_and_repetitions(tmp_path):
+    from itertools import permutations
+
+    research = ResearchService(Catalog(tmp_path / "catalog.sqlite3"), MaterialCatalog(ROOT), ROOT)
+    samples = research.materials.search(kind="existing_font_sample")[:3]
+    material_ids = [sample["material_id"] for sample in samples]
+    font_ids = [f"fixture-font-{index}" for index in range(3)]
+    for sample, font_id in zip(samples, font_ids):
+        research.materials.items[sample["material_id"]]["sample_provenance"] = {
+            "content": "fixture-only", "font_asset_id": font_id,
+        }
+    config = StudyConfig(
+        name="Automatic triplet fixture", question="Scheduling only?",
+        explanations=["fixture"], roles=["baseline"], orders=["forward"],
+        selections=[{"material_id": material_id, "reason": "engineering fixture"} for material_id in material_ids],
+        presentation_mode="triplet_pairs", focal_font_ids=font_ids[:2], repetitions=2,
+        selection_scope="Fixture images, not three matched fonts", stopping_rule="No model calls",
+    )
+    run = research.create(config)
+    executor = PersonaExecutor(research)
+    tasks = executor.prepare(run["run_id"])
+    assert len(tasks) == 16
+    expected = set(permutations(material_ids)) | {tuple(material_ids[:2]), tuple(reversed(material_ids[:2]))}
+    for repetition in range(2):
+        cycle = [task for task in tasks if task["condition"]["repetition"] == repetition]
+        assert {tuple(image["material_id"] for image in task["inputs"]) for task in cycle} == expected
+        triplets = [task for task in cycle if len(task["inputs"]) == 3]
+        for slot in range(3):
+            assert all(sum(task["inputs"][slot]["material_id"] == material_id for task in triplets) == 2 for material_id in material_ids)
+    assert research.create(config)["config"]["presentation_plan"] == run["config"]["presentation_plan"]
+    config.selections = config.selections[:2]
+    with pytest.raises(CatalogError, match="EACH_CONTENT_REQUIRES_THREE_FONTS_WITH_FOCAL_PAIR"):
+        research.create(config)
+
+
+@pytest.mark.parametrize("mode", ["aesthetic_pair", "aesthetic_pair_only"])
+def test_pair_choice_prompt_raw_and_not_collected(tmp_path, mode):
+    research = ResearchService(Catalog(tmp_path / "catalog.sqlite3"), MaterialCatalog(ROOT), ROOT)
+    sample = research.materials.search(kind="existing_font_sample")[0]
+    config = StudyConfig(name="Pair parser fixture", question="Choice preservation?", explanations=["fixture"], selections=[{"material_id": sample["material_id"], "reason": "engineering fixture"}], roles=["baseline"], orders=["forward"], questionnaire_mode=mode, selection_scope="Not a real paired stimulus", stopping_rule="No model calls")
+    run = research.create(config)
+    executor = PersonaExecutor(research)
+    task = executor.prepare(run["run_id"])[0]
+    prompt = Path(task["prompt_path"]).read_text()
+    assert ("heavier_choice" in prompt) == (mode == "aesthetic_pair")
+    assert ("thicker strokes" in prompt) == (mode == "aesthetic_pair")
+    rating = {"material_id": sample["material_id"], "preference_choice": "B", **({"heavier_choice": "A"} if mode == "aesthetic_pair" else {}), "visible_detail": "FIXTURE_ONLY"}
+    raw = {"task_id": task["task_id"], "data_type": "synthetic_persona", "visual_input_received": True, "ratings": [rating]}
+    rows, issues = executor.validate_return(task, json.dumps(raw))
+    assert not issues and rows[0]["preference_choice"] == "B"
+    assert rows[0]["aesthetic"] is None and rows[0]["outcome_status"]["aesthetic"] == "not_collected"
+    parent = {"toolId": "runSubagent", "toolCallId": "parent", "isComplete": True, "toolSpecificData": {"prompt": task["prompt_path"], "result": json.dumps(raw)}}
+    image = {"toolId": "copilot_viewImage", "toolCallId": "image", "isComplete": True, "subAgentInvocationId": "parent", "invocationMessage": task["inputs"][0]["path"]}
+    session = tmp_path / "host.jsonl"
+    session.write_text("\n".join(json.dumps(event) for event in [parent, image]))
+    assert executor.ingest(run["run_id"], session)["tasks"][0]["attempts"][0]["ratings"][0]["preference_choice"] == "B"
+    import csv
+    import io
+    import zipfile
+    from glyph_features.workbench.research_results import analyze_research, export_research
+    result = analyze_research(research, executor, run["run_id"])
+    assert result["paired_choices"][0]["preference_choice"] == "B"
+    assert result["materials"][0]["planned_observations"] == 0
+    exported = export_research(result, tmp_path / "exports")
+    with zipfile.ZipFile(exported["path"]) as archive:
+        exported_row = next(csv.DictReader(io.StringIO(archive.read("ratings.csv").decode())))
+        assert exported_row["preference_choice"] == "B"
+        assert exported_row["heavier_choice"] == ("A" if mode == "aesthetic_pair" else "")
+        assert exported_row["aesthetic_status"] == "not_collected"
+    rating["preference_choice"] = "C"
+    assert executor.validate_return(task, json.dumps(raw))[1] == ["PAIR_CHOICE_INVALID"]
+    rating["preference_choice"] = "unable"
+    assert executor.validate_return(task, json.dumps(raw))[1] == ["PAIR_MISSING_REASON_REQUIRED"]
+    rating["preference_choice"] = "tie"
+    rating["aesthetic"] = 7
+    assert "UNPRESENTED_OUTCOME_SCORED" in executor.validate_return(task, json.dumps(raw))[1]
+    del rating["aesthetic"]
+    if mode == "aesthetic_pair":
+        rating["preference_choice"] = rating.pop("preference_choice")
+    else:
+        rating["heavier_choice"] = "A"
+    assert executor.validate_return(task, json.dumps(raw))[1] == ["QUESTION_ITEM_ORDER_OR_COVERAGE_MISMATCH"]

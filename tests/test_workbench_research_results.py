@@ -88,6 +88,13 @@ def test_representation_pairs_require_same_source_and_matching_condition():
     comparison = representation_comparison(current, rows, reference, tasks)
     assert comparison["pairs"][0]["difference"] == -1
     assert comparison["reference_tasks_and_raw_returns"] == tasks
+    rows[0].update(questionnaire_mode="aesthetic_premium", premium_positioning=3)
+    assert not representation_comparison(current, rows, reference, tasks)["pairs"]
+    tasks[0]["condition"]["questionnaire_mode"] = "aesthetic_premium"
+    tasks[0]["attempts"][0]["ratings"][0]["premium_positioning"] = 5
+    comparison = representation_comparison(current, rows, reference, tasks)
+    assert comparison["pairs"][0]["premium_difference"] == -2
+    assert comparison["pairs"][0]["difference"] == -1
     tasks[0]["attempts"][0]["evidence"]["analysis_eligible"] = False
     assert not representation_comparison(current, rows, reference, tasks)["pairs"]
     tasks[0]["attempts"][0]["evidence"]["analysis_eligible"] = True
@@ -134,3 +141,33 @@ def test_assessment_freezes_result_and_supplies_next_comparison(tmp_path):
     assessment.basis_result_sha256 = "0" * 64
     with pytest.raises(ValueError, match="RESULT_CHANGED"):
         research.save_assessment(run["run_id"], assessment, result)
+
+
+def test_measurement_bridge_counts_and_exact_condition_contrasts(tmp_path, monkeypatch):
+    from glyph_features.workbench.research import QUESTIONNAIRE_SCALES
+    research = ResearchService(Catalog(tmp_path / "catalog.sqlite3"), MaterialCatalog(ROOT), ROOT)
+    sample = next(item for item in research.materials.search(kind="existing_font_sample") if "Lato-Regular" in item["representations"]["original"]["path"])
+    run = research.create(StudyConfig(name="Bridge analysis fixture", question="Do item conditions differ?", explanations=["fixture"], selections=[{"material_id": sample["material_id"], "reason": "engineering fixture"}], roles=["baseline"], presentation_mode="measurement_bridge", selection_scope="Fixture", stopping_rule="No model calls"))
+    executor = PersonaExecutor(research)
+    tasks = executor.prepare(run["run_id"])
+    scores = {"aesthetic_only": {"aesthetic": 4}, "premium_only": {"premium_positioning": 2}, "aesthetic_premium": {"aesthetic": 5, "premium_positioning": 3}, "premium_aesthetic": {"premium_positioning": 4, "aesthetic": 6}}
+    for task in tasks:
+        mode = task["condition"]["questionnaire_mode"]
+        assert set(scores[mode]) == set(QUESTIONNAIRE_SCALES[mode])
+        task["attempts"] = [{"host_call_id": task["task_id"], "status": "completed", "evidence": {"analysis_eligible": True, "model_display_name": "FIXTURE", "visible_credits": "unknown"}, "ratings": [{"material_id": sample["material_id"], **scores[mode]}]}]
+    monkeypatch.setattr(executor, "tasks", lambda run_id: tasks)
+    result = analyze_research(research, executor, run["run_id"])
+    assert result["materials"][0]["missing_or_unexecuted"] == 0
+    assert result["materials"][0]["planned_observations"] == 3
+    bridge = result["measurement_bridge"]
+    assert len(bridge["contrasts"]) == 6
+    assert len(bridge["joint_rows"]) == 2
+    assert not bridge["unmatched"]
+    assert sorted(pair["difference"] for pair in bridge["contrasts"]) == [1, 1, 1, 1, 2, 2]
+    exported = export_research(result, tmp_path / "exports")
+    with zipfile.ZipFile(exported["path"]) as archive:
+        rows = list(csv.DictReader(io.StringIO(archive.read("ratings.csv").decode())))
+        premium = next(row for row in rows if row["questionnaire_mode"] == "premium_only")
+        assert premium["aesthetic"] == ""
+        assert premium["aesthetic_status"] == "not_collected"
+        assert premium["premium_positioning"] == "2"

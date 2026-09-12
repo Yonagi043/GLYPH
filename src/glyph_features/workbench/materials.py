@@ -331,7 +331,7 @@ class MaterialCatalog:
 
     def image_path(self, material_id: str, representation: str) -> Path:
         item = self.items[material_id]
-        if item["kind"] == "controlled_font_sample":
+        if item["kind"] in {"controlled_font_sample", "paired_design_board"}:
             selected = item["representations"][representation]
             image_path = (self.generated_root / selected["path"]).resolve()
             if not image_path.is_relative_to(self.generated_root) or sha256_file(image_path) != selected["sha256"]:
@@ -361,6 +361,6 @@ class MaterialCatalog:
             return
         for manifest in sorted(directory.glob("sample_*.json")):
             item = json.loads(manifest.read_text(encoding="utf-8"))
-            if item.get("kind") != "controlled_font_sample" or manifest.stem != item.get("material_id"):
+            if item.get("kind") not in {"controlled_font_sample", "paired_design_board"} or manifest.stem != item.get("material_id"):
                 raise CatalogError("GENERATED_SAMPLE_MANIFEST_INVALID")
             self.items[item["material_id"]] = item

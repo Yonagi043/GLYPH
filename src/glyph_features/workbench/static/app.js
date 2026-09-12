@@ -333,6 +333,11 @@ function renderResearch(data, materials) {
       <div class="study-options"><label>问卷语言<select name="questionnaire_language"><option value="en">English</option><option value="zh-Hans">简体中文</option></select></label><label>身份措辞<select name="wording"><option value="background">背景描述</option><option value="profile">档案描述</option></select></label><label>同条件重复<input name="repetitions" type="number" value="1" min="1" step="1" required></label></div>
       <label>宿主执行 agent<select name="executor_agent"><option value="Explore">Explore（只读）</option><option value="default">当前默认 agent</option></select></label>
       <label>每份问卷图片数<input name="task_size" type="number" min="1" step="1" value="4"></label>
+      <label>呈现设计<select name="presentation_mode"><option value="legacy">固定分组正反序</option><option value="triplet_pairs">三字体六排列与两焦点字体</option><option value="measurement_bridge">单图四条件测量桥接</option><option value="explicit">沿用冻结的显式任务表</option></select></label>
+      <label>题项模式<select name="questionnaire_mode"><option value="q2">q2 美观、清晰度</option><option value="aesthetic_only">q3 仅美观</option><option value="premium_only">q3 仅高端定位</option><option value="aesthetic_premium">q3 美观先、高端后</option><option value="premium_aesthetic">q3 高端先、美观后</option><option value="aesthetic_pair">q4 成对美观、粗细核对</option><option value="aesthetic_pair_only">q5 仅成对美观</option></select></label>
+      <fieldset><legend>单图桥接条件</legend>${[["aesthetic_only", "仅美观"], ["premium_only", "仅高端定位"], ["aesthetic_premium", "美观先、高端后"], ["premium_aesthetic", "高端先、美观后"]].map(([value, label]) => `<label class="inline-choice"><input type="checkbox" name="bridge_modes" value="${value}" checked>${label}</label>`).join("")}</fieldset>
+      <label>焦点字体<select name="focal_font_ids" multiple size="4">${materials.items.filter((item) => item.kind === "font_file").map((item) => `<option value="${escapeHtml(item.material_id)}">${escapeHtml(item.representations.original.path.split("/").at(-1))}</option>`).join("")}</select></label>
+      <label>分配种子<input name="schedule_seed" type="number" value="20260911" step="1"></label>
       <fieldset><legend>呈现顺序</legend><label class="inline-choice"><input type="checkbox" name="orders" value="forward" checked>正序</label><label class="inline-choice"><input type="checkbox" name="orders" value="reverse" checked>反序</label></fieldset>
       <div class="table-wrap"><table><thead><tr><th>所选材料</th><th>表示</th><th>选择理由</th></tr></thead><tbody>${selected.map((item) => `<tr data-study-selection="${escapeHtml(item.material_id)}"><td>${escapeHtml(item.source?.title || item.representations.original.path.split("/").at(-1))}<br>${badge(item.use_status.model_input)}</td><td><select name="representation">${item.representations.standardized ? '<option value="standardized">已有标准化图</option>' : ""}<option value="original">原图 / 原样张</option></select><details><summary>矩形区域（可选，像素）</summary>${["left", "top", "right", "bottom"].map((edge, index) => `<label>${["左", "上", "右", "下"][index]}<input name="crop_${edge}" type="number" min="0" step="1"></label>`).join("")}</details>${renderTextRegionControls(item.material_id)}</td><td><input name="reason" required minlength="3" value="现有实例比较"></td></tr>`).join("") || emptyRow(3, "尚未选择材料")}</tbody></table></div>
       <label>选择范围与未用原因<textarea name="selection_scope" required minlength="5">本次按内容、字体或商业实例进行有针对性比较；其余材料未纳入本次配置，不代表质量不合格。</textarea></label>
@@ -371,14 +376,14 @@ function renderStudyOverview(run, results) {
   });
   const validCalls = new Set(results.rows.map((row) => row.task_id)).size;
   const missingCodes = {REPRESENTATION_NOT_APPLICABLE: "表示不适用", MEASUREMENT_NOT_IMPLEMENTED: "未实现", GLYPH_UNITS_NOT_AVAILABLE: "缺少字形单元"};
-  return `<section class="inspector-section research-overview"><h3>比较问题</h3><p>${escapeHtml(run.config.question)}</p><p>登记作品组 ${new Set(workIds.filter(Boolean)).size} · 未登记作品的输入 ${workIds.filter((value) => !value).length} · 本运行输入 ${run.snapshot.materials.length} · 实际调用 ${results.actual_calls} / ${results.planned_tasks} · 纳入调用 ${validCalls} · 评分 ${results.rows.length}</p><p>synthetic_persona · 作品组不是人类样本；Auto显示名不保证固定底层模型。</p>
+  return `<section class="inspector-section research-overview"><h3>比较问题</h3><p>${escapeHtml(run.config.question)}</p><p>登记作品组 ${new Set(workIds.filter(Boolean)).size} · 未登记作品的输入 ${workIds.filter((value) => !value).length} · 本运行输入 ${run.snapshot.materials.length} · 实际调用 ${results.actual_calls} / ${results.planned_tasks} · 纳入调用 ${validCalls} · 回答条目 ${results.rows.length}</p><p>synthetic_persona · 作品组不是人类样本；Auto显示名不保证固定底层模型。</p>
     ${comparison.reference_run_id ? `<p>参考运行：<button class="entity-button" data-study="${escapeHtml(comparison.reference_run_id)}">${escapeHtml(run.snapshot.reference_run.config.name)}</button> · 调用 ${comparison.reference_actual_calls} / ${comparison.reference_planned_tasks}</p><p>下列表示差值为本运行减参考运行；变换条件见各输入，独立调用的波动仍无法与表示差异完全分离。</p>` : ""}
     <div class="research-inputs">${run.snapshot.materials.map((record) => {
       const materialId = record.selection.material_id;
       const summary = results.materials.find((item) => item.material_id === materialId);
       const referenceInput = run.snapshot.reference_run?.snapshot.materials.find((item) => item.selection.material_id === materialId);
       return `<article class="research-input"><h4>${escapeHtml(summary.title)}</h4><div class="material-pair">${referenceInput ? `<figure><img class="material-preview" src="/api/research/${comparison.reference_run_id}/inputs/${materialId}" alt="${escapeHtml(summary.title)} 参考输入"><figcaption>参考输入</figcaption></figure>` : ""}${record.input_path ? `<figure><img class="material-preview" src="/api/research/${run.run_id}/inputs/${materialId}" alt="${escapeHtml(summary.title)} 本次输入"><figcaption>本次输入 · ${escapeHtml(record.selection.representation)}${record.selection.crop_box ? ` · ${record.selection.crop_box.join(", ")}` : " · 完整图"}</figcaption></figure>` : "<p>无可用输入</p>"}</div>
-      <p>颜色 ${escapeHtml(record.selection.color_mode || "native")} · 最长边 ${record.selection.max_edge ?? "未限制"} · 美观中位数 ${summary.median_aesthetic ?? "未评分"} · 范围 ${summary.range_aesthetic?.join(" 至 ") || "无"} · 有效 ${summary.observed_aesthetic} / 计划 ${summary.planned_observations} · 缺失或未执行 ${summary.missing_or_unexecuted}</p>
+      <p>颜色 ${escapeHtml(record.selection.color_mode || "native")} · 最长边 ${record.selection.max_edge ?? "未限制"} · ${results.measurement_bridge?.rows.length ? "评分按题项条件另列" : `美观中位数 ${summary.median_aesthetic ?? "未评分"} · 范围 ${summary.range_aesthetic?.join(" 至 ") || "无"}`} · 美观有效 ${summary.observed_aesthetic} / 计划 ${summary.planned_observations} · 缺失或未执行 ${summary.missing_or_unexecuted}</p>
       <dl class="research-differences">${[...["zh", "en", "ja", "ko"].filter((role) => run.config.roles.includes(role)).map((role) => [`${role} 减基线`, results.identity_differences.filter((item) => item.role === role)]), ["重复减首次", results.repeat_differences], ["反序减正序", results.order_and_call_differences], ...(comparison.reference_run_id ? [["本表示减参考", comparison.pairs]] : [])].map(([label, items]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(differenceRange(items.filter((item) => item.material_id === materialId)))}</dd></div>`).join("")}</dl>
       ${comparison.reference_run_id ? `<p>逐对表示差值：${comparison.pairs.filter((pair) => pair.material_id === materialId).map((pair) => researchNumber(pair.difference)).join(", ") || "无有效配对"}</p><details><summary>表示配对与未匹配记录</summary><pre class="json-block">${escapeHtml(JSON.stringify({pairs: comparison.pairs.filter((pair) => pair.material_id === materialId), unmatched: (comparison.unmatched || []).filter((item) => item.material_id === materialId)}, null, 2))}</pre></details>` : ""}
       <details><summary>测量对象与适用量</summary><p>${escapeHtml(summary.measurement?.scope || "尚未测量")} · ${escapeHtml(summary.measurement?.measurement_kind || "NA")} · 前景 ${escapeHtml(summary.measurement?.foreground || "unconfirmed")}</p><p>${escapeHtml(record.selection.foreground_note || "未确认文字前景，构图量不能解释为独立字形量。")}</p><p>阈值 96 / 128 / 160。连通域不是字符数；测量不是美感真值。</p><div class="table-wrap"><table><thead><tr><th>原始量</th><th>三阈值</th><th>不适用 / 缺失</th></tr></thead><tbody>${(summary.threshold_sensitivity || []).map((metric) => {
@@ -386,8 +391,22 @@ function renderStudyOverview(run, results) {
         return `<tr><td>${escapeHtml(metric.feature)}</td><td>${metric.values.map(researchNumber).join(" / ")}</td><td>${codes.map((code) => escapeHtml(missingCodes[code] || code)).join(", ") || "适用"}</td></tr>`;
       }).join("") || emptyRow(3, "尚未测量")}</tbody></table></div></details></article>`;
     }).join("")}</div></section>
-    <section class="inspector-section"><h3>条件覆盖</h3><div class="table-wrap"><table><thead><tr><th>身份 / 顺序 / 重复 / 图片组</th><th>状态</th><th>实际尝试</th><th>纳入美观 / 输入数</th></tr></thead><tbody>${results.tasks_and_raw_returns.map((task) => `<tr><td>${escapeHtml(task.condition.role)} / ${escapeHtml(task.condition.order)} / ${task.condition.repetition + 1} / ${(task.condition.block ?? 0) + 1}</td><td>${badge(task.status)}</td><td>${task.attempts.length}</td><td>${results.rows.filter((row) => row.task_id === task.task_id && row.aesthetic !== null).length} / ${task.inputs?.length ?? run.snapshot.materials.length}</td></tr>`).join("") || emptyRow(4)}</tbody></table></div></section>
+    <section class="inspector-section"><h3>条件覆盖</h3><div class="table-wrap"><table><thead><tr><th>身份 / 顺序 / 重复 / 图片组</th><th>状态</th><th>实际尝试</th><th>有效美观回答 / 输入数</th></tr></thead><tbody>${results.tasks_and_raw_returns.map((task) => `<tr><td>${escapeHtml(task.condition.role)} / ${escapeHtml(task.condition.order)} / ${task.condition.repetition + 1} / ${(task.condition.block ?? 0) + 1}</td><td>${badge(task.status)}</td><td>${task.attempts.length}</td><td>${results.rows.filter((row) => row.task_id === task.task_id && (row.aesthetic != null || ["A", "B", "tie"].includes(row.preference_choice))).length} / ${task.inputs?.length ?? run.snapshot.materials.length}</td></tr>`).join("") || emptyRow(4)}</tbody></table></div></section>
     <section class="inspector-section"><h3>本次具体来源</h3>${(results.four_line_evidence.specific_sources?.entries || []).map((entry) => `<article class="research-source"><h4>${escapeHtml(entry.evidence_id)}</h4><p><a href="${escapeHtml(entry.source_url)}" target="_blank" rel="noreferrer">${escapeHtml(entry.source_url)}</a></p><p>核验位置：${escapeHtml(entry.locator)} · ${escapeHtml(entry.accessed_at)}</p><p>来源事实：${escapeHtml(entry.source_facts)}</p><p>可支持：${escapeHtml(entry.supports)}</p><p>不能支持：${escapeHtml(entry.does_not_support)}</p><details><summary>核验范围与局限</summary><p>${escapeHtml(entry.verification_scope)}</p><p>${escapeHtml(entry.evidence_level)} · ${escapeHtml(entry.limitations)}</p></details></article>`).join("") || "<p>本运行尚未绑定具体来源。后面的通用文献仅作背景，不是每件资产的直接证据。</p>"}</section>`;
+}
+
+function renderPresentationComparison(results) {
+  const comparison = results.presentation_comparison;
+  if (!comparison?.pairs.length) return "";
+  const titleFor = (materialId) => results.materials.find((item) => item.material_id === materialId)?.title || materialId;
+  return `<section class="inspector-section"><h3>读取顺序与比较集合</h3><p>相同焦点字体、内容、绝对槽位、身份及重复编号匹配；三图减两图仍包含集合大小、第三图和调用变化，不是纯第三字体效应。</p><div class="table-wrap"><table><thead><tr><th>内容 / 焦点槽位</th><th>字体差值方向</th><th>三图 / 两图差值</th><th>差值之差</th></tr></thead><tbody>${comparison.matched_slot_set_contrasts.map((item) => `<tr><td>${escapeHtml(item.group_id)} · ${item.reference_position}, ${item.comparison_position}<br>重复 ${item.repetition + 1}</td><td>${escapeHtml(titleFor(item.comparison_material_id))}<br>减 ${escapeHtml(titleFor(item.reference_material_id))}</td><td>${researchNumber(item.triple_difference)} / ${researchNumber(item.pair_difference)}</td><td>${researchNumber(item.difference_of_differences)}</td></tr>`).join("") || emptyRow(4, "尚无同槽位合格配对")}</tbody></table></div><details><summary>各精确序列的同调用差值</summary><div class="table-wrap"><table><thead><tr><th>内容 / 序列 / 重复</th><th>比较减参考</th><th>槽位</th><th>美观差值</th></tr></thead><tbody>${comparison.pairs.map((item) => `<tr><td>${escapeHtml(item.group_id)} / ${escapeHtml(item.order)} / ${item.repetition + 1}</td><td>${escapeHtml(titleFor(item.comparison_material_id))}<br>减 ${escapeHtml(titleFor(item.reference_material_id))}</td><td>${item.comparison_position} - ${item.reference_position}</td><td>${researchNumber(item.differences.aesthetic)}</td></tr>`).join("")}</tbody></table></div></details></section>`;
+}
+
+function renderPairedChoices(results) {
+  if (!results.paired_choices?.length) return "";
+  const choices = {A: "A", B: "B", tie: "持平", same: "相同", unable: "无法判断"};
+  const contrasts = {"w400-w100": "400 / 100", "w900-w400": "900 / 400", "w900-w100": "900 / 100", "serif400-sans400": "宋体400 / 黑体400", "serif400-sans100": "宋体400 / 黑体100"};
+  return `<section class="inspector-section"><h3>成对美观选择</h3><p>synthetic_persona · 数字美观未采集 · ${results.paired_choices.length} 条选择</p><div class="table-wrap"><table><thead><tr><th>字样 / 对比</th><th>前项位置</th><th>美观选择</th><th>较粗选择</th></tr></thead><tbody>${results.paired_choices.map((row) => `<tr><td><button class="entity-button" data-material="${escapeHtml(row.material_id)}">${escapeHtml(row.content || row.material_id)}</button><br>${escapeHtml(contrasts[row.contrast] || row.contrast || "未映射")}</td><td>${escapeHtml(row.positive_label || "未映射")}</td><td>${escapeHtml(choices[row.preference_choice] || "缺失")}</td><td>${escapeHtml(choices[row.heavier_choice] || "未采集")}</td></tr>`).join("")}</tbody></table></div></section>`;
 }
 
 async function showStudy(runId, trigger) {
@@ -397,10 +416,10 @@ async function showStudy(runId, trigger) {
   document.querySelector("#inspector-title").textContent = run.config.name;
   document.querySelector("#inspector-content").innerHTML = `<section class="inspector-section"><h3>${escapeHtml(run.status)}</h3><p>${escapeHtml(run.config.question)}</p>${run.snapshot.materials.map((record) => `<button class="entity-button" data-material="${escapeHtml(record.selection.material_id)}">${escapeHtml(record.material.source?.title || record.selection.material_id)}</button>`).join("<br>")}</section>
     <section class="inspector-section"><h3>实际模型结果</h3><p>已记录调用 ${results.actual_calls} / 计划任务 ${results.planned_tasks} · 协议偏离 ${results.protocol_deviation_calls} · 失败 ${results.failed_calls} · 重试 ${results.retries}</p>
-    <div class="table-wrap"><table><thead><tr><th>实例</th><th>美观中位数</th><th>范围</th><th>有效 / 缺失或未执行</th></tr></thead><tbody>${results.materials.map((item) => `<tr><td><button class="entity-button" data-material="${escapeHtml(item.material_id)}">${escapeHtml(item.title)}</button></td><td>${item.median_aesthetic ?? "未评分"}</td><td>${escapeHtml(item.range_aesthetic?.join(" - ") || "未评分")}</td><td>${item.observed_aesthetic} / ${item.missing_or_unexecuted}</td></tr>`).join("")}</tbody></table></div>
+    ${results.measurement_bridge?.rows.length ? "" : `<div class="table-wrap"><table><thead><tr><th>实例</th><th>美观中位数</th><th>范围</th><th>有效 / 缺失或未执行</th></tr></thead><tbody>${results.materials.map((item) => `<tr><td><button class="entity-button" data-material="${escapeHtml(item.material_id)}">${escapeHtml(item.title)}</button></td><td>${item.median_aesthetic ?? "未评分"}</td><td>${escapeHtml(item.range_aesthetic?.join(" - ") || "未评分")}</td><td>${item.observed_aesthetic} / ${item.missing_or_unexecuted}</td></tr>`).join("")}</tbody></table></div>`}
     <p>synthetic_persona · 有序评分的描述比较，不代表真实人群或因果贡献。</p>
     <button class="button" data-export-study="${escapeHtml(runId)}">导出内部审计包</button><div id="research-download"></div></section>
-    <section class="inspector-section"><h3>逐次评分与模型事后描述</h3><div class="table-wrap"><table><thead><tr><th>任务 / 材料</th><th>条件</th><th>美观 / 清晰度</th><th>模型理由与联想</th></tr></thead><tbody>${results.rows.map((row) => `<tr><td class="mono">${escapeHtml(row.task_id)}<br>${escapeHtml(row.material_id)}</td><td>${escapeHtml(row.role)} / ${escapeHtml(row.order)} / ${row.repetition}</td><td>${row.aesthetic ?? "缺失"} / ${row.visual_clarity ?? "缺失"}</td><td>${escapeHtml(row.reason)}<br>${escapeHtml(row.associations)}</td></tr>`).join("") || emptyRow(4, "尚无通过视觉证据核验的回答")}</tbody></table></div></section>
+    <section class="inspector-section"><h3>逐次评分与模型事后描述</h3><div class="table-wrap"><table><thead><tr><th>任务 / 材料</th><th>条件</th><th>美观 / 高端定位 / 清晰度</th><th>模型理由与联想</th></tr></thead><tbody>${results.rows.map((row) => `<tr><td class="mono">${escapeHtml(row.task_id)}<br>${escapeHtml(row.material_id)}</td><td>${escapeHtml(row.role)} / ${escapeHtml(row.order)} / ${row.repetition}<br>${escapeHtml(row.questionnaire_version || "synthetic_persona-q2")}</td><td>${["aesthetic", "premium_positioning", "visual_clarity"].map((scale) => scoreText(row, scale)).join(" / ")}</td><td>${escapeHtml(row.reason)}<br>${escapeHtml(row.associations)}</td></tr>`).join("") || emptyRow(4, "尚无通过视觉证据核验的回答")}</tbody></table></div></section>
     <section class="inspector-section"><h3>匹配比较与视觉量</h3><details><summary>身份减基线、同条件重复、顺序与同内容字体差值</summary><pre class="json-block">${escapeHtml(JSON.stringify({identity: results.identity_differences, repetition: results.repeat_differences, order_and_call: results.order_and_call_differences, font_pairs: results.within_content_font_pairs}, null, 2))}</pre></details><details><summary>三阈值原始测量及敏感性</summary><pre class="json-block">${escapeHtml(JSON.stringify(results.materials, null, 2))}</pre></details></section>
     <section class="inspector-section"><h3>通用背景文献与未匹配项</h3>${results.four_line_evidence.literature.map((item) => `<details><summary>${escapeHtml(item.evidence_id)} · 背景记录，非资产特定证据</summary><p>${escapeHtml(item.original_record)}</p></details>`).join("")}<details><summary>当前字体字符映射、汉字实例与文化叙事缺口</summary><pre class="json-block">${escapeHtml(JSON.stringify({instances: results.four_line_evidence.instances, task04_source: results.four_line_evidence.task04_source, social_evidence: results.four_line_evidence.social_evidence}, null, 2))}</pre></details></section>
     <section class="inspector-section"><h3>用途阻塞</h3><pre class="json-block">${escapeHtml(JSON.stringify(run.snapshot.blockers, null, 2))}</pre><details><summary>配置、输入与推断限制</summary><pre class="json-block">${escapeHtml(JSON.stringify({run, limits: results.limits}, null, 2))}</pre></details></section>`;
@@ -412,13 +431,51 @@ async function showStudy(runId, trigger) {
   document.querySelector("#inspector-content").prepend(controls);
   controls.insertAdjacentHTML("afterbegin", `<div class="action-row"><button class="button" data-clone-study="${escapeHtml(runId)}">复用配置</button>${run.status === "suspended" ? `<button class="button" data-study-transition="resume" data-run="${escapeHtml(runId)}">恢复队列</button>` : `<button class="button" data-suspend-study="${escapeHtml(runId)}">暂停队列</button>`}<button class="icon-button" data-study="${escapeHtml(runId)}" aria-label="刷新运行状态" title="刷新运行状态">↻</button></div>`);
   document.querySelector("#inspector-content").insertAdjacentHTML("afterbegin", renderStudyOverview(run, results));
+  document.querySelector("#inspector-content").insertAdjacentHTML("afterbegin", renderPresentationComparison(results));
+  document.querySelector("#inspector-content").insertAdjacentHTML("afterbegin", renderMeasurementBridge(results));
+  document.querySelector("#inspector-content").insertAdjacentHTML("afterbegin", renderOutcomeRepresentation(results));
+  document.querySelector("#inspector-content").insertAdjacentHTML("afterbegin", renderPairedChoices(results));
   document.querySelector("#inspector-content").insertAdjacentHTML("afterbegin", renderResearchJudgments(run, results));
+}
+
+function scoreText(row, scale) {
+  if (row.outcome_status?.[scale] === "not_collected" || (!row.questionnaire_mode && scale === "premium_positioning")) return "未采集";
+  return row[scale] ?? "缺失";
+}
+
+function renderOutcomeRepresentation(results) {
+  const pairs = results.representation_comparison?.pairs.filter((pair) => pair.questionnaire_mode && pair.questionnaire_mode !== "q2") || [];
+  if (!pairs.length) return "";
+  const titleFor = (materialId) => results.materials.find((item) => item.material_id === materialId)?.title || materialId;
+  return `<section class="inspector-section"><h3>表示变化与两种评分</h3><p>本表示减参考表示；相同图源、身份、题项模式与重复编号匹配。美观和高端定位分别列出；变换与独立调用的共同变化仍在。</p><div class="table-wrap"><table><thead><tr><th>作品 / 题序 / 重复</th><th>美观 当前 / 参考 / 差</th><th>高端 当前 / 参考 / 差</th></tr></thead><tbody>${pairs.map((pair) => `<tr><td>${escapeHtml(titleFor(pair.material_id))}<br>${pair.questionnaire_mode === "aesthetic_premium" ? "美观先" : "高端先"} / ${pair.repetition + 1}</td><td>${pair.aesthetic} / ${pair.reference_aesthetic} / ${pair.difference}</td><td>${researchNumber(pair.premium_positioning)} / ${researchNumber(pair.reference_premium_positioning)} / ${researchNumber(pair.premium_difference)}</td></tr>`).join("")}</tbody></table></div></section>`;
+}
+
+function renderMeasurementBridge(results) {
+  if (!results.measurement_bridge?.rows.length || results.paired_choices?.length) return "";
+  const modes = {aesthetic_only: "仅美观", premium_only: "仅高端", aesthetic_premium: "美观→高端", premium_aesthetic: "高端→美观"};
+  const titleFor = (materialId) => results.materials.find((item) => item.material_id === materialId)?.title || materialId;
+  return `<section class="inspector-section"><h3>美观与高端定位</h3><p>q3 · 美观为主要结果，高端定位独立记录。只问一题时另一题为未采集；双题才有同调用联合观测。不与旧q2混分。</p><div class="table-wrap"><table><thead><tr><th>实例</th><th>题项条件</th><th>美观逐次值</th><th>高端逐次值</th></tr></thead><tbody>${results.materials.flatMap((item) => Object.entries(modes).filter(([mode]) => item.outcomes_by_condition?.some((outcome) => outcome.questionnaire_mode === mode)).map(([mode, title]) => `<tr><td>${escapeHtml(item.title)}</td><td>${title}</td>${["aesthetic", "premium_positioning"].map((scale) => { const outcome = item.outcomes_by_condition.find((entry) => entry.questionnaire_mode === mode && entry.outcome === scale); return `<td>${outcome?.status === "not_collected" ? "未采集" : `${outcome?.values.join(", ") || "无评分"} · 缺失/未执行 ${outcome?.missing_or_unexecuted ?? "未知"}`}</td>`; }).join("")}</tr>`)).join("")}</tbody></table></div><details><summary>加题与题序的同材料配对差值</summary><p>当前条件减参考条件；图像、身份、重复编号与模型显示名匹配，调用波动仍在。未匹配 ${results.measurement_bridge.unmatched.length} 项。</p><div class="table-wrap"><table><thead><tr><th>实例 / 重复</th><th>结果</th><th>当前减参考</th><th>差值</th></tr></thead><tbody>${results.measurement_bridge.contrasts.map((pair) => `<tr><td>${escapeHtml(titleFor(pair.material_id))} / ${pair.repetition + 1}</td><td>${pair.outcome === "aesthetic" ? "美观" : "高端定位"}</td><td>${modes[pair.condition]} 减 ${modes[pair.reference_condition]}</td><td>${pair.difference}</td></tr>`).join("") || emptyRow(4)}</tbody></table></div></details></section>`;
+}
+
+function submittedDesignContract(draft) {
+  const previous = draft?.design_contract || {};
+  return {
+    status: "exploratory_ui_revision",
+    evidence_level: "synthetic_persona",
+    primary_outcome: "aesthetic",
+    ...(previous.board_mapping ? {board_mapping: previous.board_mapping, board_mapping_scope: "unchanged source-board member provenance, not a frozen hypothesis"} : {}),
+    inherited_contract: previous.inherited_contract || previous,
+    inherited_contract_status: "provenance_only_not_current_protocol",
+  };
 }
 
 function captureStudyDraft() {
   const form = document.querySelector("#study-form");
   if (!form) return;
-  const config = {};
+  const config = {design_version: state.draftConfig?.design_version, design_contract: state.draftConfig?.design_contract, presentation_plan: state.draftConfig?.presentation_plan};
+  for (const key of ["presentation_mode", "schedule_seed", "questionnaire_mode"]) config[key] = form.querySelector(`[name='${key}']`)?.value;
+  config.focal_font_ids = [...(form.querySelector("[name='focal_font_ids']")?.selectedOptions || [])].map((option) => option.value);
+  config.bridge_modes = [...(form.querySelectorAll("[name='bridge_modes']") || [])].filter((field) => field.checked).map((field) => field.value);
   for (const key of ["name", "question", "questionnaire_language", "wording", "repetitions", "selection_scope", "stopping_rule", "executor_agent", "reference_run_id", "task_size", "design_rationale", "parent_assessment_id"]) config[key] = form.querySelector(`[name='${key}']`).value;
   config.explanations = form.querySelector("[name='explanations']").value.split("\n");
   config.predictions = form.querySelector("[name='predictions']").value.split("\n");
@@ -440,6 +497,12 @@ function fillStudyDraft() {
   const config = state.draftConfig;
   const form = document.querySelector("#study-form");
   if (!config || !form) return;
+  for (const key of ["presentation_mode", "schedule_seed", "questionnaire_mode"]) {
+    const field = form.querySelector(`[name='${key}']`);
+    if (field && config[key] !== undefined) field.value = config[key];
+  }
+  for (const option of form.querySelector("[name='focal_font_ids']")?.options || []) option.selected = (config.focal_font_ids || []).includes(option.value);
+  for (const field of form.querySelectorAll("[name='bridge_modes']") || []) field.checked = (config.bridge_modes || ["aesthetic_only", "premium_only", "aesthetic_premium", "premium_aesthetic"]).includes(field.value);
   for (const key of ["name", "question", "questionnaire_language", "wording", "repetitions", "selection_scope", "stopping_rule", "executor_agent", "reference_run_id", "task_size", "design_rationale", "parent_assessment_id"]) {
     const field = form.querySelector(`[name='${key}']`);
     if (field && config[key] !== undefined) field.value = config[key] ?? "";
@@ -918,6 +981,15 @@ document.addEventListener("submit", async (event) => {
   config.reference_run_id = fields.get("reference_run_id") || null;
   config.parent_assessment_id = fields.get("parent_assessment_id") || null;
   config.task_size = fields.get("task_size") ? Number(fields.get("task_size")) : null;
+  config.presentation_mode = fields.get("presentation_mode") || "legacy";
+  config.questionnaire_mode = fields.get("questionnaire_mode") || "q2";
+  config.bridge_modes = fields.getAll("bridge_modes");
+  config.focal_font_ids = fields.getAll("focal_font_ids");
+  config.schedule_seed = Number(fields.get("schedule_seed") || 20260911);
+  config.design_contract = submittedDesignContract(state.draftConfig);
+  config.design_version = "exploratory-ui-v1";
+  config.presentation_plan = config.presentation_mode === "explicit" ? (state.draftConfig?.presentation_plan || []) : [];
+  if (config.presentation_mode !== "legacy") config.task_size = null;
   config.explanations = String(fields.get("explanations")).split("\n").filter(Boolean);
   config.predictions = String(fields.get("predictions")).split("\n").filter(Boolean);
   const selectionRows = [...form.querySelectorAll("[data-study-selection]")];

@@ -6,7 +6,7 @@ const source = fs.readFileSync(`${__dirname}/../src/glyph_features/workbench/sta
 
 function formFor(ids) {
   const fields = Object.fromEntries(['name', 'question', 'explanations', 'questionnaire_language', 'wording', 'repetitions', 'selection_scope', 'stopping_rule', 'executor_agent', 'reference_run_id', 'task_size', 'design_rationale', 'predictions', 'parent_assessment_id'].map((key) => [key, {value: `default-${key}`} ]));
-  const groups = {roles: ['baseline', 'zh', 'en', 'ja'].map((value) => ({value, checked: ['baseline', 'zh'].includes(value)})), orders: ['forward', 'reverse'].map((value) => ({value, checked: true}))};
+  const groups = {roles: ['baseline', 'zh', 'en', 'ja'].map((value) => ({value, checked: ['baseline', 'zh'].includes(value)})), orders: ['forward', 'reverse'].map((value) => ({value, checked: true})), bridge_modes: ['aesthetic_only', 'premium_only', 'aesthetic_premium', 'premium_aesthetic'].map((value) => ({value, checked: true}))};
   const rows = ids.map((materialId) => {
     const controls = {representation: {value: 'standardized'}, reason: {value: 'default'}, foreground: {value: 'unconfirmed'}, foreground_note: {value: ''}, color_mode: {value: 'native'}, max_edge: {value: '1280'}, ...Object.fromEntries(['left', 'top', 'right', 'bottom'].map((edge) => [`crop_${edge}`, {value: ''}]))};
     return {dataset: {studySelection: materialId}, querySelector: (selector) => controls[selector.match(/name='([^']+)'/)[1]]};
@@ -31,6 +31,7 @@ test('navigation preserves edited conditions and retained crop; clone and blank 
   form.fields.predictions.value = 'opposing predictions\nretain counterexamples';
   form.fields.task_size.value = '4';
   form.groups.roles.forEach((field) => {field.checked = field.value !== 'zh';});
+  form.groups.bridge_modes.forEach((field) => {field.checked = !field.value.endsWith('_only');});
   form.rows[0].querySelector("[name='representation']").value = 'original';
   form.rows[0].querySelector("[name='foreground']").value = 'dark';
   form.rows[0].querySelector("[name='foreground_note']").value = 'fixture observation';
@@ -43,6 +44,7 @@ test('navigation preserves edited conditions and retained crop; clone and blank 
   await context.navigate('research');
   assert.deepEqual(form.fields, expectedFields);
   assert.deepEqual(form.groups.roles.filter((field) => field.checked).map((field) => field.value), ['baseline', 'en', 'ja']);
+  assert.deepEqual(form.groups.bridge_modes.filter((field) => field.checked).map((field) => field.value), ['aesthetic_premium', 'premium_aesthetic']);
   assert.equal(form.rows[0].querySelector("[name='crop_right']").value, '1140');
   assert.equal(form.rows[0].querySelector("[name='representation']").value, 'original');
   assert.equal(form.rows[0].querySelector("[name='foreground']").value, 'dark');
@@ -62,6 +64,24 @@ test('navigation preserves edited conditions and retained crop; clone and blank 
   await context.navigate('research', true, false);
   assert.equal(form.fields.name.value, 'default-name');
   assert.equal(form.rows.length, 0);
+});
+
+test('new UI submissions retain prior contract as provenance, not a current frozen protocol', () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(source.slice(source.indexOf('function submittedDesignContract('), source.indexOf('function captureStudyDraft(')), context);
+  const previous = {protocol: 'AB02-fixture', repeat_selection: 'old fixed items', board_mapping: {fixture: {positive_label: 'A'}}};
+  const updated = context.submittedDesignContract({design_contract: previous});
+  assert.equal(updated.protocol, undefined);
+  assert.equal(updated.status, 'exploratory_ui_revision');
+  assert.equal(updated.inherited_contract, previous);
+  assert.equal(updated.inherited_contract_status, 'provenance_only_not_current_protocol');
+  assert.equal(updated.board_mapping, previous.board_mapping);
+  assert.ok(updated.board_mapping_scope.includes('not a frozen hypothesis'));
+  assert.equal(previous.protocol, 'AB02-fixture');
+  assert.equal(context.submittedDesignContract({design_contract: updated}).inherited_contract, previous);
+  assert.equal(context.submittedDesignContract(null).primary_outcome, 'aesthetic');
+  assert.ok(source.includes('config.design_contract = submittedDesignContract(state.draftConfig);'));
 });
 
 test('research overview shows coverage, zero differences, input provenance and source boundaries', () => {
@@ -93,4 +113,22 @@ test('research overview shows coverage, zero differences, input provenance and s
   assert.ok(assessmentHtml.includes('Counterexample retained'));
   assert.ok(assessmentHtml.includes('data-continue-assessment="assessment-fixture"'));
   assert.ok(assessmentHtml.includes('basis-fixture'));
+  result.rows = [{task_id: 'valid', aesthetic: null, preference_choice: 'tie'}];
+  const choiceOverview = context.renderStudyOverview(run, result);
+  assert.ok(choiceOverview.includes('回答条目 1'));
+  assert.ok(choiceOverview.includes('<td>1 / 1</td>'));
+});
+
+test('paired choices retain ties and uncollected weight checks', () => {
+  const context = {escapeHtml: String};
+  vm.createContext(context);
+  vm.runInContext(source.slice(source.indexOf('function renderPairedChoices('), source.indexOf('async function showStudy(')), context);
+  assert.equal(context.renderPairedChoices({}), '');
+  const html = context.renderPairedChoices({paired_choices: [{material_id: 'fixture', content: 'Example', contrast: 'w900-w400', positive_label: 'B', preference_choice: 'tie'}]});
+  assert.ok(html.includes('Example'));
+  assert.ok(html.includes('900 / 400'));
+  assert.ok(html.includes('<td>B</td><td>持平</td><td>未采集</td>'));
+  assert.ok(html.includes('数字美观未采集'));
+  assert.ok(source.includes('value="aesthetic_pair_only"'));
+  assert.ok(source.includes('value="aesthetic_pair"'));
 });
